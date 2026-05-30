@@ -24,174 +24,338 @@ tavily_key    = get_key("TAVILY_API_KEY")
 # ── Styling ────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-/* ── Global ── */
+/* ── Fonts & global reset ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 html, body, [class*="css"] {
     font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    color: #1E293B;
 }
 
-/* ── Sidebar ── */
-section[data-testid="stSidebar"] {
-    background: #1E3A5F;
-    color: white;
-}
-section[data-testid="stSidebar"] * {
-    color: white !important;
-}
-section[data-testid="stSidebar"] hr {
-    border-color: rgba(255,255,255,0.2) !important;
-}
-section[data-testid="stSidebar"] .sidebar-logo {
-    font-size: 1.6rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    padding: 8px 0 4px 0;
-}
-section[data-testid="stSidebar"] .sidebar-sources {
-    font-size: 0.82rem;
-    line-height: 1.8;
-    opacity: 0.85;
+/* ── Page fade-in ── */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0);   }
 }
 
-/* ── Main area ── */
+/* ── Pulsing dot (active step) ── */
+@keyframes pulse {
+    0%   { opacity: 1;   transform: scale(1);    }
+    50%  { opacity: 0.4; transform: scale(1.35); }
+    100% { opacity: 1;   transform: scale(1);    }
+}
+
+/* ── Animated progress bar ── */
+@keyframes progressSlide {
+    from { width: 0%; }
+    to   { width: 100%; }
+}
+
+/* ── Main container ── */
 .main .block-container {
-    max-width: 900px;
+    max-width: 920px;
     padding-top: 2rem;
     margin: 0 auto;
+    animation: fadeIn 0.35s ease both;
+    background: #F8FAFC;
+}
+
+/* ── App background ── */
+[data-testid="stAppViewContainer"] {
+    background: #F8FAFC;
+}
+
+/* ── Sidebar — white with blue accent ── */
+section[data-testid="stSidebar"] {
+    background: #FFFFFF;
+    border-right: 1px solid #E2E8F0;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.05);
+}
+section[data-testid="stSidebar"] > div:first-child {
+    border-left: 4px solid #2E86AB;
+    padding-left: 12px;
+}
+section[data-testid="stSidebar"] * {
+    color: #1E293B !important;
+}
+section[data-testid="stSidebar"] hr {
+    border-color: #E2E8F0 !important;
+}
+section[data-testid="stSidebar"] .sidebar-logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    padding: 8px 0 4px 0;
+    color: #1E293B !important;
+}
+section[data-testid="stSidebar"] .sidebar-accent {
+    color: #2E86AB !important;
+}
+section[data-testid="stSidebar"] .sidebar-sources {
+    font-size: 0.83rem;
+    line-height: 1.9;
+    color: #64748B !important;
 }
 
 /* ── Main title ── */
 .main-title {
     font-size: 2.4rem;
     font-weight: 800;
-    color: #1E3A5F;
+    color: #1E293B;
     letter-spacing: -1px;
     margin-bottom: 0.2rem;
 }
+.main-title span {
+    color: #2E86AB;
+}
 .main-subtitle {
     font-size: 1.0rem;
-    color: #64748b;
-    margin-bottom: 1.8rem;
+    color: #64748B;
+    margin-bottom: 2rem;
+    line-height: 1.6;
 }
 
 /* ── Deliverable cards ── */
 .card-btn {
     background: white;
-    border: 2px solid #E2E8F0;
-    border-radius: 12px;
-    padding: 16px 18px;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 18px 20px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s ease;
     width: 100%;
     text-align: left;
     margin-bottom: 0;
 }
 .card-btn:hover {
     border-color: #2E86AB;
-    box-shadow: 0 4px 12px rgba(46,134,171,0.15);
-    transform: translateY(-1px);
+    border-left: 4px solid #2E86AB;
+    box-shadow: 0 6px 20px rgba(46,134,171,0.15);
+    transform: translateY(-2px);
+    background: #F0F9FF;
+}
+.card-btn.selected {
+    background: #EFF6FF;
+    border: 1.5px solid #2E86AB;
+    border-left: 4px solid #2E86AB;
 }
 .card-icon {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 .card-title {
-    font-size: 0.95rem;
+    font-size: 0.96rem;
     font-weight: 700;
-    color: #1E3A5F;
+    color: #1E293B;
     display: block;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
 }
 .card-desc {
-    font-size: 0.78rem;
-    color: #64748b;
-    line-height: 1.4;
+    font-size: 0.79rem;
+    color: #64748B;
+    line-height: 1.5;
 }
 
 /* ── Progress / waiting screen ── */
+.progress-topbar {
+    height: 4px;
+    background: #E2E8F0;
+    border-radius: 2px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+.progress-topbar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2E86AB, #10B981);
+    border-radius: 2px;
+    animation: progressSlide 30s linear forwards;
+}
+
 .progress-container {
-    background: #F8FAFC;
+    background: white;
     border: 1px solid #E2E8F0;
-    border-radius: 12px;
-    padding: 24px 28px;
+    border-radius: 14px;
+    padding: 26px 30px;
     margin: 16px 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
 }
-.progress-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #1E3A5F;
-    margin-bottom: 16px;
-}
-.step-row {
+.progress-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 6px 0;
-    font-size: 0.9rem;
-    color: #334155;
+    gap: 12px;
+    margin-bottom: 20px;
 }
-.step-row.done   { color: #16a34a; }
-.step-row.active { color: #2E86AB; font-weight: 600; }
-.step-row.pending{ color: #94a3b8; }
-.step-icon { font-size: 1.1rem; min-width: 22px; }
-.searching-label {
-    font-size: 0.82rem;
-    color: #94a3b8;
-    margin-top: 14px;
-    font-style: italic;
-}
-
-/* ── Result area ── */
-.result-header {
-    font-size: 1.0rem;
+.progress-title {
+    font-size: 1.05rem;
     font-weight: 700;
-    color: #1E3A5F;
-    margin-bottom: 12px;
+    color: #1E293B;
 }
-
-/* ── Company badge ── */
-.company-badge {
+.progress-company {
+    font-size: 0.88rem;
+    color: #64748B;
+}
+.progress-deliverable {
     display: inline-block;
     background: #EFF6FF;
     border: 1px solid #BFDBFE;
     color: #1E40AF;
+    font-weight: 600;
+    font-size: 0.82rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-top: 2px;
+}
+
+.step-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    font-size: 0.91rem;
+    color: #334155;
+    border-bottom: 1px solid #F1F5F9;
+    transition: all 0.25s ease;
+}
+.step-row:last-of-type { border-bottom: none; }
+.step-row.done   { color: #059669; }
+.step-row.active { color: #2E86AB; font-weight: 600; }
+.step-row.pending{ color: #94A3B8; }
+.step-icon { font-size: 1.1rem; min-width: 24px; }
+
+.pulse-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #2E86AB;
+    border-radius: 50%;
+    margin-left: 6px;
+    animation: pulse 1.4s ease-in-out infinite;
+    vertical-align: middle;
+}
+
+.searching-label {
+    font-size: 0.82rem;
+    color: #94A3B8;
+    margin-top: 16px;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ── Result area ── */
+.result-header {
+    font-size: 1.05rem;
     font-weight: 700;
-    font-size: 1.1rem;
+    color: #1E293B;
+    margin-bottom: 14px;
+}
+
+/* ── Company badge ── */
+.company-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    color: #1E40AF;
+    font-weight: 700;
+    font-size: 1.05rem;
     padding: 6px 16px;
     border-radius: 8px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 /* ── Streamlit button overrides ── */
 div[data-testid="stButton"] > button {
-    border-radius: 8px;
+    border-radius: 10px;
     font-weight: 600;
-    transition: all 0.15s ease;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    letter-spacing: 0.01em;
+}
+div[data-testid="stButton"] > button[kind="primary"] {
+    background: #2E86AB;
+    border: none;
+    color: white;
+}
+div[data-testid="stButton"] > button[kind="primary"]:hover {
+    background: #256E8E;
+    box-shadow: 0 4px 14px rgba(46,134,171,0.3);
+    transform: translateY(-1px);
 }
 
 /* ── Download buttons ── */
 div[data-testid="stDownloadButton"] > button {
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 0.88rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
 }
 
 /* ── Expander ── */
 details {
     border: 1px solid #E2E8F0 !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     margin-bottom: 16px !important;
+    background: white !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+}
+details summary {
+    font-weight: 600 !important;
+    color: #1E293B !important;
+    padding: 2px 0 !important;
 }
 
-/* ── Spinner text ── */
+/* ── File badge ── */
+.file-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
+    color: #166534;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin: 4px 4px 4px 0;
+}
+.file-badge-name {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Section label ── */
+.section-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+}
+
+/* ── Spinner ── */
 div[data-testid="stSpinner"] > div {
     font-size: 0.9rem;
-    color: #64748b;
+    color: #64748B;
 }
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #F1F5F9; }
 ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* ── Tabs ── */
+button[data-baseweb="tab"] {
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -245,13 +409,13 @@ DELIVERABLE_BY_KEY = {d["key"]: d for d in DELIVERABLES}
 # ── Session state initialization ──────────────────────────────────────────────
 def init_state():
     defaults = {
-        "screen":          1,
-        "company":         "",
+        "screen":           1,
+        "company":          "",
         "deliverable_type": "complet",
-        "context":         "",
-        "result_text":     "",
-        "current_step":    "",
-        "steps_done":      [],
+        "context":          "",
+        "result_text":      "",
+        "current_step":     "",
+        "steps_done":       [],
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -261,9 +425,12 @@ init_state()
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown('<div class="sidebar-logo">🔍 M&A Screening</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sidebar-logo">🔍 M&A <span class="sidebar-accent">Screening</span></div>',
+        unsafe_allow_html=True,
+    )
     st.markdown("---")
-    st.markdown("**Sources utilisées**")
+    st.markdown('<div class="section-label">Sources utilisées</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="sidebar-sources">'
         "• Pappers, Societe.com, Infogreffe<br>"
@@ -280,7 +447,7 @@ with st.sidebar:
             for k in ["screen", "company", "deliverable_type", "context", "result_text", "current_step", "steps_done"]:
                 if k == "screen":
                     st.session_state[k] = 1
-                elif k in ["steps_done"]:
+                elif k == "steps_done":
                     st.session_state[k] = []
                 else:
                     st.session_state[k] = ""
@@ -291,7 +458,10 @@ with st.sidebar:
 # ══════════════════════════════════════════════════════════════════════════════
 if st.session_state.screen == 1:
 
-    st.markdown('<div class="main-title">Screening M&A</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="main-title">Screening <span>M&A</span></div>',
+        unsafe_allow_html=True,
+    )
     st.markdown(
         '<div class="main-subtitle">Analysez une entreprise en profondeur grâce à l\'intelligence artificielle et aux données publiques.</div>',
         unsafe_allow_html=True,
@@ -331,18 +501,59 @@ if st.session_state.screen == 1:
                     st.session_state.result_text      = ""
                     st.rerun()
 
-    # Optional context expander
+    # Context section — tabs for manual input and document import
     with st.expander("💡 Informations déjà connues (optionnel)"):
-        context_input = st.text_area(
-            "Ce que vous savez déjà sur cette entreprise",
-            placeholder=(
-                "Exemples : secteur d'activité, chiffre d'affaires approximatif, "
-                "principaux clients, zone géographique, contexte de l'opération..."
-            ),
-            height=120,
-            key="context_input_field",
-        )
-        st.session_state.context = context_input
+        tab_manual, tab_docs = st.tabs(["✏️ Saisie libre", "📎 Importer des documents"])
+
+        with tab_manual:
+            manual_context = st.text_area(
+                "Ce que vous savez déjà sur cette entreprise",
+                placeholder=(
+                    "Exemples : secteur d'activité, chiffre d'affaires approximatif, "
+                    "principaux clients, zone géographique, contexte de l'opération..."
+                ),
+                height=130,
+                key="context_input_field",
+            )
+
+        with tab_docs:
+            st.markdown(
+                '<div class="section-label">Glissez jusqu\'à 5 fichiers (PDF, Word, Excel, TXT, CSV, MD)</div>',
+                unsafe_allow_html=True,
+            )
+            uploaded_files = st.file_uploader(
+                "Importer des documents",
+                type=["pdf", "docx", "xlsx", "xls", "txt", "md", "csv"],
+                accept_multiple_files=True,
+                label_visibility="collapsed",
+                key="doc_uploader",
+            )
+
+            doc_texts = []
+            if uploaded_files:
+                from document_extractor import extract_text
+                shown = uploaded_files[:5]
+                for uf in shown:
+                    extracted = extract_text(uf)
+                    char_count = len(extracted)
+                    doc_texts.append(
+                        f"\n\n--- Document : {uf.name} ---\n\n{extracted}"
+                    )
+                    st.markdown(
+                        f'<div class="file-badge">'
+                        f'📄 <span class="file-badge-name">{uf.name}</span>'
+                        f' &nbsp;·&nbsp; {char_count:,} car.'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+                if len(uploaded_files) > 5:
+                    st.caption("Seuls les 5 premiers fichiers sont pris en compte.")
+
+        # Combine manual text + document texts into session context
+        combined_context = manual_context
+        if doc_texts:
+            combined_context = combined_context + "".join(doc_texts)
+        st.session_state.context = combined_context
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -350,45 +561,71 @@ if st.session_state.screen == 1:
 # ══════════════════════════════════════════════════════════════════════════════
 elif st.session_state.screen == 2:
 
-    company       = st.session_state.company
-    deliv_key     = st.session_state.deliverable_type
-    deliv_info    = DELIVERABLE_BY_KEY.get(deliv_key, DELIVERABLES[0])
-    context       = st.session_state.context
-    all_steps     = deliv_info["steps"]
+    company    = st.session_state.company
+    deliv_key  = st.session_state.deliverable_type
+    deliv_info = DELIVERABLE_BY_KEY.get(deliv_key, DELIVERABLES[0])
+    context    = st.session_state.context
+    all_steps  = deliv_info["steps"]
 
+    # Animated progress bar at top
     st.markdown(
-        f'<div class="company-badge">{company}</div>',
+        '<div class="progress-topbar"><div class="progress-topbar-fill"></div></div>',
         unsafe_allow_html=True,
     )
-    st.markdown(f"**{deliv_info['icon']} {deliv_info['title']}** — Analyse en cours...")
+
+    # Header with company + deliverable type
+    st.markdown(
+        f'<div class="company-badge">🏢 {company}</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f'<span class="progress-deliverable">{deliv_info["icon"]} {deliv_info["title"]}</span>',
+        unsafe_allow_html=True,
+    )
 
     # Progress display placeholder
     progress_placeholder = st.empty()
 
     def render_progress(current_step: str, steps_done: list):
+        total  = len(all_steps)
+        done_n = len(steps_done)
+        pct    = int(done_n / total * 100) if total else 0
+
         html_rows = ""
         for step in all_steps:
             if step in steps_done:
-                css   = "done"
-                icon  = "✅"
+                css  = "done"
+                icon = "✅"
+                pulse = ""
             elif step == current_step:
-                css   = "active"
-                icon  = "⏳"
+                css  = "active"
+                icon = "⏳"
+                pulse = '<span class="pulse-dot"></span>'
             else:
-                css   = "pending"
-                icon  = "⬜"
+                css  = "pending"
+                icon = "⬜"
+                pulse = ""
             html_rows += (
                 f'<div class="step-row {css}">'
                 f'<span class="step-icon">{icon}</span>'
-                f'<span>{step}</span>'
+                f'<span>{step}{pulse}</span>'
                 f"</div>"
             )
+
         progress_placeholder.markdown(
             f"""
             <div class="progress-container">
-                <div class="progress-title">Progression de l'analyse</div>
+                <div class="progress-header">
+                    <div>
+                        <div class="progress-title">Progression de l'analyse</div>
+                        <div class="progress-company">{company} &nbsp;·&nbsp; {done_n}/{total} étapes</div>
+                    </div>
+                </div>
                 {html_rows}
-                <div class="searching-label">L'agent effectue des recherches web...</div>
+                <div class="searching-label">
+                    <span class="pulse-dot"></span>
+                    L'agent effectue des recherches web en temps réel...
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -461,10 +698,10 @@ elif st.session_state.screen == 3:
 
     # Header
     st.markdown(
-        f'<div class="company-badge">{company}</div>',
+        f'<div class="company-badge">🏢 {company}</div>',
         unsafe_allow_html=True,
     )
-    st.markdown(f"**{deliv_info['icon']} {deliv_info['title']}** — Analyse terminée")
+    st.markdown(f"**{deliv_info['icon']} {deliv_info['title']}** — Analyse terminée ✅")
     st.markdown("---")
 
     # Download buttons
