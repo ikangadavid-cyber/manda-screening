@@ -9,9 +9,14 @@ MODEL = "claude-sonnet-4-6"
 
 _COMMON_INSTRUCTIONS = """
 ---
-Sois factuel, cite tes sources, et indique clairement quand une information n'est pas disponible (NC = Non Communiqué).
-Utilise l'outil web_search autant que nécessaire pour obtenir des informations précises et à jour.
-Réponds toujours en français."""
+RÈGLES DE MISE EN FORME STRICTES :
+- Ne narre jamais tes recherches. Commence DIRECTEMENT par le contenu du rapport, sans introduction du type "Je vais lancer des recherches..." ou "J'ai maintenant suffisamment d'informations...".
+- N'utilise JAMAIS la notation entre crochets dans les titres ou le texte : interdit [E], [CA], [L], [N], [C], [P], [G], [S], [URL], [!], [F] ou tout autre code entre crochets.
+- N'ajoute pas de notes méthodologiques, notes orthographiques ou commentaires sur le processus dans le rapport final.
+- Les titres de section s'écrivent en clair, sans préfixe entre crochets.
+- Sois factuel, cite tes sources, et indique clairement quand une information n'est pas disponible (NC = Non Communiqué).
+- Utilise l'outil web_search autant que nécessaire pour obtenir des informations précises et à jour.
+- Réponds toujours en français."""
 
 _STEP1_TEMPLATE = """## ÉTAPE 1 — Univers de l'entreprise
 Recherche et présente :
