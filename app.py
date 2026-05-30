@@ -29,7 +29,39 @@ st.markdown("""
 
 html, body, [class*="css"] {
     font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
-    color: #2D3748;
+    color: #1A202C;
+}
+
+/* ── Texte du rapport (markdown Streamlit) ── */
+.stMarkdown p, .stMarkdown li, .stMarkdown td, .stMarkdown th {
+    color: #1A202C !important;
+    font-size: 0.95rem;
+    line-height: 1.75;
+}
+.stMarkdown h1 { color: #1A2744 !important; font-size: 1.5rem !important; font-weight: 800 !important; border-bottom: 2px solid #4A7FA5; padding-bottom: 6px; margin-top: 24px !important; }
+.stMarkdown h2 { color: #1A2744 !important; font-size: 1.2rem !important; font-weight: 700 !important; margin-top: 20px !important; }
+.stMarkdown h3 { color: #2D5A7A !important; font-size: 1.05rem !important; font-weight: 600 !important; }
+.stMarkdown strong { color: #1A2744 !important; font-weight: 700 !important; }
+.stMarkdown em { color: #3A5068 !important; }
+.stMarkdown code { background: #E8EDF2 !important; color: #1A2744 !important; border-radius: 4px; padding: 1px 5px; }
+.stMarkdown blockquote { border-left: 3px solid #4A7FA5 !important; padding-left: 12px; color: #3A5068 !important; }
+.stMarkdown hr { border-color: #C8D4DC !important; margin: 16px 0 !important; }
+
+/* ── Tableaux ── */
+.stMarkdown table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+.stMarkdown th { background: #1A2744 !important; color: #F0F4F8 !important; font-weight: 600; padding: 10px 14px; text-align: left; }
+.stMarkdown td { color: #1A202C !important; padding: 8px 14px; border-bottom: 1px solid #D4DCE4; }
+.stMarkdown tr:nth-child(even) td { background: #EEF2F6 !important; }
+.stMarkdown tr:hover td { background: #E4ECF4 !important; }
+
+/* ── Zone résultats ── */
+.result-box {
+    background: #FFFFFF;
+    border: 1px solid #C8D4DC;
+    border-radius: 14px;
+    padding: 28px 32px;
+    margin-top: 16px;
+    box-shadow: 0 2px 12px rgba(26,39,68,0.07);
 }
 
 /* ── Animations ── */
@@ -725,9 +757,11 @@ elif st.session_state.screen == 3:
 
     st.markdown("---")
 
-    # Full report
+    # Full report in white box
     st.markdown('<div class="result-header">Rapport d\'analyse</div>', unsafe_allow_html=True)
-    st.markdown(result, unsafe_allow_html=False)
+    st.markdown('<div class="result-box">', unsafe_allow_html=True)
+    st.markdown(result)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
 
