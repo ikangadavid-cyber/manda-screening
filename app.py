@@ -1,4 +1,5 @@
 import os
+import time
 import streamlit as st
 from dotenv import load_dotenv
 
@@ -370,6 +371,15 @@ DELIVERABLES = [
 
 DELIVERABLE_BY_KEY = {d["key"]: d for d in DELIVERABLES}
 
+# Estimated duration in seconds per deliverable type (used for progress timer)
+ESTIMATED_SECONDS = {
+    "complet":   360,   # ~6 min
+    "fiche":     90,    # ~1.5 min
+    "benchmark": 210,   # ~3.5 min
+    "manda":     180,   # ~3 min
+    "geo":       180,   # ~3 min
+}
+
 # ── Session state initialization ──────────────────────────────────────────────
 def init_state():
     defaults = {
@@ -601,24 +611,56 @@ elif st.session_state.screen == 2:
     # Progress display placeholder
     progress_placeholder = st.empty()
 
-    def render_progress(current_step: str, steps_done: list):
+    estimated = ESTIMATED_SECONDS.get(deliv_key, 180)
+
+    def render_progress(current_step: str, steps_done: list, elapsed: float = 0):
         total  = len(all_steps)
         done_n = len(steps_done)
-        pct    = int(done_n / total * 100) if total else 0
 
+        # ── Timing display ──
+        if elapsed > 0:
+            m, s        = divmod(int(elapsed), 60)
+            elapsed_str = f"{m}:{s:02d}"
+            remaining   = max(0, estimated - elapsed)
+            if remaining > 90:
+                rem_str = f"~{int(remaining // 60) + 1} min"
+            elif remaining > 0:
+                rem_str = "moins d'1 min"
+            else:
+                rem_str = "bientôt..."
+            pct_bar = min(97, int(elapsed / estimated * 100)) if estimated else 50
+            timing_html = f"""
+            <div style="background:#EEF2F6; border-radius:8px; padding:10px 16px; margin-bottom:12px;
+                        display:flex; justify-content:space-between; align-items:center; font-size:0.83rem;">
+                <span style="color:#4A5568;">⏱ Écoulé : <strong style="color:#1A2744;">{elapsed_str}</strong></span>
+                <span style="color:#4A5568;">Temps restant : <strong style="color:#4A7FA5;">{rem_str}</strong></span>
+            </div>
+            <div style="background:#DDD5C8; border-radius:4px; height:5px; margin-bottom:18px; overflow:hidden;">
+                <div style="background:linear-gradient(90deg,#4A7FA5,#5BAD8C); width:{pct_bar}%; height:100%; border-radius:4px;"></div>
+            </div>"""
+        else:
+            est_min = max(1, int(estimated / 60))
+            timing_html = f"""
+            <div style="background:#EEF2F6; border-radius:8px; padding:10px 16px; margin-bottom:12px;
+                        display:flex; align-items:center; gap:8px; font-size:0.83rem; color:#4A5568;">
+                <span>⏱</span>
+                <span>Durée estimée : <strong style="color:#4A7FA5;">~{est_min} minutes</strong></span>
+            </div>"""
+
+        # ── Step rows ──
         html_rows = ""
         for step in all_steps:
             if step in steps_done:
-                css  = "done"
-                icon = "✅"
+                css   = "done"
+                icon  = "✅"
                 pulse = ""
             elif step == current_step:
-                css  = "active"
-                icon = "⏳"
+                css   = "active"
+                icon  = "⏳"
                 pulse = '<span class="pulse-dot"></span>'
             else:
-                css  = "pending"
-                icon = "⬜"
+                css   = "pending"
+                icon  = "⬜"
                 pulse = ""
             html_rows += (
                 f'<div class="step-row {css}">'
@@ -636,6 +678,7 @@ elif st.session_state.screen == 2:
                         <div class="progress-company">{company} &nbsp;·&nbsp; {done_n}/{total} étapes</div>
                     </div>
                 </div>
+                {timing_html}
                 {html_rows}
                 <div class="searching-label">
                     <span class="pulse-dot"></span>
@@ -646,7 +689,7 @@ elif st.session_state.screen == 2:
             unsafe_allow_html=True,
         )
 
-    render_progress("", [])
+    render_progress("", [], elapsed=0)
 
     # Vérification des clés avant de lancer
     if not anthropic_key or not tavily_key:
@@ -662,7 +705,8 @@ elif st.session_state.screen == 2:
 
     from agent import run_screening
 
-    full_text = [""]
+    full_text  = [""]
+    start_time = time.time()
 
     def on_text(text):
         full_text[0] = text
@@ -681,7 +725,8 @@ elif st.session_state.screen == 2:
         ):
             st.session_state.steps_done = st.session_state.steps_done + [st.session_state.current_step]
         st.session_state.current_step = step_name
-        render_progress(step_name, st.session_state.steps_done)
+        elapsed = time.time() - start_time
+        render_progress(step_name, st.session_state.steps_done, elapsed=elapsed)
 
     try:
         result = run_screening(
@@ -731,13 +776,18 @@ elif st.session_state.screen == 3:
     col_dl1, col_dl2, col_dl3 = st.columns([2, 2, 4])
 
     with col_dl1:
-        st.download_button(
-            label="📄 Télécharger en TXT",
-            data=result,
-            file_name=f"screening_{company.replace(' ', '_').lower()}.txt",
-            mime="text/plain",
-            use_container_width=True,
-        )
+        try:
+            from word_generator import generate_word
+            docx_bytes = generate_word(result, company, deliv_key)
+            st.download_button(
+                label="📝 Télécharger en Word",
+                data=docx_bytes,
+                file_name=f"screening_{company.replace(' ', '_').lower()}.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                use_container_width=True,
+            )
+        except Exception as ex:
+            st.warning(f"Word indisponible : {ex}")
 
     with col_dl2:
         try:
