@@ -759,9 +759,8 @@ elif st.session_state.screen == 3:
 
     # Full report in white box
     st.markdown('<div class="result-header">Rapport d\'analyse</div>', unsafe_allow_html=True)
-    st.markdown('<div class="result-box">', unsafe_allow_html=True)
-    st.markdown(result)
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown(result)
 
     st.markdown("---")
 

@@ -26,17 +26,17 @@ Identifie les 5 à 10 principaux concurrents directs en France et en Europe.
 Pour chaque concurrent, génère une **fiche standardisée** :
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[E] [NOM DE L'ENTREPRISE]
+NOM DE L'ENTREPRISE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[L] Localisation     : [ville, pays]
-[F] Activité         : [description courte]
-[CA] CA estimé       : [montant ou "NC"]
-[N] Effectifs        : [nombre ou "NC"]
-[C] Clients          : [types de clients]
-[P] Produits/Tech    : [offre principale]
-[G] Géographie       : [marchés couverts]
-[S] Statut           : [indépendant / groupe / filiale]
-[URL] Source         : [URL]
+Localisation     : ville, pays
+Activité         : description courte
+CA estimé        : montant ou NC
+Effectifs        : nombre ou NC
+Clients          : types de clients
+Produits/Tech    : offre principale
+Géographie       : marchés couverts
+Statut           : indépendant / groupe / filiale
+Source           : URL
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```"""
 
