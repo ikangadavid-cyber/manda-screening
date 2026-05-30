@@ -445,6 +445,10 @@ if st.session_state.screen == 1:
 
     card_cols = [col_a, col_b, col_c, col_d, col_e]
 
+    # Zone d'erreur visible AU-DESSUS des cartes
+    error_zone = st.empty()
+
+    clicked_key = None
     for idx, deliv in enumerate(DELIVERABLES):
         accent, bg = CARD_COLORS[deliv["key"]]
         with card_cols[idx]:
@@ -456,27 +460,29 @@ if st.session_state.screen == 1:
                 border-radius:12px;
                 padding:16px 18px;
                 margin-bottom:8px;
-                cursor:pointer;
-                transition:all 0.2s ease;
             ">
                 <span style="font-size:1.5rem;">{deliv['icon']}</span>
                 <div style="font-weight:700;color:#1A2744;font-size:0.95rem;margin:6px 0 3px 0;">{deliv['title']}</div>
                 <div style="font-size:0.78rem;color:#5A6A7A;line-height:1.4;">{deliv['desc']}</div>
             </div>
             """, unsafe_allow_html=True)
-            if st.button(f"Sélectionner", key=f"card_{deliv['key']}", use_container_width=True):
-                if not company_input.strip():
-                    st.warning("Veuillez entrer le nom d'une entreprise.")
-                elif not anthropic_key or not tavily_key:
-                    st.error("Configuration manquante : clés API introuvables. Contactez l'administrateur.")
-                else:
-                    st.session_state.company          = company_input.strip()
-                    st.session_state.deliverable_type = deliv["key"]
-                    st.session_state.screen           = 2
-                    st.session_state.steps_done       = []
-                    st.session_state.current_step     = ""
-                    st.session_state.result_text      = ""
-                    st.rerun()
+            if st.button("Sélectionner", key=f"card_{deliv['key']}", use_container_width=True):
+                clicked_key = deliv["key"]
+
+    # Validation centralisée — messages visibles
+    if clicked_key:
+        if not company_input.strip():
+            error_zone.warning("⚠️ Veuillez entrer le nom d'une entreprise avant de choisir un type d'analyse.")
+        elif not anthropic_key or not tavily_key:
+            error_zone.error("🔑 Clés API manquantes. Contactez l'administrateur.")
+        else:
+            st.session_state.company          = company_input.strip()
+            st.session_state.deliverable_type = clicked_key
+            st.session_state.screen           = 2
+            st.session_state.steps_done       = []
+            st.session_state.current_step     = ""
+            st.session_state.result_text      = ""
+            st.rerun()
 
     # Context section — tabs for manual input and document import
     with st.expander("💡 Informations déjà connues (optionnel)"):
@@ -609,6 +615,14 @@ elif st.session_state.screen == 2:
         )
 
     render_progress("", [])
+
+    # Vérification des clés avant de lancer
+    if not anthropic_key or not tavily_key:
+        st.error("🔑 Clés API manquantes — impossible de lancer l'analyse. Contactez l'administrateur.")
+        if st.button("← Retour"):
+            st.session_state.screen = 1
+            st.rerun()
+        st.stop()
 
     # ── Run the agent ──────────────────────────────────────────────────────
     os.environ["ANTHROPIC_API_KEY"] = anthropic_key
