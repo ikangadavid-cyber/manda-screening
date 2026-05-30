@@ -24,182 +24,140 @@ tavily_key    = get_key("TAVILY_API_KEY")
 # ── Styling ────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-/* ── Fonts & global reset ── */
+/* ── Fonts ── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 html, body, [class*="css"] {
     font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
-    color: #1E293B;
+    color: #2D3748;
 }
 
-/* ── Page fade-in ── */
+/* ── Animations ── */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0);   }
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0);    }
 }
-
-/* ── Pulsing dot (active step) ── */
 @keyframes pulse {
     0%   { opacity: 1;   transform: scale(1);    }
-    50%  { opacity: 0.4; transform: scale(1.35); }
+    50%  { opacity: 0.3; transform: scale(1.4);  }
     100% { opacity: 1;   transform: scale(1);    }
 }
-
-/* ── Animated progress bar ── */
 @keyframes progressSlide {
     from { width: 0%; }
     to   { width: 100%; }
 }
 
-/* ── Main container ── */
+/* ── Fond général : crème chaude ── */
+[data-testid="stAppViewContainer"] {
+    background: #F5F0E8;
+}
 .main .block-container {
     max-width: 920px;
     padding-top: 2rem;
     margin: 0 auto;
-    animation: fadeIn 0.35s ease both;
-    background: #F8FAFC;
+    animation: fadeIn 0.4s ease both;
+    background: transparent;
 }
 
-/* ── App background ── */
-[data-testid="stAppViewContainer"] {
-    background: #F8FAFC;
-}
-
-/* ── Sidebar — white with blue accent ── */
+/* ── Sidebar : bleu nuit avec texte clair ── */
 section[data-testid="stSidebar"] {
-    background: #FFFFFF;
-    border-right: 1px solid #E2E8F0;
-    box-shadow: 2px 0 12px rgba(0,0,0,0.05);
-}
-section[data-testid="stSidebar"] > div:first-child {
-    border-left: 4px solid #2E86AB;
-    padding-left: 12px;
+    background: linear-gradient(180deg, #1A2744 0%, #243352 100%);
+    border-right: none;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
 }
 section[data-testid="stSidebar"] * {
-    color: #1E293B !important;
+    color: #C8D6E8 !important;
 }
 section[data-testid="stSidebar"] hr {
-    border-color: #E2E8F0 !important;
+    border-color: rgba(200,214,232,0.2) !important;
 }
 section[data-testid="stSidebar"] .sidebar-logo {
     font-size: 1.5rem;
     font-weight: 800;
     letter-spacing: -0.5px;
     padding: 8px 0 4px 0;
-    color: #1E293B !important;
+    color: #FFFFFF !important;
 }
 section[data-testid="stSidebar"] .sidebar-accent {
-    color: #2E86AB !important;
+    color: #7EB8D4 !important;
 }
 section[data-testid="stSidebar"] .sidebar-sources {
     font-size: 0.83rem;
     line-height: 1.9;
-    color: #64748B !important;
+    color: #8FA8C4 !important;
+}
+section[data-testid="stSidebar"] button {
+    background: rgba(255,255,255,0.1) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    color: #C8D6E8 !important;
+}
+section[data-testid="stSidebar"] button:hover {
+    background: rgba(255,255,255,0.18) !important;
 }
 
-/* ── Main title ── */
+/* ── Titre principal ── */
 .main-title {
     font-size: 2.4rem;
     font-weight: 800;
-    color: #1E293B;
+    color: #1A2744;
     letter-spacing: -1px;
     margin-bottom: 0.2rem;
 }
-.main-title span {
-    color: #2E86AB;
-}
+.main-title span { color: #4A7FA5; }
 .main-subtitle {
     font-size: 1.0rem;
-    color: #64748B;
+    color: #6B7A8D;
     margin-bottom: 2rem;
     line-height: 1.6;
 }
 
-/* ── Deliverable cards ── */
+/* ── Cartes livrables ── */
 .card-btn {
-    background: white;
-    border: 1.5px solid #E2E8F0;
+    background: #FDFAF5;
+    border: 1.5px solid #DDD5C8;
     border-radius: 14px;
     padding: 18px 20px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.22s ease;
     width: 100%;
     text-align: left;
-    margin-bottom: 0;
 }
 .card-btn:hover {
-    border-color: #2E86AB;
-    border-left: 4px solid #2E86AB;
-    box-shadow: 0 6px 20px rgba(46,134,171,0.15);
-    transform: translateY(-2px);
-    background: #F0F9FF;
+    border-color: #4A7FA5;
+    border-left: 4px solid #4A7FA5;
+    box-shadow: 0 8px 24px rgba(74,127,165,0.18);
+    transform: translateY(-3px);
+    background: #EEF4F8;
 }
 .card-btn.selected {
-    background: #EFF6FF;
-    border: 1.5px solid #2E86AB;
-    border-left: 4px solid #2E86AB;
+    background: #E8F1F8;
+    border: 1.5px solid #4A7FA5;
+    border-left: 4px solid #4A7FA5;
 }
-.card-icon {
-    font-size: 1.6rem;
-    display: block;
-    margin-bottom: 8px;
-}
-.card-title {
-    font-size: 0.96rem;
-    font-weight: 700;
-    color: #1E293B;
-    display: block;
-    margin-bottom: 4px;
-}
-.card-desc {
-    font-size: 0.79rem;
-    color: #64748B;
-    line-height: 1.5;
-}
+.card-icon  { font-size: 1.6rem; display: block; margin-bottom: 8px; }
+.card-title { font-size: 0.96rem; font-weight: 700; color: #1A2744; display: block; margin-bottom: 4px; }
+.card-desc  { font-size: 0.79rem; color: #6B7A8D; line-height: 1.5; }
 
-/* ── Progress / waiting screen ── */
-.progress-topbar {
-    height: 4px;
-    background: #E2E8F0;
-    border-radius: 2px;
-    margin-bottom: 20px;
-    overflow: hidden;
-}
-.progress-topbar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #2E86AB, #10B981);
-    border-radius: 2px;
-    animation: progressSlide 30s linear forwards;
-}
+/* ── Écran d'attente ── */
+.progress-topbar      { height: 4px; background: #DDD5C8; border-radius: 2px; margin-bottom: 20px; overflow: hidden; }
+.progress-topbar-fill { height: 100%; background: linear-gradient(90deg, #4A7FA5, #5BAD8C); border-radius: 2px; animation: progressSlide 40s linear forwards; }
 
 .progress-container {
-    background: white;
-    border: 1px solid #E2E8F0;
+    background: #FDFAF5;
+    border: 1px solid #DDD5C8;
     border-radius: 14px;
     padding: 26px 30px;
     margin: 16px 0;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    box-shadow: 0 4px 16px rgba(26,39,68,0.07);
 }
-.progress-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-}
-.progress-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: #1E293B;
-}
-.progress-company {
-    font-size: 0.88rem;
-    color: #64748B;
-}
+.progress-header    { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.progress-title     { font-size: 1.05rem; font-weight: 700; color: #1A2744; }
+.progress-company   { font-size: 0.88rem; color: #6B7A8D; }
 .progress-deliverable {
     display: inline-block;
-    background: #EFF6FF;
-    border: 1px solid #BFDBFE;
-    color: #1E40AF;
+    background: #E8F1F8;
+    border: 1px solid #B8D0E4;
+    color: #2D5A7A;
     font-weight: 600;
     font-size: 0.82rem;
     padding: 3px 10px;
@@ -207,116 +165,90 @@ section[data-testid="stSidebar"] .sidebar-sources {
     margin-top: 2px;
 }
 
-.step-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 0;
-    font-size: 0.91rem;
-    color: #334155;
-    border-bottom: 1px solid #F1F5F9;
-    transition: all 0.25s ease;
-}
+.step-row           { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 0.91rem; color: #4A5568; border-bottom: 1px solid #EDE8DF; transition: all 0.25s ease; }
 .step-row:last-of-type { border-bottom: none; }
-.step-row.done   { color: #059669; }
-.step-row.active { color: #2E86AB; font-weight: 600; }
-.step-row.pending{ color: #94A3B8; }
-.step-icon { font-size: 1.1rem; min-width: 24px; }
+.step-row.done      { color: #2E7D55; }
+.step-row.active    { color: #4A7FA5; font-weight: 600; }
+.step-row.pending   { color: #A0ADB8; }
+.step-icon          { font-size: 1.1rem; min-width: 24px; }
 
 .pulse-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background: #2E86AB;
-    border-radius: 50%;
-    margin-left: 6px;
-    animation: pulse 1.4s ease-in-out infinite;
-    vertical-align: middle;
+    display: inline-block; width: 8px; height: 8px;
+    background: #4A7FA5; border-radius: 50%;
+    margin-left: 6px; animation: pulse 1.4s ease-in-out infinite; vertical-align: middle;
 }
+.searching-label { font-size: 0.82rem; color: #A0ADB8; margin-top: 16px; font-style: italic; display: flex; align-items: center; gap: 6px; }
 
-.searching-label {
-    font-size: 0.82rem;
-    color: #94A3B8;
-    margin-top: 16px;
-    font-style: italic;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-/* ── Result area ── */
-.result-header {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: #1E293B;
-    margin-bottom: 14px;
-}
-
-/* ── Company badge ── */
+/* ── Résultat ── */
+.result-header { font-size: 1.05rem; font-weight: 700; color: #1A2744; margin-bottom: 14px; }
 .company-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #EFF6FF;
-    border: 1px solid #BFDBFE;
-    color: #1E40AF;
-    font-weight: 700;
-    font-size: 1.05rem;
-    padding: 6px 16px;
-    border-radius: 8px;
-    margin-bottom: 10px;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #E8F1F8; border: 1px solid #B8D0E4;
+    color: #2D5A7A; font-weight: 700; font-size: 1.05rem;
+    padding: 6px 16px; border-radius: 8px; margin-bottom: 10px;
 }
 
-/* ── Streamlit button overrides ── */
+/* ── Boutons Streamlit ── */
 div[data-testid="stButton"] > button {
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: all 0.2s ease;
-    letter-spacing: 0.01em;
+    border-radius: 10px; font-weight: 600; font-size: 0.9rem;
+    transition: all 0.2s ease; letter-spacing: 0.01em;
+    background: #FDFAF5; border: 1.5px solid #DDD5C8; color: #1A2744;
 }
 div[data-testid="stButton"] > button[kind="primary"] {
-    background: #2E86AB;
-    border: none;
-    color: white;
+    background: #1A2744; border: none; color: #F5F0E8;
 }
 div[data-testid="stButton"] > button[kind="primary"]:hover {
-    background: #256E8E;
-    box-shadow: 0 4px 14px rgba(46,134,171,0.3);
+    background: #243352;
+    box-shadow: 0 4px 16px rgba(26,39,68,0.3);
     transform: translateY(-1px);
 }
-
-/* ── Download buttons ── */
 div[data-testid="stDownloadButton"] > button {
-    border-radius: 10px;
-    font-size: 0.88rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
+    border-radius: 10px; font-size: 0.88rem; font-weight: 600; transition: all 0.2s ease;
 }
 
 /* ── Expander ── */
 details {
-    border: 1px solid #E2E8F0 !important;
-    border-radius: 12px !important;
-    margin-bottom: 16px !important;
-    background: white !important;
+    border: 1px solid #DDD5C8 !important; border-radius: 12px !important;
+    margin-bottom: 16px !important; background: #FDFAF5 !important;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
 }
-details summary {
-    font-weight: 600 !important;
-    color: #1E293B !important;
-    padding: 2px 0 !important;
+details summary { font-weight: 600 !important; color: #1A2744 !important; padding: 2px 0 !important; }
+
+/* ── Inputs ── */
+div[data-testid="stTextInput"] input, div[data-testid="stTextArea"] textarea {
+    background: #FDFAF5 !important;
+    border: 1.5px solid #DDD5C8 !important;
+    border-radius: 10px !important;
+    color: #2D3748 !important;
+}
+div[data-testid="stTextInput"] input:focus, div[data-testid="stTextArea"] textarea:focus {
+    border-color: #4A7FA5 !important;
+    box-shadow: 0 0 0 3px rgba(74,127,165,0.15) !important;
+}
+
+/* ── File uploader ── */
+div[data-testid="stFileUploader"] {
+    background: #FDFAF5 !important;
+    border: 1.5px dashed #B8C4CC !important;
+    border-radius: 12px !important;
+}
+
+/* ── Tabs ── */
+div[data-testid="stTabs"] button {
+    color: #6B7A8D !important;
+    font-weight: 500 !important;
+}
+div[data-testid="stTabs"] button[aria-selected="true"] {
+    color: #1A2744 !important;
+    font-weight: 700 !important;
+    border-bottom: 2px solid #4A7FA5 !important;
 }
 
 /* ── File badge ── */
 .file-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #F0FDF4;
-    border: 1px solid #BBF7D0;
-    color: #166534;
-    font-size: 0.8rem;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #EAF5EE; border: 1px solid #A8D5B8;
+    color: #2E6B45; font-size: 0.8rem;
     font-weight: 600;
     padding: 4px 10px;
     border-radius: 20px;
