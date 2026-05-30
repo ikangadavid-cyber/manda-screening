@@ -407,7 +407,36 @@ if st.session_state.screen == 1:
         key="company_input_field",
     )
 
-    st.markdown("#### Choisissez le type d'analyse")
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #1A2744 0%, #2D4A7A 100%);
+        border-radius: 14px;
+        padding: 14px 22px;
+        margin: 18px 0 14px 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    ">
+        <span style="font-size:1.3rem;">📊</span>
+        <div>
+            <div style="color:#FFFFFF; font-size:1.05rem; font-weight:700; letter-spacing:-0.3px;">
+                Choisissez le type d'analyse
+            </div>
+            <div style="color:#8FA8C8; font-size:0.82rem; margin-top:2px;">
+                Cliquez sur un livrable pour lancer l'analyse
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Couleurs d'accent par livrable
+    CARD_COLORS = {
+        "complet":   ("#4A7FA5", "#E8F1F8"),
+        "fiche":     ("#7A5FA5", "#F0EBF8"),
+        "benchmark": ("#A5614A", "#F8EEE8"),
+        "manda":     ("#2E7D55", "#E8F5EE"),
+        "geo":       ("#A5944A", "#F8F3E8"),
+    }
 
     # 2x2 + 1 grid for deliverable cards
     col_a, col_b = st.columns(2)
@@ -417,9 +446,25 @@ if st.session_state.screen == 1:
     card_cols = [col_a, col_b, col_c, col_d, col_e]
 
     for idx, deliv in enumerate(DELIVERABLES):
+        accent, bg = CARD_COLORS[deliv["key"]]
         with card_cols[idx]:
-            label = f"{deliv['icon']} {deliv['title']}\n\n_{deliv['desc']}_"
-            if st.button(label, key=f"card_{deliv['key']}", use_container_width=True):
+            st.markdown(f"""
+            <div style="
+                background:{bg};
+                border:2px solid {accent}40;
+                border-left:4px solid {accent};
+                border-radius:12px;
+                padding:16px 18px;
+                margin-bottom:8px;
+                cursor:pointer;
+                transition:all 0.2s ease;
+            ">
+                <span style="font-size:1.5rem;">{deliv['icon']}</span>
+                <div style="font-weight:700;color:#1A2744;font-size:0.95rem;margin:6px 0 3px 0;">{deliv['title']}</div>
+                <div style="font-size:0.78rem;color:#5A6A7A;line-height:1.4;">{deliv['desc']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button(f"Sélectionner", key=f"card_{deliv['key']}", use_container_width=True):
                 if not company_input.strip():
                     st.warning("Veuillez entrer le nom d'une entreprise.")
                 elif not anthropic_key or not tavily_key:
