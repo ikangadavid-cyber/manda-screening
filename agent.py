@@ -28,24 +28,36 @@ Recherche et présente :
 
 _STEP2_TEMPLATE = """## ÉTAPE 2 — Cartographie des concurrents
 Identifie les 5 à 10 principaux concurrents directs en France et en Europe.
-Pour chaque concurrent, effectue des recherches spécifiques pour trouver leur site web et leur page LinkedIn, puis génère une **fiche standardisée** :
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-NOM DE L'ENTREPRISE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Localisation     : ville, pays
-Activité         : description courte
-CA estimé        : montant ou NC
-Effectifs        : nombre ou NC
-Clients          : types de clients
-Produits/Tech    : offre principale
-Géographie       : marchés couverts
-Statut           : indépendant / groupe / filiale
-Site web         : URL du site officiel ou NC
-LinkedIn         : URL de la page LinkedIn entreprise ou NC
-Source           : URL article ou page de référence
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```"""
+Pour chaque concurrent, effectue des recherches ciblées (site web, LinkedIn, presse, Pappers) et produis une fiche structurée en 3 blocs :
+
+### Concurrent N° — NOM DE L'ENTREPRISE
+
+**🏢 Identité**
+| Champ | Information |
+|---|---|
+| Localisation | ville, pays |
+| Statut | indépendant / filiale / groupe / coté en bourse |
+| Dirigeant | Prénom Nom, titre (PDG / DG / Fondateur) ou NC |
+| Fondation | année ou NC |
+| Effectifs | nombre ou NC |
+
+**💼 Activité & Marché**
+| Champ | Information |
+|---|---|
+| Activité principale | description courte et précise |
+| Produits / Tech | offre principale |
+| Clients cibles | types de clients |
+| Géographie | marchés couverts |
+| CA estimé | montant ou NC |
+
+**🔗 Liens & Sources**
+| Champ | Lien |
+|---|---|
+| Site web | URL du site officiel ou NC |
+| LinkedIn | URL page LinkedIn entreprise ou NC |
+| Source | URL article ou page de référence |
+
+---"""
 
 _STEP3_TEMPLATE = """## ÉTAPE 3 — Analyse géographique
 - Présence actuelle de l'entreprise cible
