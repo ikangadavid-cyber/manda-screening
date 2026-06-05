@@ -28,7 +28,7 @@ Recherche et présente :
 
 _STEP2_TEMPLATE = """## ÉTAPE 2 — Cartographie des concurrents
 Identifie les 5 à 10 principaux concurrents directs en France et en Europe.
-Pour chaque concurrent, génère une **fiche standardisée** :
+Pour chaque concurrent, effectue des recherches spécifiques pour trouver leur site web et leur page LinkedIn, puis génère une **fiche standardisée** :
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 NOM DE L'ENTREPRISE
@@ -41,7 +41,9 @@ Clients          : types de clients
 Produits/Tech    : offre principale
 Géographie       : marchés couverts
 Statut           : indépendant / groupe / filiale
-Source           : URL
+Site web         : URL du site officiel ou NC
+LinkedIn         : URL de la page LinkedIn entreprise ou NC
+Source           : URL article ou page de référence
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```"""
 
