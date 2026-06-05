@@ -390,6 +390,8 @@ def init_state():
         "result_text":      "",
         "current_step":     "",
         "steps_done":       [],
+        "email_target":     "",
+        "generated_email":  "",
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -814,9 +816,93 @@ elif st.session_state.screen == 3:
 
     st.markdown("---")
 
+    # ── Email de prise de contact ──────────────────────────────────────────
+    import re as _re
+    import anthropic as _anthropic
+
+    def generate_contact_email(competitor: str, main_company: str) -> str:
+        client = _anthropic.Anthropic(api_key=anthropic_key)
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=700,
+            messages=[{"role": "user", "content": f"""Tu es un associé senior d'un fonds d'investissement M&A français.
+
+Rédige un email de première prise de contact pour approcher {competitor}.
+Contexte : ton fonds étudie le secteur de {main_company} et souhaite rencontrer les acteurs clés du marché.
+
+Contraintes strictes :
+- Objet : percutant, 1 ligne
+- Corps : 8 à 12 lignes maximum
+- Ton : professionnel, chaleureux, direct — pas de jargon financier agressif
+- Se présenter comme "[Prénom Nom], Associé chez [Nom du Fonds]"
+- Montrer une connaissance du secteur sans être générique
+- Demander un échange informel de 20-30 minutes (call ou café à Paris)
+- Formule de politesse élégante en fin de mail
+- Entièrement en français
+- Ne pas inventer de chiffres ou faits précis sur l'entreprise
+
+Format de sortie — uniquement l'email, rien d'autre :
+Objet : [objet]
+
+[Corps de l'email]"""}]
+        )
+        return response.content[0].text
+
+    # Détecter les concurrents dans le rapport
+    detected = _re.findall(r'###\s+Concurrent[^—\n]*—\s*\**([^\n*]+)', result)
+    detected = [c.strip() for c in detected if c.strip()]
+
+    st.markdown("""
+    <div style="background:linear-gradient(135deg,#1A2744 0%,#2D4A7A 100%);
+                border-radius:14px; padding:20px 24px; margin-bottom:20px;">
+        <div style="color:#FFFFFF; font-size:1.05rem; font-weight:700; margin-bottom:4px;">
+            📧 Préparer une prise de contact
+        </div>
+        <div style="color:#8FA8C8; font-size:0.83rem;">
+            Cliquez sur un concurrent pour générer instantanément un email professionnel de premier contact.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if detected:
+        cols_per_row = 3
+        rows = [detected[i:i+cols_per_row] for i in range(0, len(detected), cols_per_row)]
+        for row in rows:
+            cols = st.columns(len(row))
+            for col, comp in zip(cols, row):
+                with col:
+                    if st.button(f"✉️ {comp}", key=f"email_btn_{comp}", use_container_width=True):
+                        st.session_state.email_target    = comp
+                        st.session_state.generated_email = ""
+                        with st.spinner(f"Rédaction de l'email pour {comp}..."):
+                            st.session_state.generated_email = generate_contact_email(comp, company)
+    else:
+        # Fallback : saisie manuelle si aucun concurrent détecté
+        manual_comp = st.text_input("Nom du concurrent à contacter :",
+                                     placeholder="ex : Entreprise XYZ",
+                                     key="manual_email_target")
+        if manual_comp and st.button("✉️ Générer l'email", type="primary"):
+            st.session_state.email_target    = manual_comp
+            st.session_state.generated_email = ""
+            with st.spinner(f"Rédaction de l'email pour {manual_comp}..."):
+                st.session_state.generated_email = generate_contact_email(manual_comp, company)
+
+    # Afficher l'email généré
+    if st.session_state.generated_email:
+        st.markdown(
+            f'<div style="font-size:0.85rem;color:#6B7A8D;margin:16px 0 6px 0;">'
+            f'Email généré pour <strong style="color:#1A2744;">{st.session_state.email_target}</strong>'
+            f' — copiez et personnalisez avant envoi :</div>',
+            unsafe_allow_html=True,
+        )
+        st.code(st.session_state.generated_email, language=None)
+
+    st.markdown("---")
+
     # New analysis button
     if st.button("🔍 Nouvelle analyse", type="primary"):
-        for k in ["screen", "company", "deliverable_type", "context", "result_text", "current_step", "steps_done"]:
+        for k in ["screen", "company", "deliverable_type", "context", "result_text",
+                  "current_step", "steps_done", "email_target", "generated_email"]:
             if k == "screen":
                 st.session_state[k] = 1
             elif k == "steps_done":
