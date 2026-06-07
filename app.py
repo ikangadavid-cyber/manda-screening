@@ -449,6 +449,41 @@ with st.sidebar:
             st.rerun()
 
     st.markdown("---")
+    st.markdown('<div class="section-label">Inviter un consultant</div>', unsafe_allow_html=True)
+    invite_email = st.text_input(
+        "Email du consultant",
+        placeholder="prenom.nom@cabinet.fr",
+        label_visibility="collapsed",
+        key="invite_email_field",
+    )
+    if invite_email and "@" in invite_email:
+        subject = "Accès à l'outil M&A Screening IA"
+        body = (
+            f"Bonjour,\n\n"
+            f"Je t'invite à utiliser M&A Screening IA, un outil d'intelligence économique "
+            f"qui permet d'analyser une entreprise en profondeur en quelques minutes "
+            f"(cartographie concurrentielle, actualités M&A, qualification sectorielle).\n\n"
+            f"Accède à l'outil ici : https://screening-ma.streamlit.app\n\n"
+            f"Bonne analyse,"
+        )
+        import urllib.parse
+        mailto = f"mailto:{invite_email}?subject={urllib.parse.quote(subject)}&body={urllib.parse.quote(body)}"
+        st.markdown(
+            f'<a href="{mailto}" target="_blank" style="'
+            'display:block; text-align:center; background:rgba(255,255,255,0.12); '
+            'border:1px solid rgba(255,255,255,0.25); border-radius:8px; '
+            'color:#C8D6E8 !important; font-size:0.85rem; font-weight:600; '
+            'padding:8px 0; margin-top:6px; text-decoration:none; cursor:pointer;">'
+            '📨 Envoyer l\'invitation</a>',
+            unsafe_allow_html=True,
+        )
+    elif invite_email:
+        st.markdown(
+            '<div style="color:#E88; font-size:0.78rem; margin-top:4px;">Email invalide</div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("---")
     st.markdown(
         '<div class="section-label">À propos</div>',
         unsafe_allow_html=True,
