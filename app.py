@@ -310,14 +310,14 @@ div[data-testid="stSpinner"] > div {
     color: #64748B;
 }
 
-/* ── Barre Streamlit : fond crème, sans barre noire ── */
+/* ── Barre Streamlit : fond crème, icônes grises ── */
 header[data-testid="stHeader"] {
     background: #F5F0E8 !important;
     box-shadow: none !important;
     border-bottom: none !important;
 }
-header[data-testid="stHeader"] button svg {
-    filter: brightness(0) !important;
+header[data-testid="stHeader"] svg {
+    filter: invert(0.6) !important;
 }
 footer { visibility: hidden !important; }
 
