@@ -346,19 +346,6 @@ button[data-baseweb="tab"] {
 # ── Deliverable type definitions ──────────────────────────────────────────────
 DELIVERABLES = [
     {
-        "key":   "complet",
-        "icon":  "📋",
-        "title": "Rapport Complet",
-        "desc":  "Analyse en 5 étapes : univers, concurrents, géographie, M&A, secteur",
-        "steps": [
-            "Analyse de l'entreprise",
-            "Cartographie des concurrents",
-            "Analyse géographique",
-            "Actualités M&A",
-            "Qualification du secteur",
-        ],
-    },
-    {
         "key":   "fiche",
         "icon":  "🏢",
         "title": "Fiche Entreprise",
@@ -392,7 +379,6 @@ DELIVERABLE_BY_KEY = {d["key"]: d for d in DELIVERABLES}
 
 # Estimated duration in seconds per deliverable type (used for progress timer)
 ESTIMATED_SECONDS = {
-    "complet":   360,   # ~6 min
     "fiche":     90,    # ~1.5 min
     "benchmark": 210,   # ~3.5 min
     "manda":     180,   # ~3 min
@@ -404,7 +390,7 @@ def init_state():
     defaults = {
         "screen":           1,
         "company":          "",
-        "deliverable_type": "complet",
+        "deliverable_type": "fiche",
         "context":          "",
         "result_text":      "",
         "current_step":     "",
