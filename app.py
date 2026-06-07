@@ -429,6 +429,27 @@ with st.sidebar:
                     st.session_state[k] = ""
             st.rerun()
 
+    st.markdown("---")
+    st.markdown(
+        '<div class="section-label">À propos</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="sidebar-sources">'
+        "<strong style='color:#C8D6E8;'>M&A Screening IA</strong><br>"
+        "Outil d'intelligence économique alimenté par l'IA pour les professionnels du M&A.<br><br>"
+        "Analyse d'entreprises, cartographie concurrentielle, actualités sectorielle et prise de contact — en quelques minutes.<br><br>"
+        "✉️ <a href='mailto:contact@screening-ma.fr' style='color:#7EB8D4;'>contact@screening-ma.fr</a>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="sidebar-sources" style="margin-top:10px;color:#5A7A94;font-size:0.75rem;">'
+        "v1.0 · 2026 · Tous droits réservés"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
 # ══════════════════════════════════════════════════════════════════════════════
 # SCREEN 1 — INPUT
 # ══════════════════════════════════════════════════════════════════════════════
@@ -910,3 +931,26 @@ Objet : [objet]
             else:
                 st.session_state[k] = ""
         st.rerun()
+
+    # Disclaimer légal
+    st.markdown(
+        """
+        <div style="
+            margin-top: 32px;
+            padding: 14px 18px;
+            background: #F0EDE8;
+            border-left: 3px solid #C8B89A;
+            border-radius: 6px;
+            font-size: 0.76rem;
+            color: #7A6E62;
+            line-height: 1.6;
+        ">
+        <strong style="color:#5A5048;">⚠️ Avertissement</strong> — Les informations présentées dans ce rapport sont
+        issues de sources publiques disponibles sur Internet à la date de l'analyse. Elles sont fournies
+        à titre indicatif et ne constituent en aucun cas un conseil en investissement, une recommandation
+        financière ou une due diligence. Les données (chiffre d'affaires, effectifs, valorisations) sont
+        des estimations et doivent être vérifiées auprès des sources primaires avant toute prise de décision.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
