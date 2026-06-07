@@ -310,6 +310,11 @@ div[data-testid="stSpinner"] > div {
     color: #64748B;
 }
 
+/* ── Masquer la barre Streamlit en haut ── */
+header[data-testid="stHeader"] { display: none !important; }
+#MainMenu { visibility: hidden !important; }
+footer { visibility: hidden !important; }
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #F1F5F9; }
