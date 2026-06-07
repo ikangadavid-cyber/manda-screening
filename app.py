@@ -321,11 +321,10 @@ header[data-testid="stHeader"] a,
 header[data-testid="stHeader"] svg {
     color: #1A2744 !important;
     fill: #1A2744 !important;
-    opacity: 0.65;
+    opacity: 1 !important;
 }
 header[data-testid="stHeader"] button:hover {
-    opacity: 1;
-    background: rgba(26,39,68,0.08) !important;
+    background: rgba(26,39,68,0.1) !important;
     border-radius: 6px;
 }
 footer { visibility: hidden !important; }
