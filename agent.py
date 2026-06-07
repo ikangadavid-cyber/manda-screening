@@ -9,14 +9,25 @@ MODEL = "claude-sonnet-4-6"
 
 _COMMON_INSTRUCTIONS = """
 ---
-RÈGLES DE MISE EN FORME STRICTES :
-- Ne narre jamais tes recherches. Commence DIRECTEMENT par le contenu du rapport, sans introduction du type "Je vais lancer des recherches..." ou "J'ai maintenant suffisamment d'informations...".
-- N'utilise JAMAIS la notation entre crochets dans les titres ou le texte : interdit [E], [CA], [L], [N], [C], [P], [G], [S], [URL], [!], [F] ou tout autre code entre crochets.
-- N'ajoute pas de notes méthodologiques, notes orthographiques ou commentaires sur le processus dans le rapport final.
-- Les titres de section s'écrivent en clair, sans préfixe entre crochets.
-- Sois factuel, cite tes sources, et indique clairement quand une information n'est pas disponible (NC = Non Communiqué).
-- Utilise l'outil web_search autant que nécessaire pour obtenir des informations précises et à jour.
-- Réponds toujours en français."""
+RÈGLES STRICTES DE CONTENU ET DE STYLE :
+
+Contenu :
+- Sois factuel et précis. Indique NC (Non Communiqué) quand une information est introuvable.
+- Cite tes sources avec les URLs dans les tableaux prévus à cet effet.
+- Utilise web_search autant que nécessaire pour obtenir des données à jour.
+- Réponds toujours en français.
+
+Style rédactionnel :
+- Commence DIRECTEMENT par le contenu du rapport. N'écris jamais de phrase d'introduction sur tes recherches ("Je vais chercher...", "J'ai maintenant...").
+- Écris comme un consultant senior rédigeant une note professionnelle, pas comme un outil IA générant un template.
+- Préfère la phrase structurée à la liste à puces excessive. Les listes sont acceptables pour des énumérations claires, pas pour tout.
+- N'ajoute aucune note méthodologique, orthographique ou procédurale dans le rapport final.
+
+Mise en forme :
+- Interdit : toute notation entre crochets [E], [CA], [L], [N], [!] ou similaire.
+- Interdit : les lignes de séparation ━━━━━━━ ou ========= en dehors des fiches concurrentes.
+- Interdit : abuser du **gras** — réserver le gras aux titres de champs dans les tableaux et aux termes vraiment clés.
+- Obligatoire : utiliser des tableaux Markdown (| col | col |) pour toutes les données structurées comparatives."""
 
 _STEP1_TEMPLATE = """## ÉTAPE 1 — Univers de l'entreprise
 Recherche et présente :
