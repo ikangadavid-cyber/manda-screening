@@ -316,8 +316,12 @@ header[data-testid="stHeader"] {
     box-shadow: none !important;
     border-bottom: none !important;
 }
-header[data-testid="stHeader"] svg {
-    filter: invert(0.6) !important;
+header[data-testid="stHeader"] svg,
+header[data-testid="stHeader"] span,
+header[data-testid="stHeader"] p,
+header[data-testid="stHeader"] button {
+    filter: invert(1) !important;
+    color: #000000 !important;
 }
 footer { visibility: hidden !important; }
 
