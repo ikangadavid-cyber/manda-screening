@@ -310,9 +310,24 @@ div[data-testid="stSpinner"] > div {
     color: #64748B;
 }
 
-/* ── Masquer la barre Streamlit en haut ── */
-header[data-testid="stHeader"] { display: none !important; }
-#MainMenu { visibility: hidden !important; }
+/* ── Barre Streamlit : fond crème, sans barre noire ── */
+header[data-testid="stHeader"] {
+    background: #F5F0E8 !important;
+    box-shadow: none !important;
+    border-bottom: none !important;
+}
+header[data-testid="stHeader"] button,
+header[data-testid="stHeader"] a,
+header[data-testid="stHeader"] svg {
+    color: #1A2744 !important;
+    fill: #1A2744 !important;
+    opacity: 0.65;
+}
+header[data-testid="stHeader"] button:hover {
+    opacity: 1;
+    background: rgba(26,39,68,0.08) !important;
+    border-radius: 6px;
+}
 footer { visibility: hidden !important; }
 
 /* ── Scrollbar ── */
