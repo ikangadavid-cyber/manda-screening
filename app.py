@@ -316,16 +316,24 @@ header[data-testid="stHeader"] {
     box-shadow: none !important;
     border-bottom: none !important;
 }
-header[data-testid="stHeader"] button,
-header[data-testid="stHeader"] a,
-header[data-testid="stHeader"] svg {
+header[data-testid="stHeader"] button {
     color: #1A2744 !important;
-    fill: #1A2744 !important;
     opacity: 1 !important;
 }
 header[data-testid="stHeader"] button:hover {
     background: rgba(26,39,68,0.1) !important;
     border-radius: 6px;
+}
+/* Force toutes les icônes SVG du header en marine foncé */
+header[data-testid="stHeader"] svg,
+header[data-testid="stHeader"] svg path,
+header[data-testid="stHeader"] svg circle,
+header[data-testid="stHeader"] svg rect,
+header[data-testid="stHeader"] svg polygon {
+    fill: #1A2744 !important;
+    stroke: #1A2744 !important;
+    color: #1A2744 !important;
+    opacity: 1 !important;
 }
 footer { visibility: hidden !important; }
 
