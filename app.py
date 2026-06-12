@@ -967,35 +967,31 @@ Retourne UNIQUEMENT ce JSON (rien d'autre) :
                     if n and t and len(n) > 3:
                         executives.append({"name": n, "title": t})
                 # Cherche l'URL directe du profil LinkedIn pour chaque dirigeant
+                comp_lower = competitor.lower()
                 for ex in executives[:5]:
+                    profile_url = None
                     try:
                         li_res = tc.search(
                             query=f'"{ex["name"]}" "{competitor}" site:linkedin.com/in',
-                            max_results=3,
+                            max_results=5,
                             search_depth="basic",
                         )
-                        profile_url = None
                         for r in li_res.get("results", []):
                             u = r.get("url", "")
-                            if "linkedin.com/in/" in u:
+                            if "linkedin.com/in/" not in u:
+                                continue
+                            # Vérifie que le snippet mentionne bien l'entreprise
+                            snippet = (r.get("content", "") + r.get("title", "")).lower()
+                            if comp_lower in snippet or ex["name"].split()[0].lower() in snippet:
                                 profile_url = u.split("?")[0].rstrip("/")
                                 break
-                        if profile_url:
-                            ex["url"] = profile_url
-                        else:
-                            # Fallback : recherche LinkedIn par prénom/nom
-                            parts = ex["name"].strip().split()
-                            if len(parts) >= 2:
-                                ex["url"] = (f"https://www.linkedin.com/search/results/people/"
-                                             f"?firstName={_up.quote(parts[0])}&lastName={_up.quote(' '.join(parts[1:]))}")
-                            else:
-                                ex["url"] = f"https://www.linkedin.com/search/results/people/?keywords={_up.quote(ex['name'])}"
                     except Exception:
-                        parts = ex["name"].strip().split()
-                        ex["url"] = (f"https://www.linkedin.com/search/results/people/"
-                                     f"?firstName={_up.quote(parts[0])}&lastName={_up.quote(' '.join(parts[1:]))}"
-                                     if len(parts) >= 2 else
-                                     f"https://www.linkedin.com/search/results/people/?keywords={_up.quote(ex['name'])}")
+                        pass
+                    # Fallback : recherche LinkedIn avec nom + société (résultats filtrés)
+                    if not profile_url:
+                        kw = _up.quote(f"{ex['name']} {competitor}")
+                        profile_url = f"https://www.linkedin.com/search/results/people/?keywords={kw}"
+                    ex["url"] = profile_url
                 return executives[:5]
         except Exception:
             pass
