@@ -945,14 +945,12 @@ Retourne UNIQUEMENT ce JSON (rien d'autre) :
                 for e in raw:
                     n, t = e.get("name","").strip(), e.get("title","").strip()
                     if n and t and len(n) > 3:
-                        # Séparer prénom et nom pour une recherche LinkedIn précise
                         parts = n.strip().split()
                         if len(parts) >= 2:
                             first = parts[0]
                             last  = " ".join(parts[1:])
                             li = (f"https://www.linkedin.com/search/results/people/"
-                                  f"?firstName={_up.quote(first)}&lastName={_up.quote(last)}"
-                                  f"&company={_up.quote(competitor)}")
+                                  f"?firstName={_up.quote(first)}&lastName={_up.quote(last)}")
                         else:
                             li = f"https://www.linkedin.com/search/results/people/?keywords={_up.quote(n)}"
                         executives.append({"name": n, "title": t, "url": li})
