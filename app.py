@@ -879,38 +879,82 @@ elif st.session_state.screen == 3:
     import anthropic as _anthropic
 
     def find_executives(competitor: str) -> list:
-        """Cherche les profils LinkedIn des dirigeants via Tavily."""
+        """Cherche les dirigeants officiels via Pappers (registre Infogreffe)."""
         from tavily import TavilyClient
+        import re as _r
         tc = TavilyClient(api_key=tavily_key)
         executives = []
-        seen = set()
+        seen_names = set()
         try:
-            for query in [
-                f'"{competitor}" dirigeant directeur PDG fondateur site:linkedin.com/in',
-                f'{competitor} PDG directeur général dirigeant linkedin.com/in',
-            ]:
-                res = tc.search(query=query, max_results=6, search_depth="basic")
-                for r in res.get("results", []):
-                    url = r.get("url", "")
-                    title = r.get("title", "")
-                    if "linkedin.com/in/" not in url:
-                        continue
-                    clean_url = url.split("?")[0].rstrip("/")
-                    if clean_url in seen:
-                        continue
-                    seen.add(clean_url)
-                    # Parse "Prénom Nom - Titre | LinkedIn"
-                    t = title.replace(" | LinkedIn", "").replace(" - LinkedIn", "")
-                    parts = t.split(" - ", 1)
-                    name = parts[0].strip()
-                    role = parts[1].strip() if len(parts) > 1 else ""
-                    # Filtre : garder seulement les titres de direction
-                    direction_kw = ["pdg","dg","ceo","président","directeur","fondateur",
-                                    "associé","managing","partner","cfo","coo","cto","vp","vice"]
-                    if not role or any(k in role.lower() for k in direction_kw):
-                        executives.append({"name": name, "title": role, "url": clean_url})
+            # Recherche sur Pappers — source officielle française
+            res = tc.search(
+                query=f'"{competitor}" site:pappers.fr',
+                max_results=5,
+                search_depth="advanced",
+            )
+            # Titres de direction à détecter dans le contenu Pappers
+            titre_patterns = [
+                r"(Président[^,\n:]*)[:\s]+([A-ZÀ-Ö][a-zà-ö]+(?:\s[A-ZÀ-Ö][a-zà-ö]+)+)",
+                r"(G[ée]rant[^,\n:]*)[:\s]+([A-ZÀ-Ö][a-zà-ö]+(?:\s[A-ZÀ-Ö][a-zà-ö]+)+)",
+                r"(Directeur [Gg][ée]n[ée]ral[^,\n:]*)[:\s]+([A-ZÀ-Ö][a-zà-ö]+(?:\s[A-ZÀ-Ö][a-zà-ö]+)+)",
+                r"(PDG[^,\n:]*)[:\s]+([A-ZÀ-Ö][a-zà-ö]+(?:\s[A-ZÀ-Ö][a-zà-ö]+)+)",
+                r"(Administrateur[^,\n:]*)[:\s]+([A-ZÀ-Ö][a-zà-ö]+(?:\s[A-ZÀ-Ö][a-zà-ö]+)+)",
+                # Format inversé : NOM Prénom, titre
+                r"([A-ZÀÂÉÈÊËÎÏÔÙÛÜ][A-ZÀÂÉÈÊËÎÏÔÙÛÜ\s\-]+),?\s+(Président|Gérant|Directeur|PDG|Fondateur)",
+            ]
+            for r in res.get("results", []):
+                content = r.get("content", "") + " " + r.get("title", "")
+                pappers_url = r.get("url", "")
+                for pat in titre_patterns:
+                    for m in _r.finditer(pat, content):
+                        if len(m.groups()) == 2:
+                            titre, nom = m.group(1).strip(), m.group(2).strip()
+                        else:
+                            continue
+                        # Nettoyer le nom
+                        nom = nom.strip().strip(",").strip()
+                        if nom in seen_names or len(nom) < 4:
+                            continue
+                        seen_names.add(nom)
+                        # Lien LinkedIn de recherche pour ce dirigeant
+                        import urllib.parse as _up
+                        li_url = f"https://www.linkedin.com/search/results/people/?keywords={_up.quote(nom + ' ' + competitor)}"
+                        executives.append({
+                            "name": nom,
+                            "title": titre.split("(")[0].strip(),
+                            "url": li_url,
+                            "source": pappers_url,
+                        })
         except Exception:
             pass
+
+        # Fallback : si Pappers n'a rien trouvé, recherche directe société
+        if not executives:
+            try:
+                res2 = tc.search(
+                    query=f'{competitor} gérant président directeur général représentant légal',
+                    max_results=4,
+                    search_depth="advanced",
+                    include_domains=["pappers.fr", "societe.com", "infogreffe.fr", "verif.com"],
+                )
+                import urllib.parse as _up2
+                for r in res2.get("results", []):
+                    content = r.get("content", "")
+                    for pat in titre_patterns:
+                        for m in _r.finditer(pat, content):
+                            if len(m.groups()) == 2:
+                                titre, nom = m.group(1).strip(), m.group(2).strip()
+                            else:
+                                continue
+                            nom = nom.strip().strip(",")
+                            if nom in seen_names or len(nom) < 4:
+                                continue
+                            seen_names.add(nom)
+                            li_url = f"https://www.linkedin.com/search/results/people/?keywords={_up2.quote(nom + ' ' + competitor)}"
+                            executives.append({"name": nom, "title": titre.split("(")[0].strip(), "url": li_url, "source": r.get("url","")})
+            except Exception:
+                pass
+
         return executives[:6]
 
     def _extract_competitor_context(competitor: str, report: str) -> str:
@@ -1105,7 +1149,8 @@ Objet : [objet]
             st.markdown(
                 '<div style="font-size:0.82rem;font-weight:600;color:#64748B;'
                 'text-transform:uppercase;letter-spacing:0.05em;margin:18px 0 10px 0;">'
-                'Dirigeants identifiés</div>',
+                'Dirigeants identifiés <span style="font-size:0.72rem;font-weight:400;'
+                'color:#94A3B8;text-transform:none;">(source : registre officiel Pappers / Infogreffe)</span></div>',
                 unsafe_allow_html=True,
             )
             cols = st.columns(min(len(execs), 3))
