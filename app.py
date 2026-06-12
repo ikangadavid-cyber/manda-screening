@@ -987,7 +987,7 @@ Email pour approcher {competitor}, dans le cadre d'une analyse du secteur de {ma
 Règles absolues :
 - Écris comme un humain qui envoie un vrai email, pas comme un outil IA
 - Objet : court, direct, donne envie d'ouvrir (pas "Prise de contact" ou "Opportunité de collaboration")
-- Commence par "Bonjour [Prénom]," — jamais "Madame, Monsieur"
+- Commence par "Bonjour [Prénom]," — laisse littéralement "[Prénom]" entre crochets, n'invente jamais un prénom
 - 3 courts paragraphes : qui tu es / un détail concret sur leur activité qui justifie le contact / ce que tu proposes (30 min, call ou café)
 - Zéro jargon : pas de "synergies", "deal flow", "value creation", "best regards"
 - Pas de mise en forme (pas de tirets, pas de gras, pas de liste)
