@@ -337,23 +337,20 @@ button[data-baseweb="tab"] {
     font-weight: 600 !important;
 }
 
-/* ── Radio buttons ── */
-div[data-testid="stRadio"] label {
-    color: #1A2744 !important;
-    font-size: 0.88rem !important;
-    font-weight: 500 !important;
-}
-div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p {
-    color: #1A2744 !important;
-}
-div[data-testid="stRadio"] > label > div:first-child {
-    border-color: #8A9DB5 !important;
-    background: transparent !important;
-}
-div[data-testid="stRadio"] > label[data-checked="true"] > div:first-child,
-div[data-testid="stRadio"] input:checked + div {
-    border-color: #1A2744 !important;
+/* ── Email type segmented control ── */
+.etype-btn-selected > div > button {
     background: #1A2744 !important;
+    border-color: #1A2744 !important;
+    color: #F5F0E8 !important;
+}
+.etype-btn-idle > div > button {
+    background: #FDFAF5 !important;
+    border: 1.5px solid #C8D4DC !important;
+    color: #4A5568 !important;
+}
+.etype-btn-idle > div > button:hover {
+    border-color: #4A7FA5 !important;
+    color: #1A2744 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -1133,16 +1130,22 @@ CONTRAINTES ABSOLUES :
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Sélecteur du type d'email ──────────────────────────────────────────
-    email_type_choice = st.radio(
-        "Type d'approche",
-        options=list(EMAIL_TYPE_LABELS.keys()),
-        format_func=lambda x: EMAIL_TYPE_LABELS[x],
-        index=list(EMAIL_TYPE_LABELS.keys()).index(st.session_state.get("email_type", "rachat")),
-        horizontal=True,
-        key="email_type_radio",
-    )
-    st.session_state.email_type = email_type_choice
+    # ── Sélecteur du type d'email (boutons segmentés) ─────────────────────
+    _etype_current = st.session_state.get("email_type", "rachat")
+    _etype_options = [
+        ("rachat",  "Investisseur — Rachat"),
+        ("levee",   "M&A — Levée de fonds"),
+        ("buildup", "Investisseur — Build-up"),
+    ]
+    _etype_cols = st.columns(3)
+    for _ec, (_ek, _el) in zip(_etype_cols, _etype_options):
+        _css_class = "etype-btn-selected" if _etype_current == _ek else "etype-btn-idle"
+        _ec.markdown(f'<div class="{_css_class}">', unsafe_allow_html=True)
+        with _ec:
+            if st.button(_el, key=f"etype_{_ek}", use_container_width=True):
+                st.session_state.email_type = _ek
+                st.rerun()
+        _ec.markdown('</div>', unsafe_allow_html=True)
 
     if detected:
         cols_per_row = 3
