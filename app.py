@@ -877,20 +877,43 @@ elif st.session_state.screen == 3:
     import re as _re
     import anthropic as _anthropic
 
-    def generate_contact_email(competitor: str, main_company: str) -> str:
+    def _extract_competitor_context(competitor: str, report: str) -> str:
+        """Extrait la fiche du concurrent depuis le rapport."""
+        # Cherche la section ### ... NOM jusqu'au prochain --- ou ###
+        pattern = rf'###[^\n]*{_re.escape(competitor)}[^\n]*\n(.*?)(?=\n---|\n###|\Z)'
+        match = _re.search(pattern, report, _re.DOTALL | _re.IGNORECASE)
+        if match:
+            raw = match.group(1).strip()
+            # Garde max 800 caractères pour ne pas surcharger le prompt
+            return raw[:800]
+        return ""
+
+    def generate_contact_email(competitor: str, main_company: str, comp_context: str = "") -> str:
         client = _anthropic.Anthropic(api_key=anthropic_key)
+
+        context_block = ""
+        if comp_context:
+            context_block = f"""
+Voici ce que tu sais déjà sur {competitor} (extrait du rapport de screening) :
+---
+{comp_context}
+---
+Utilise 1 ou 2 éléments concrets et précis de ces infos dans l'email pour montrer que tu connais l'entreprise.
+Ne cite pas tout — choisis ce qui est le plus pertinent pour amorcer la conversation (ex : leur activité principale, leur géographie, leur modèle, leur dirigeant si mentionné).
+"""
+
         response = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=700,
             messages=[{"role": "user", "content": f"""Tu es un professionnel du M&A qui écrit un vrai email de prise de contact — pas un template corporate.
 
 Email pour approcher {competitor}, dans le cadre d'une analyse du secteur de {main_company}.
-
+{context_block}
 Règles absolues :
 - Écris comme un humain qui envoie un vrai email, pas comme un outil IA
 - Objet : court, direct, donne envie d'ouvrir (pas "Prise de contact" ou "Opportunité de collaboration")
 - Commence par "Bonjour [Prénom]," — jamais "Madame, Monsieur"
-- 3 courts paragraphes : qui tu es / pourquoi tu les contactes maintenant / ce que tu proposes (30 min, call ou café)
+- 3 courts paragraphes : qui tu es / un détail concret sur leur activité qui justifie le contact / ce que tu proposes (30 min, call ou café)
 - Zéro jargon : pas de "synergies", "deal flow", "value creation", "best regards"
 - Pas de mise en forme (pas de tirets, pas de gras, pas de liste)
 - Se signer "[Prénom Nom] — [Titre], [Fonds]" sur deux lignes
@@ -931,7 +954,8 @@ Objet : [objet]
                         st.session_state.email_target    = comp
                         st.session_state.generated_email = ""
                         with st.spinner(f"Rédaction de l'email pour {comp}..."):
-                            st.session_state.generated_email = generate_contact_email(comp, company)
+                            ctx = _extract_competitor_context(comp, result)
+                            st.session_state.generated_email = generate_contact_email(comp, company, ctx)
     else:
         # Fallback : saisie manuelle si aucun concurrent détecté
         manual_comp = st.text_input("Nom du concurrent à contacter :",
@@ -941,7 +965,8 @@ Objet : [objet]
             st.session_state.email_target    = manual_comp
             st.session_state.generated_email = ""
             with st.spinner(f"Rédaction de l'email pour {manual_comp}..."):
-                st.session_state.generated_email = generate_contact_email(manual_comp, company)
+                ctx = _extract_competitor_context(manual_comp, result)
+                st.session_state.generated_email = generate_contact_email(manual_comp, company, ctx)
 
     # Afficher l'email généré
     if st.session_state.generated_email:
