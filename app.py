@@ -679,32 +679,41 @@ elif st.session_state.screen == 2:
 
         # ── Timing display ──
         if elapsed > 0:
-            m, s        = divmod(int(elapsed), 60)
-            elapsed_str = f"{m}:{s:02d}"
+            # Temps écoulé
+            m_el, s_el  = divmod(int(elapsed), 60)
+            elapsed_str = f"{m_el}:{s_el:02d}"
+            # Temps restant en MM:SS précis
             remaining   = max(0, estimated - elapsed)
-            if remaining > 90:
-                rem_str = f"~{int(remaining // 60) + 1} min"
-            elif remaining > 0:
-                rem_str = "moins d'1 min"
+            m_re, s_re  = divmod(int(remaining), 60)
+            if remaining <= 0:
+                rem_str   = "Finalisation..."
+                rem_color = "#5BAD8C"
             else:
-                rem_str = "bientôt..."
+                rem_str   = f"{m_re}:{s_re:02d}"
+                rem_color = "#4A7FA5" if remaining > 60 else "#E67E22"
             pct_bar = min(97, int(elapsed / estimated * 100)) if estimated else 50
             timing_html = f"""
-            <div style="background:#EEF2F6; border-radius:8px; padding:10px 16px; margin-bottom:12px;
-                        display:flex; justify-content:space-between; align-items:center; font-size:0.83rem;">
-                <span style="color:#4A5568;">⏱ Écoulé : <strong style="color:#1A2744;">{elapsed_str}</strong></span>
-                <span style="color:#4A5568;">Temps restant : <strong style="color:#4A7FA5;">{rem_str}</strong></span>
+            <div style="background:#EEF2F6; border-radius:8px; padding:12px 18px; margin-bottom:12px; font-size:0.85rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="color:#4A5568;">⏱ Temps écoulé</span>
+                    <span style="color:#4A5568;">Temps restant</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong style="color:#1A2744; font-size:1.3rem; font-family:monospace; letter-spacing:1px;">{elapsed_str}</strong>
+                    <strong style="color:{rem_color}; font-size:1.3rem; font-family:monospace; letter-spacing:1px;">{rem_str}</strong>
+                </div>
             </div>
-            <div style="background:#DDD5C8; border-radius:4px; height:5px; margin-bottom:18px; overflow:hidden;">
-                <div style="background:linear-gradient(90deg,#4A7FA5,#5BAD8C); width:{pct_bar}%; height:100%; border-radius:4px;"></div>
+            <div style="background:#DDD5C8; border-radius:4px; height:6px; margin-bottom:18px; overflow:hidden;">
+                <div style="background:linear-gradient(90deg,#4A7FA5,#5BAD8C); width:{pct_bar}%; height:100%; border-radius:4px; transition:width 0.5s;"></div>
             </div>"""
         else:
             est_min = max(1, int(estimated / 60))
+            m_est, s_est = divmod(estimated, 60)
             timing_html = f"""
-            <div style="background:#EEF2F6; border-radius:8px; padding:10px 16px; margin-bottom:12px;
+            <div style="background:#EEF2F6; border-radius:8px; padding:12px 18px; margin-bottom:12px;
                         display:flex; align-items:center; gap:8px; font-size:0.83rem; color:#4A5568;">
                 <span>⏱</span>
-                <span>Durée estimée : <strong style="color:#4A7FA5;">~{est_min} minutes</strong></span>
+                <span>Durée estimée : <strong style="color:#4A7FA5; font-family:monospace;">{est_min}:{s_est:02d}</strong></span>
             </div>"""
 
         # ── Step rows ──
@@ -772,7 +781,9 @@ elif st.session_state.screen == 2:
         full_text[0] = text
 
     def on_tool_use(name, inputs):
-        pass  # Intentionally silent — no raw queries shown
+        # Rafraîchit le timer à chaque recherche web (~toutes les 5-10s)
+        elapsed = time.time() - start_time
+        render_progress(st.session_state.current_step, st.session_state.steps_done, elapsed=elapsed)
 
     def on_tool_result(_):
         pass
