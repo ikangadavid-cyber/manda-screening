@@ -945,15 +945,37 @@ Retourne UNIQUEMENT ce JSON (rien d'autre) :
                 for e in raw:
                     n, t = e.get("name","").strip(), e.get("title","").strip()
                     if n and t and len(n) > 3:
-                        parts = n.strip().split()
-                        if len(parts) >= 2:
-                            first = parts[0]
-                            last  = " ".join(parts[1:])
-                            li = (f"https://www.linkedin.com/search/results/people/"
-                                  f"?firstName={_up.quote(first)}&lastName={_up.quote(last)}")
+                        executives.append({"name": n, "title": t})
+                # Cherche l'URL directe du profil LinkedIn pour chaque dirigeant
+                for ex in executives[:5]:
+                    try:
+                        li_res = tc.search(
+                            query=f'"{ex["name"]}" "{competitor}" site:linkedin.com/in',
+                            max_results=3,
+                            search_depth="basic",
+                        )
+                        profile_url = None
+                        for r in li_res.get("results", []):
+                            u = r.get("url", "")
+                            if "linkedin.com/in/" in u:
+                                profile_url = u.split("?")[0].rstrip("/")
+                                break
+                        if profile_url:
+                            ex["url"] = profile_url
                         else:
-                            li = f"https://www.linkedin.com/search/results/people/?keywords={_up.quote(n)}"
-                        executives.append({"name": n, "title": t, "url": li})
+                            # Fallback : recherche LinkedIn par prénom/nom
+                            parts = ex["name"].strip().split()
+                            if len(parts) >= 2:
+                                ex["url"] = (f"https://www.linkedin.com/search/results/people/"
+                                             f"?firstName={_up.quote(parts[0])}&lastName={_up.quote(' '.join(parts[1:]))}")
+                            else:
+                                ex["url"] = f"https://www.linkedin.com/search/results/people/?keywords={_up.quote(ex['name'])}"
+                    except Exception:
+                        parts = ex["name"].strip().split()
+                        ex["url"] = (f"https://www.linkedin.com/search/results/people/"
+                                     f"?firstName={_up.quote(parts[0])}&lastName={_up.quote(' '.join(parts[1:]))}"
+                                     if len(parts) >= 2 else
+                                     f"https://www.linkedin.com/search/results/people/?keywords={_up.quote(ex['name'])}")
                 return executives[:5]
         except Exception:
             pass
