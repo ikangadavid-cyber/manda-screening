@@ -1022,7 +1022,8 @@ Objet : [objet]
         # Liens LinkedIn
         import urllib.parse as _urlparse
         li_company = f"https://www.linkedin.com/search/results/companies/?keywords={_urlparse.quote(st.session_state.email_target)}"
-        li_people  = f"https://www.linkedin.com/search/results/people/?keywords={_urlparse.quote(st.session_state.email_target)}"
+        _direction_titles = "PDG OR DG OR CEO OR Président OR Directeur Général OR Associé OR Fondateur OR Managing Director OR CFO OR COO"
+        li_people  = f"https://www.linkedin.com/search/results/people/?keywords={_urlparse.quote(st.session_state.email_target + ' ' + _direction_titles)}"
         st.markdown(
             f'<div style="display:flex; gap:10px; margin-top:10px;">'
             f'<a href="{li_company}" target="_blank" style="'
