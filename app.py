@@ -393,6 +393,7 @@ def init_state():
         "steps_done":       [],
         "email_target":     "",
         "generated_email":  "",
+        "found_executives": [],
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -877,6 +878,41 @@ elif st.session_state.screen == 3:
     import re as _re
     import anthropic as _anthropic
 
+    def find_executives(competitor: str) -> list:
+        """Cherche les profils LinkedIn des dirigeants via Tavily."""
+        from tavily import TavilyClient
+        tc = TavilyClient(api_key=tavily_key)
+        executives = []
+        seen = set()
+        try:
+            for query in [
+                f'"{competitor}" dirigeant directeur PDG fondateur site:linkedin.com/in',
+                f'{competitor} PDG directeur général dirigeant linkedin.com/in',
+            ]:
+                res = tc.search(query=query, max_results=6, search_depth="basic")
+                for r in res.get("results", []):
+                    url = r.get("url", "")
+                    title = r.get("title", "")
+                    if "linkedin.com/in/" not in url:
+                        continue
+                    clean_url = url.split("?")[0].rstrip("/")
+                    if clean_url in seen:
+                        continue
+                    seen.add(clean_url)
+                    # Parse "Prénom Nom - Titre | LinkedIn"
+                    t = title.replace(" | LinkedIn", "").replace(" - LinkedIn", "")
+                    parts = t.split(" - ", 1)
+                    name = parts[0].strip()
+                    role = parts[1].strip() if len(parts) > 1 else ""
+                    # Filtre : garder seulement les titres de direction
+                    direction_kw = ["pdg","dg","ceo","président","directeur","fondateur",
+                                    "associé","managing","partner","cfo","coo","cto","vp","vice"]
+                    if not role or any(k in role.lower() for k in direction_kw):
+                        executives.append({"name": name, "title": role, "url": clean_url})
+        except Exception:
+            pass
+        return executives[:6]
+
     def _extract_competitor_context(competitor: str, report: str) -> str:
         """Extrait la fiche du concurrent depuis le rapport."""
         # Cherche la section ### ... NOM jusqu'au prochain --- ou ###
@@ -953,9 +989,11 @@ Objet : [objet]
                     if st.button(f"✉️ {comp}", key=f"email_btn_{comp}", use_container_width=True):
                         st.session_state.email_target    = comp
                         st.session_state.generated_email = ""
-                        with st.spinner(f"Rédaction de l'email pour {comp}..."):
+                        st.session_state.found_executives = []
+                        with st.spinner(f"Rédaction de l'email et recherche des dirigeants..."):
                             ctx = _extract_competitor_context(comp, result)
-                            st.session_state.generated_email = generate_contact_email(comp, company, ctx)
+                            st.session_state.generated_email  = generate_contact_email(comp, company, ctx)
+                            st.session_state.found_executives = find_executives(comp)
     else:
         # Fallback : saisie manuelle si aucun concurrent détecté
         manual_comp = st.text_input("Nom du concurrent à contacter :",
@@ -964,9 +1002,11 @@ Objet : [objet]
         if manual_comp and st.button("✉️ Générer l'email", type="primary"):
             st.session_state.email_target    = manual_comp
             st.session_state.generated_email = ""
-            with st.spinner(f"Rédaction de l'email pour {manual_comp}..."):
+            st.session_state.found_executives = []
+            with st.spinner(f"Rédaction de l'email et recherche des dirigeants..."):
                 ctx = _extract_competitor_context(manual_comp, result)
-                st.session_state.generated_email = generate_contact_email(manual_comp, company, ctx)
+                st.session_state.generated_email  = generate_contact_email(manual_comp, company, ctx)
+                st.session_state.found_executives = find_executives(manual_comp)
 
     # Afficher l'email généré
     if st.session_state.generated_email:
@@ -1019,39 +1059,64 @@ Objet : [objet]
         with st.expander("📋 Copier le texte brut"):
             st.text_area("", value=raw, height=220, label_visibility="collapsed", key="email_copy_area")
 
-        # Liens LinkedIn
+        # Lien page entreprise LinkedIn
         import urllib.parse as _urlparse
         li_company = f"https://www.linkedin.com/search/results/companies/?keywords={_urlparse.quote(st.session_state.email_target)}"
-        _direction_titles = "PDG OR DG OR CEO OR Président OR Directeur Général OR Associé OR Fondateur OR Managing Director OR CFO OR COO"
-        li_people  = f"https://www.linkedin.com/search/results/people/?keywords={_urlparse.quote(st.session_state.email_target + ' ' + _direction_titles)}"
+        li_svg = ('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" '
+                  'viewBox="0 0 24 24" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569'
+                  'c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351'
+                  'V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 '
+                  '5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 '
+                  '2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 '
+                  '.774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 '
+                  '22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>')
         st.markdown(
-            f'<div style="display:flex; gap:10px; margin-top:10px;">'
-            f'<a href="{li_company}" target="_blank" style="'
-            f'display:inline-flex; align-items:center; gap:6px; '
-            f'background:#FFFFFF; border:1px solid #C8D4DC; border-radius:8px; '
-            f'padding:7px 14px; font-size:0.83rem; font-weight:600; color:#0A66C2; '
-            f'text-decoration:none;">'
-            f'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#0A66C2">'
-            f'<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>'
-            f'</svg>Page entreprise</a>'
-            f'<a href="{li_people}" target="_blank" style="'
-            f'display:inline-flex; align-items:center; gap:6px; '
-            f'background:#FFFFFF; border:1px solid #C8D4DC; border-radius:8px; '
-            f'padding:7px 14px; font-size:0.83rem; font-weight:600; color:#0A66C2; '
-            f'text-decoration:none;">'
-            f'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#0A66C2">'
-            f'<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>'
-            f'</svg>Trouver un contact</a>'
-            f'</div>',
+            f'<div style="margin-top:10px;">'
+            f'<a href="{li_company}" target="_blank" style="display:inline-flex;align-items:center;'
+            f'gap:6px;background:#FFFFFF;border:1px solid #C8D4DC;border-radius:8px;'
+            f'padding:7px 14px;font-size:0.83rem;font-weight:600;color:#0A66C2;text-decoration:none;">'
+            f'{li_svg} Voir la page entreprise</a></div>',
             unsafe_allow_html=True,
         )
+
+        # Cartes dirigeants trouvés
+        execs = st.session_state.get("found_executives", [])
+        if execs:
+            st.markdown(
+                '<div style="font-size:0.82rem;font-weight:600;color:#64748B;'
+                'text-transform:uppercase;letter-spacing:0.05em;margin:18px 0 10px 0;">'
+                'Dirigeants identifiés</div>',
+                unsafe_allow_html=True,
+            )
+            cols = st.columns(min(len(execs), 3))
+            for idx, exec_ in enumerate(execs):
+                with cols[idx % 3]:
+                    st.markdown(
+                        f'<a href="{exec_["url"]}" target="_blank" style="text-decoration:none;">'
+                        f'<div style="background:#FFFFFF;border:1px solid #C8D4DC;border-radius:10px;'
+                        f'padding:12px 14px;transition:box-shadow 0.2s;">'
+                        f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
+                        f'{li_svg}'
+                        f'<span style="font-size:0.88rem;font-weight:700;color:#1A2744;">{exec_["name"]}</span>'
+                        f'</div>'
+                        f'<div style="font-size:0.78rem;color:#64748B;line-height:1.4;">{exec_["title"] or "Dirigeant"}</div>'
+                        f'<div style="font-size:0.75rem;color:#0A66C2;margin-top:6px;font-weight:600;">Voir le profil →</div>'
+                        f'</div></a>',
+                        unsafe_allow_html=True,
+                    )
+        elif st.session_state.generated_email:
+            st.markdown(
+                '<div style="font-size:0.8rem;color:#94A3B8;margin-top:12px;font-style:italic;">'
+                'Aucun profil dirigeant trouvé publiquement — utilisez la page entreprise LinkedIn.</div>',
+                unsafe_allow_html=True,
+            )
 
     st.markdown("---")
 
     # New analysis button
     if st.button("🔍 Nouvelle analyse", type="primary"):
         for k in ["screen", "company", "deliverable_type", "context", "result_text",
-                  "current_step", "steps_done", "email_target", "generated_email"]:
+                  "current_step", "steps_done", "email_target", "generated_email", "found_executives"]:
             if k == "screen":
                 st.session_state[k] = 1
             elif k == "steps_done":
