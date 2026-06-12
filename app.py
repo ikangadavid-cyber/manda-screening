@@ -964,8 +964,28 @@ Objet : [objet]
         return response.content[0].text
 
     # Détecter les concurrents dans le rapport
+    # Pattern 1 : ### Concurrent N° — NOM  (format standard)
     detected = _re.findall(r'###\s+Concurrent[^—\n]*—\s*\**([^\n*]+)', result)
-    detected = [c.strip() for c in detected if c.strip()]
+    # Pattern 2 : ### N° — NOM  (sans le mot "Concurrent")
+    detected += _re.findall(r'###\s+\d+[^\S\n]*[—–-][^\S\n]*\**([^\n*]+)', result)
+    # Pattern 3 : ### NOM DE L'ENTREPRISE  (heading direct sans numéro)
+    all_h3 = _re.findall(r'###\s+([^\n]+)', result)
+    fmt1 = set(_re.findall(r'###\s+Concurrent[^—\n]*—\s*\**([^\n*]+)', result))
+    fmt2 = set(_re.findall(r'###\s+\d+[^\S\n]*[—–-][^\S\n]*\**([^\n*]+)', result))
+    already = fmt1 | fmt2
+    skip_kw = {"étape","analyse","cartographie","synthèse","positionnement","concurrent","note","fiche","benchmark","géographique","m&a","secteur"}
+    for h in all_h3:
+        clean = h.strip().strip("*").strip()
+        if clean and not any(k in clean.lower() for k in skip_kw) and clean not in already:
+            detected.append(clean)
+    # Dédoublonner et nettoyer
+    seen, unique = set(), []
+    for c in detected:
+        c = c.strip().strip("*").strip()
+        if c and c not in seen:
+            seen.add(c)
+            unique.append(c)
+    detected = unique
 
     st.markdown("""
     <div style="background:linear-gradient(135deg,#1A2744 0%,#2D4A7A 100%);

@@ -38,7 +38,7 @@ Recherche et présente :
 - Chiffre d'affaires estimé (si disponible)"""
 
 _STEP2_TEMPLATE = """## ÉTAPE 2 — Cartographie des concurrents
-Identifie les 5 à 10 principaux concurrents directs en France et en Europe.
+Identifie les 5 à 10 concurrents directs en France et en Europe, y compris les acteurs de plus petite taille ou régionaux dès lors qu'ils opèrent sur le même marché.
 Pour chaque concurrent, effectue des recherches ciblées (site web, LinkedIn, presse, Pappers) et produis une fiche structurée en 3 blocs :
 
 ### Concurrent N° — NOM DE L'ENTREPRISE
