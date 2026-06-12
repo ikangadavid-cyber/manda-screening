@@ -394,6 +394,7 @@ def init_state():
         "email_target":     "",
         "generated_email":  "",
         "found_executives": [],
+        "email_type":       "rachat",
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -992,42 +993,81 @@ Retourne UNIQUEMENT ce JSON (rien d'autre) :
             return raw[:800]
         return ""
 
-    def generate_contact_email(competitor: str, main_company: str, comp_context: str = "") -> str:
+    EMAIL_TYPE_LABELS = {
+        "rachat":   "🏦 Investisseur — Rachat",
+        "levee":    "📈 M&A — Levée de fonds",
+        "buildup":  "🔗 Investisseur — Build-up",
+    }
+
+    EMAIL_TYPE_PROMPTS = {
+        "rachat": """Tu es un investisseur ou un fonds qui envisage d'acquérir {competitor}.
+Contexte : tu analyses le secteur de {main_company} et {competitor} a retenu ton attention comme cible potentielle.
+{context_block}
+Angle du mail : prise de contact discrète pour explorer une éventuelle opération de rachat.
+- Objet : sobre, ne mentionne pas directement "rachat" ou "acquisition" — suggère sans dévoiler
+- Commence par "Bonjour [Prénom]," — laisse "[Prénom]" entre crochets, n'invente jamais
+- Paragraphe 1 : qui tu es (fonds/investisseur), ce que tu fais
+- Paragraphe 2 : 1 élément concret sur leur activité qui justifie ton intérêt — montre que tu as fait tes recherches
+- Paragraphe 3 : proposer un échange confidentiel de 30 min pour mieux se connaître
+- Ton : professionnel, direct, chaleureux — jamais agressif ni pressant
+- Zéro jargon : pas de "synergies", "due diligence", "deal flow", "value creation"
+- Pas de mise en forme (pas de tirets, pas de gras)
+- Signature : "[Prénom Nom] — [Titre], [Fonds]"
+- Entièrement en français, 8 à 10 lignes maximum""",
+
+        "levee": """Tu es un conseiller M&A qui met en relation {competitor} avec des fonds d'investissement, dans le cadre d'une levée de fonds.
+Contexte : tu analyses le secteur de {main_company} et tu as identifié {competitor} comme une société à fort potentiel de croissance.
+{context_block}
+Angle du mail : approche d'un dirigeant pour lui proposer de l'accompagner dans une levée de fonds.
+- Objet : orienté croissance et opportunité, sans mentionner "levée de fonds" directement
+- Commence par "Bonjour [Prénom]," — laisse "[Prénom]" entre crochets, n'invente jamais
+- Paragraphe 1 : qui tu es (conseil M&A, advisor), ton réseau de fonds
+- Paragraphe 2 : 1 élément concret sur leur activité ou leur marché qui justifie qu'ils méritent des capitaux
+- Paragraphe 3 : proposer un échange de 30 min pour explorer si une opération de financement pourrait accélérer leur développement
+- Ton : conseiller, facilitateur — pas vendeur
+- Zéro jargon corporate ou anglicismes excessifs
+- Pas de mise en forme (pas de tirets, pas de gras)
+- Signature : "[Prénom Nom] — [Titre], [Cabinet]"
+- Entièrement en français, 8 à 10 lignes maximum""",
+
+        "buildup": """Tu es un investisseur actionnaire d'une société active dans le même secteur que {competitor}, avec une stratégie de build-up — tu cherches à acquérir des entreprises complémentaires pour consolider le marché.
+Contexte : tu analyses le secteur de {main_company} et tu as identifié {competitor} comme une cible pertinente pour rejoindre ta plateforme.
+{context_block}
+Angle du mail : présenter ta stratégie de consolidation et explorer un rapprochement.
+- Objet : axé sur la vision commune du marché, sans mentionner directement "build-up" ou "rachat"
+- Commence par "Bonjour [Prénom]," — laisse "[Prénom]" entre crochets, n'invente jamais
+- Paragraphe 1 : qui tu es, ta société plateforme dans ce secteur et sa taille/ambition
+- Paragraphe 2 : 1 point concret sur l'activité de {competitor} qui montre la complémentarité
+- Paragraphe 3 : proposer un échange pour voir s'il y a une vision partagée sur l'avenir du marché
+- Ton : entrepreneur à entrepreneur, vision long terme — pas financier
+- Zéro jargon : pas de "build-up", "synergies", "closing", "multiple"
+- Pas de mise en forme (pas de tirets, pas de gras)
+- Signature : "[Prénom Nom] — [Titre], [Société]"
+- Entièrement en français, 8 à 10 lignes maximum""",
+    }
+
+    def generate_contact_email(competitor: str, main_company: str, comp_context: str = "", email_type: str = "rachat") -> str:
         client = _anthropic.Anthropic(api_key=anthropic_key)
 
         context_block = ""
         if comp_context:
-            context_block = f"""
-Voici ce que tu sais déjà sur {competitor} (extrait du rapport de screening) :
----
-{comp_context}
----
-Utilise 1 ou 2 éléments concrets et précis de ces infos dans l'email pour montrer que tu connais l'entreprise.
-Ne cite pas tout — choisis ce qui est le plus pertinent pour amorcer la conversation (ex : leur activité principale, leur géographie, leur modèle, leur dirigeant si mentionné).
-"""
+            context_block = (
+                f"\nVoici ce que tu sais sur {competitor} (utilise 1 ou 2 éléments concrets) :\n"
+                f"---\n{comp_context}\n---\n"
+            )
+
+        prompt_template = EMAIL_TYPE_PROMPTS.get(email_type, EMAIL_TYPE_PROMPTS["rachat"])
+        prompt = prompt_template.format(
+            competitor=competitor,
+            main_company=main_company,
+            context_block=context_block,
+        )
 
         response = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=700,
-            messages=[{"role": "user", "content": f"""Tu es un professionnel du M&A qui écrit un vrai email de prise de contact — pas un template corporate.
-
-Email pour approcher {competitor}, dans le cadre d'une analyse du secteur de {main_company}.
-{context_block}
-Règles absolues :
-- Écris comme un humain qui envoie un vrai email, pas comme un outil IA
-- Objet : court, direct, donne envie d'ouvrir (pas "Prise de contact" ou "Opportunité de collaboration")
-- Commence par "Bonjour [Prénom]," — laisse littéralement "[Prénom]" entre crochets, n'invente jamais un prénom
-- 3 courts paragraphes : qui tu es / un détail concret sur leur activité qui justifie le contact / ce que tu proposes (30 min, call ou café)
-- Zéro jargon : pas de "synergies", "deal flow", "value creation", "best regards"
-- Pas de mise en forme (pas de tirets, pas de gras, pas de liste)
-- Se signer "[Prénom Nom] — [Titre], [Fonds]" sur deux lignes
-- Entièrement en français
-- Maximum 10 lignes de corps
-
-Retourne uniquement l'email, format exact :
-Objet : [objet]
-
-[corps]"""}]
+            messages=[{"role": "user", "content":
+                f"{prompt}\n\nRetourne uniquement l'email, format exact :\nObjet : [objet]\n\n[corps]"}]
         )
         return response.content[0].text
 
@@ -1067,6 +1107,17 @@ Objet : [objet]
     </div>
     """, unsafe_allow_html=True)
 
+    # ── Sélecteur du type d'email ──────────────────────────────────────────
+    email_type_choice = st.radio(
+        "Type d'approche",
+        options=list(EMAIL_TYPE_LABELS.keys()),
+        format_func=lambda x: EMAIL_TYPE_LABELS[x],
+        index=list(EMAIL_TYPE_LABELS.keys()).index(st.session_state.get("email_type", "rachat")),
+        horizontal=True,
+        key="email_type_radio",
+    )
+    st.session_state.email_type = email_type_choice
+
     if detected:
         cols_per_row = 3
         rows = [detected[i:i+cols_per_row] for i in range(0, len(detected), cols_per_row)]
@@ -1080,7 +1131,7 @@ Objet : [objet]
                         st.session_state.found_executives = []
                         with st.spinner(f"Rédaction de l'email et recherche des dirigeants..."):
                             ctx = _extract_competitor_context(comp, result)
-                            st.session_state.generated_email  = generate_contact_email(comp, company, ctx)
+                            st.session_state.generated_email  = generate_contact_email(comp, company, ctx, email_type=st.session_state.email_type)
                             st.session_state.found_executives = find_executives(comp)
     else:
         # Fallback : saisie manuelle si aucun concurrent détecté
@@ -1093,7 +1144,7 @@ Objet : [objet]
             st.session_state.found_executives = []
             with st.spinner(f"Rédaction de l'email et recherche des dirigeants..."):
                 ctx = _extract_competitor_context(manual_comp, result)
-                st.session_state.generated_email  = generate_contact_email(manual_comp, company, ctx)
+                st.session_state.generated_email  = generate_contact_email(manual_comp, company, ctx, email_type=st.session_state.email_type)
                 st.session_state.found_executives = find_executives(manual_comp)
 
     # Afficher l'email généré
@@ -1205,11 +1256,14 @@ Objet : [objet]
     # New analysis button
     if st.button("🔍 Nouvelle analyse", type="primary"):
         for k in ["screen", "company", "deliverable_type", "context", "result_text",
-                  "current_step", "steps_done", "email_target", "generated_email", "found_executives"]:
+                  "current_step", "steps_done", "email_target", "generated_email",
+                  "found_executives", "email_type"]:
             if k == "screen":
                 st.session_state[k] = 1
-            elif k == "steps_done":
+            elif k in ("steps_done", "found_executives"):
                 st.session_state[k] = []
+            elif k == "email_type":
+                st.session_state[k] = "rachat"
             else:
                 st.session_state[k] = ""
         st.rerun()
