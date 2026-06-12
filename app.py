@@ -336,6 +336,25 @@ button[data-baseweb="tab"] {
     font-size: 0.88rem !important;
     font-weight: 600 !important;
 }
+
+/* ── Radio buttons ── */
+div[data-testid="stRadio"] label {
+    color: #1A2744 !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+}
+div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p {
+    color: #1A2744 !important;
+}
+div[data-testid="stRadio"] > label > div:first-child {
+    border-color: #8A9DB5 !important;
+    background: transparent !important;
+}
+div[data-testid="stRadio"] > label[data-checked="true"] > div:first-child,
+div[data-testid="stRadio"] input:checked + div {
+    border-color: #1A2744 !important;
+    background: #1A2744 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -994,9 +1013,9 @@ Retourne UNIQUEMENT ce JSON (rien d'autre) :
         return ""
 
     EMAIL_TYPE_LABELS = {
-        "rachat":   "🏦 Investisseur — Rachat",
-        "levee":    "📈 M&A — Levée de fonds",
-        "buildup":  "🔗 Investisseur — Build-up",
+        "rachat":   "Investisseur — Rachat",
+        "levee":    "M&A — Levée de fonds",
+        "buildup":  "Investisseur — Build-up",
     }
 
     EMAIL_TYPE_PROMPTS = {
