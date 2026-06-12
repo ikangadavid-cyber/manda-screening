@@ -882,26 +882,25 @@ elif st.session_state.screen == 3:
         response = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=700,
-            messages=[{"role": "user", "content": f"""Tu es un associé senior d'un fonds d'investissement M&A français.
+            messages=[{"role": "user", "content": f"""Tu es un professionnel du M&A qui écrit un vrai email de prise de contact — pas un template corporate.
 
-Rédige un email de première prise de contact pour approcher {competitor}.
-Contexte : ton fonds étudie le secteur de {main_company} et souhaite rencontrer les acteurs clés du marché.
+Email pour approcher {competitor}, dans le cadre d'une analyse du secteur de {main_company}.
 
-Contraintes strictes :
-- Objet : percutant, 1 ligne
-- Corps : 8 à 12 lignes maximum
-- Ton : professionnel, chaleureux, direct — pas de jargon financier agressif
-- Se présenter comme "[Prénom Nom], Associé chez [Nom du Fonds]"
-- Montrer une connaissance du secteur sans être générique
-- Demander un échange informel de 20-30 minutes (call ou café à Paris)
-- Formule de politesse élégante en fin de mail
+Règles absolues :
+- Écris comme un humain qui envoie un vrai email, pas comme un outil IA
+- Objet : court, direct, donne envie d'ouvrir (pas "Prise de contact" ou "Opportunité de collaboration")
+- Commence par "Bonjour [Prénom]," — jamais "Madame, Monsieur"
+- 3 courts paragraphes : qui tu es / pourquoi tu les contactes maintenant / ce que tu proposes (30 min, call ou café)
+- Zéro jargon : pas de "synergies", "deal flow", "value creation", "best regards"
+- Pas de mise en forme (pas de tirets, pas de gras, pas de liste)
+- Se signer "[Prénom Nom] — [Titre], [Fonds]" sur deux lignes
 - Entièrement en français
-- Ne pas inventer de chiffres ou faits précis sur l'entreprise
+- Maximum 10 lignes de corps
 
-Format de sortie — uniquement l'email, rien d'autre :
+Retourne uniquement l'email, format exact :
 Objet : [objet]
 
-[Corps de l'email]"""}]
+[corps]"""}]
         )
         return response.content[0].text
 
@@ -946,13 +945,54 @@ Objet : [objet]
 
     # Afficher l'email généré
     if st.session_state.generated_email:
+        raw = st.session_state.generated_email.strip()
+
+        # Séparer objet et corps
+        lines = raw.split("\n")
+        subject_line = ""
+        body_lines = []
+        in_body = False
+        for line in lines:
+            if line.lower().startswith("objet"):
+                subject_line = line.split(":", 1)[-1].strip()
+            elif in_body or (subject_line and line.strip() == "" and not in_body):
+                in_body = True
+                body_lines.append(line)
+            elif subject_line and line.strip():
+                in_body = True
+                body_lines.append(line)
+
+        body_text = "\n".join(body_lines).strip()
+
         st.markdown(
-            f'<div style="font-size:0.85rem;color:#6B7A8D;margin:16px 0 6px 0;">'
-            f'Email généré pour <strong style="color:#1A2744;">{st.session_state.email_target}</strong>'
-            f' — copiez et personnalisez avant envoi :</div>',
+            f'<div style="font-size:0.82rem;color:#6B7A8D;margin:18px 0 10px 0;">'
+            f'Brouillon pour <strong style="color:#1A2744;">{st.session_state.email_target}</strong>'
+            f' — personnalisez les champs entre crochets avant envoi</div>',
             unsafe_allow_html=True,
         )
-        st.code(st.session_state.generated_email, language=None)
+
+        # Rendu email
+        st.markdown(f"""
+<div style="background:#FFFFFF; border:1px solid #D4DCE4; border-radius:12px;
+            padding:0; overflow:hidden; box-shadow:0 2px 10px rgba(26,39,68,0.07);">
+
+  <div style="background:#F0F4F8; border-bottom:1px solid #D4DCE4;
+              padding:12px 20px; display:flex; align-items:center; gap:10px;">
+    <span style="font-size:0.78rem; font-weight:600; color:#64748B; min-width:48px;">Objet</span>
+    <span style="font-size:0.92rem; font-weight:600; color:#1A2744;">{subject_line}</span>
+  </div>
+
+  <div style="padding:22px 24px; font-size:0.93rem; color:#1A202C;
+              line-height:1.85; white-space:pre-wrap; font-family:'Inter', sans-serif;">
+{body_text}
+  </div>
+
+</div>
+""", unsafe_allow_html=True)
+
+        # Zone de copie discrète
+        with st.expander("📋 Copier le texte brut"):
+            st.text_area("", value=raw, height=220, label_visibility="collapsed", key="email_copy_area")
 
     st.markdown("---")
 
