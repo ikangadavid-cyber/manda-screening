@@ -890,83 +890,67 @@ elif st.session_state.screen == 3:
     import anthropic as _anthropic
 
     def find_executives(competitor: str) -> list:
-        """Cherche les dirigeants officiels via Pappers (registre Infogreffe)."""
+        """Cherche les dirigeants via plusieurs sources puis extrait les noms avec Claude."""
         from tavily import TavilyClient
-        import re as _r
-        tc = TavilyClient(api_key=tavily_key)
-        executives = []
-        seen_names = set()
-        try:
-            # Recherche sur Pappers — source officielle française
-            res = tc.search(
-                query=f'"{competitor}" site:pappers.fr',
-                max_results=5,
-                search_depth="advanced",
-            )
-            # Titres de direction à détecter dans le contenu Pappers
-            titre_patterns = [
-                r"(Président[^,\n:]*)[:\s]+([A-ZÀ-Ö][a-zà-ö]+(?:\s[A-ZÀ-Ö][a-zà-ö]+)+)",
-                r"(G[ée]rant[^,\n:]*)[:\s]+([A-ZÀ-Ö][a-zà-ö]+(?:\s[A-ZÀ-Ö][a-zà-ö]+)+)",
-                r"(Directeur [Gg][ée]n[ée]ral[^,\n:]*)[:\s]+([A-ZÀ-Ö][a-zà-ö]+(?:\s[A-ZÀ-Ö][a-zà-ö]+)+)",
-                r"(PDG[^,\n:]*)[:\s]+([A-ZÀ-Ö][a-zà-ö]+(?:\s[A-ZÀ-Ö][a-zà-ö]+)+)",
-                r"(Administrateur[^,\n:]*)[:\s]+([A-ZÀ-Ö][a-zà-ö]+(?:\s[A-ZÀ-Ö][a-zà-ö]+)+)",
-                # Format inversé : NOM Prénom, titre
-                r"([A-ZÀÂÉÈÊËÎÏÔÙÛÜ][A-ZÀÂÉÈÊËÎÏÔÙÛÜ\s\-]+),?\s+(Président|Gérant|Directeur|PDG|Fondateur)",
-            ]
-            for r in res.get("results", []):
-                content = r.get("content", "") + " " + r.get("title", "")
-                pappers_url = r.get("url", "")
-                for pat in titre_patterns:
-                    for m in _r.finditer(pat, content):
-                        if len(m.groups()) == 2:
-                            titre, nom = m.group(1).strip(), m.group(2).strip()
-                        else:
-                            continue
-                        # Nettoyer le nom
-                        nom = nom.strip().strip(",").strip()
-                        if nom in seen_names or len(nom) < 4:
-                            continue
-                        seen_names.add(nom)
-                        # Lien LinkedIn de recherche pour ce dirigeant
-                        import urllib.parse as _up
-                        li_url = f"https://www.linkedin.com/search/results/people/?keywords={_up.quote(nom + ' ' + competitor)}"
-                        executives.append({
-                            "name": nom,
-                            "title": titre.split("(")[0].strip(),
-                            "url": li_url,
-                            "source": pappers_url,
-                        })
-        except Exception:
-            pass
+        import anthropic as _ant
+        import json as _json
+        import urllib.parse as _up
 
-        # Fallback : si Pappers n'a rien trouvé, recherche directe société
-        if not executives:
+        tc = TavilyClient(api_key=tavily_key)
+        all_content = []
+
+        queries = [
+            f'"{competitor}" gérant président directeur général site:pappers.fr',
+            f'"{competitor}" dirigeants fondateur PDG CEO direction site:societe.com OR site:verif.com',
+            f'"{competitor}" équipe direction dirigeants LinkedIn',
+        ]
+        for q in queries:
             try:
-                res2 = tc.search(
-                    query=f'{competitor} gérant président directeur général représentant légal',
-                    max_results=4,
-                    search_depth="advanced",
-                    include_domains=["pappers.fr", "societe.com", "infogreffe.fr", "verif.com"],
-                )
-                import urllib.parse as _up2
-                for r in res2.get("results", []):
-                    content = r.get("content", "")
-                    for pat in titre_patterns:
-                        for m in _r.finditer(pat, content):
-                            if len(m.groups()) == 2:
-                                titre, nom = m.group(1).strip(), m.group(2).strip()
-                            else:
-                                continue
-                            nom = nom.strip().strip(",")
-                            if nom in seen_names or len(nom) < 4:
-                                continue
-                            seen_names.add(nom)
-                            li_url = f"https://www.linkedin.com/search/results/people/?keywords={_up2.quote(nom + ' ' + competitor)}"
-                            executives.append({"name": nom, "title": titre.split("(")[0].strip(), "url": li_url, "source": r.get("url","")})
+                res = tc.search(query=q, max_results=4, search_depth="advanced")
+                for r in res.get("results", []):
+                    snippet = f"[{r.get('url','')}]\n{r.get('title','')}\n{r.get('content','')}"
+                    all_content.append(snippet)
             except Exception:
                 pass
 
-        return executives[:6]
+        if not all_content:
+            return []
+
+        # Claude extrait les dirigeants intelligemment depuis les sources brutes
+        combined = "\n\n---\n\n".join(all_content[:8])[:4000]
+        client = _ant.Anthropic(api_key=anthropic_key)
+        try:
+            resp = client.messages.create(
+                model="claude-haiku-4-5",
+                max_tokens=400,
+                messages=[{"role": "user", "content":
+                    f"""Extrais les noms et titres des dirigeants actuels de "{competitor}" depuis ces résultats.
+
+{combined}
+
+Règles :
+- Uniquement des personnes en poste actuellement (pas d'anciens dirigeants)
+- Titres acceptés : PDG, DG, Président, Directeur, Fondateur, Gérant, CEO, CFO, COO, VP, Associé, Partner
+- Maximum 5 personnes
+- Si vraiment aucun dirigeant identifiable, retourne []
+
+Retourne UNIQUEMENT ce JSON (rien d'autre) :
+[{{"name": "Prénom Nom", "title": "Titre"}}]"""}]
+            )
+            text = resp.content[0].text.strip()
+            match = _re.search(r'\[.*?\]', text, _re.DOTALL)
+            if match:
+                raw = _json.loads(match.group())
+                executives = []
+                for e in raw:
+                    n, t = e.get("name","").strip(), e.get("title","").strip()
+                    if n and t and len(n) > 3:
+                        li = f"https://www.linkedin.com/search/results/people/?keywords={_up.quote(n + ' ' + competitor)}"
+                        executives.append({"name": n, "title": t, "url": li})
+                return executives[:5]
+        except Exception:
+            pass
+        return []
 
     def _extract_competitor_context(competitor: str, report: str) -> str:
         """Extrait la fiche du concurrent depuis le rapport."""
