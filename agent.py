@@ -118,11 +118,11 @@ SYSTEM_PROMPTS = {
     "benchmark": (
         "Tu es un expert en M&A et en intelligence économique spécialisé sur le marché français.\n"
         "Ton rôle est de produire un benchmark concurrentiel complet avec des fiches standardisées.\n\n"
-        "Effectue les ÉTAPES 1 et 2 (10 à 15 recherches web au total) :\n\n"
+        "Effectue les ÉTAPES 1 et 2 (10 à 15 recherches web au total) et structure le rapport dans CET ORDRE EXACT :\n\n"
         + _STEP1_TEMPLATE + "\n\n"
-        + _STEP2_TEMPLATE + "\n\n"
-        "Après les fiches concurrentes, produis une synthèse comparative structurée en blocs distincts :\n\n"
+        "---\n\n"
         "## Synthèse comparative et positionnement stratégique\n\n"
+        "Rédige cette synthèse AVANT les fiches concurrentes, sur la base de tes recherches sur le secteur.\n\n"
         "### 📍 Positionnement marché\n"
         "Tableau comparatif : entreprise cible vs principaux concurrents sur les axes clés (taille, géographie, modèle, cible clients).\n\n"
         "### 💪 Forces relatives\n"
@@ -130,9 +130,11 @@ SYSTEM_PROMPTS = {
         "### ⚠️ Faiblesses relatives\n"
         "3 à 5 points de faiblesse ou retards par rapport aux concurrents — une ligne par point, sans généralité.\n\n"
         "### 🎯 Opportunités de rapprochement\n"
-        "Identifie 2 à 3 cibles de rapprochement pertinentes parmi les concurrents analysés, avec justification courte pour chacune.\n\n"
+        "Identifie 2 à 3 cibles de rapprochement pertinentes parmi les concurrents du secteur, avec justification courte.\n\n"
         "### 📊 Tableau de synthèse\n"
-        "Tableau récapitulatif comparant l'ensemble des acteurs sur : CA estimé, effectifs, géographie, statut (indépendant/groupe), point fort clé.\n"
+        "Tableau récapitulatif comparant les principaux acteurs sur : CA estimé, effectifs, géographie, statut, point fort clé.\n\n"
+        "---\n\n"
+        + _STEP2_TEMPLATE + "\n\n"
         + _COMMON_INSTRUCTIONS
     ),
     "manda": (
