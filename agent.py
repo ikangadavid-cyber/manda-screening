@@ -121,9 +121,18 @@ SYSTEM_PROMPTS = {
         "Effectue les ÉTAPES 1 et 2 (10 à 15 recherches web au total) :\n\n"
         + _STEP1_TEMPLATE + "\n\n"
         + _STEP2_TEMPLATE + "\n\n"
-        "Après les fiches concurrentes, ajoute une synthèse comparative : "
-        "positionnement de l'entreprise cible par rapport à ses concurrents, "
-        "forces et faiblesses relatives, opportunités de rapprochement potentiel.\n"
+        "Après les fiches concurrentes, produis une synthèse comparative structurée en blocs distincts :\n\n"
+        "## Synthèse comparative et positionnement stratégique\n\n"
+        "### 📍 Positionnement marché\n"
+        "Tableau comparatif : entreprise cible vs principaux concurrents sur les axes clés (taille, géographie, modèle, cible clients).\n\n"
+        "### 💪 Forces relatives\n"
+        "3 à 5 avantages concurrentiels distinctifs de l'entreprise cible par rapport au marché — une ligne par force, concrète et factuelle.\n\n"
+        "### ⚠️ Faiblesses relatives\n"
+        "3 à 5 points de faiblesse ou retards par rapport aux concurrents — une ligne par point, sans généralité.\n\n"
+        "### 🎯 Opportunités de rapprochement\n"
+        "Identifie 2 à 3 cibles de rapprochement pertinentes parmi les concurrents analysés, avec justification courte pour chacune.\n\n"
+        "### 📊 Tableau de synthèse\n"
+        "Tableau récapitulatif comparant l'ensemble des acteurs sur : CA estimé, effectifs, géographie, statut (indépendant/groupe), point fort clé.\n"
         + _COMMON_INSTRUCTIONS
     ),
     "manda": (
