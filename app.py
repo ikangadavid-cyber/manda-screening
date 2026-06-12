@@ -1001,49 +1001,60 @@ Retourne UNIQUEMENT ce JSON (rien d'autre) :
 
     EMAIL_TYPE_PROMPTS = {
         "rachat": """Tu es un investisseur ou un fonds qui envisage d'acquérir {competitor}.
-Contexte : tu analyses le secteur de {main_company} et {competitor} a retenu ton attention comme cible potentielle.
+Tu as fait tes recherches sur leur secteur et leur activité de façon indépendante — ne mentionne aucune autre société ni aucune source dans le message.
 {context_block}
-Angle du mail : prise de contact discrète pour explorer une éventuelle opération de rachat.
-- Objet : sobre, ne mentionne pas directement "rachat" ou "acquisition" — suggère sans dévoiler
-- Commence par "Bonjour [Prénom]," — laisse "[Prénom]" entre crochets, n'invente jamais
-- Paragraphe 1 : qui tu es (fonds/investisseur), ce que tu fais
-- Paragraphe 2 : 1 élément concret sur leur activité qui justifie ton intérêt — montre que tu as fait tes recherches
-- Paragraphe 3 : proposer un échange confidentiel de 30 min pour mieux se connaître
-- Ton : professionnel, direct, chaleureux — jamais agressif ni pressant
-- Zéro jargon : pas de "synergies", "due diligence", "deal flow", "value creation"
-- Pas de mise en forme (pas de tirets, pas de gras)
+Rédige un message LinkedIn de premier contact, discret et professionnel.
+
+CONTRAINTES ABSOLUES :
+- Ne mentionne jamais le nom d'une autre entreprise, ni pourquoi tu les as repérés
+- Objet (max 200 caractères) : sobre, sans les mots "rachat" ou "acquisition"
+- Corps du message : 900 caractères MAXIMUM (LinkedIn InMail) — sois très concis
+- Commence par "Bonjour [Prénom]," — laisse "[Prénom]" entre crochets, n'invente jamais un prénom
+- Ligne 1 : qui tu es en une phrase (fonds/investisseur, secteur d'activité)
+- Ligne 2 : 1 observation concrète sur {competitor} qui montre que tu les connais — sans citer de source
+- Ligne 3 : proposer un échange de 20 min, confidentiel, sans engagement
+- Ton : direct, humain, jamais corporatif — aucun jargon (pas de "synergies", "due diligence", "deal flow")
+- Pas de mise en forme : pas de tirets, pas de gras, pas de listes
 - Signature : "[Prénom Nom] — [Titre], [Fonds]"
-- Entièrement en français, 8 à 10 lignes maximum""",
+- Entièrement en français""",
 
-        "levee": """Tu es un conseiller M&A qui met en relation {competitor} avec des fonds d'investissement, dans le cadre d'une levée de fonds.
-Contexte : tu analyses le secteur de {main_company} et tu as identifié {competitor} comme une société à fort potentiel de croissance.
+        "levee": """Tu es un conseiller M&A accompagnant des dirigeants dans des opérations de financement et de croissance.
+Tu as identifié {competitor} comme une société à fort potentiel — de façon indépendante, sans mentionner aucune autre société ni source dans le message.
 {context_block}
-Angle du mail : approche d'un dirigeant pour lui proposer de l'accompagner dans une levée de fonds.
-- Objet : orienté croissance et opportunité, sans mentionner "levée de fonds" directement
-- Commence par "Bonjour [Prénom]," — laisse "[Prénom]" entre crochets, n'invente jamais
-- Paragraphe 1 : qui tu es (conseil M&A, advisor), ton réseau de fonds
-- Paragraphe 2 : 1 élément concret sur leur activité ou leur marché qui justifie qu'ils méritent des capitaux
-- Paragraphe 3 : proposer un échange de 30 min pour explorer si une opération de financement pourrait accélérer leur développement
-- Ton : conseiller, facilitateur — pas vendeur
-- Zéro jargon corporate ou anglicismes excessifs
-- Pas de mise en forme (pas de tirets, pas de gras)
+Rédige un message LinkedIn de premier contact, orienté opportunité de croissance.
+
+CONTRAINTES ABSOLUES :
+- Ne mentionne jamais le nom d'une autre entreprise, ni la démarche qui t'a conduit à les contacter
+- Objet (max 200 caractères) : axé croissance, sans les mots "levée de fonds" ou "financement"
+- Corps du message : 900 caractères MAXIMUM (LinkedIn InMail) — sois très concis
+- Commence par "Bonjour [Prénom]," — laisse "[Prénom]" entre crochets, n'invente jamais un prénom
+- Ligne 1 : qui tu es en une phrase (conseil M&A, réseau de fonds, secteur)
+- Ligne 2 : 1 observation sur leur marché ou leur activité qui justifie l'intérêt — sans citer de source
+- Ligne 3 : proposer un échange de 20 min pour voir si tu peux les aider à accélérer
+- Ton : conseiller, pas vendeur — facilitateur qui apporte de la valeur
+- Aucun anglicisme excessif, aucun jargon corporate
+- Pas de mise en forme : pas de tirets, pas de gras, pas de listes
 - Signature : "[Prénom Nom] — [Titre], [Cabinet]"
-- Entièrement en français, 8 à 10 lignes maximum""",
+- Entièrement en français""",
 
-        "buildup": """Tu es un investisseur actionnaire d'une société active dans le même secteur que {competitor}, avec une stratégie de build-up — tu cherches à acquérir des entreprises complémentaires pour consolider le marché.
-Contexte : tu analyses le secteur de {main_company} et tu as identifié {competitor} comme une cible pertinente pour rejoindre ta plateforme.
+        "buildup": """Tu es un investisseur actionnaire d'une société active dans le même secteur que {competitor}, avec une stratégie de consolidation — tu cherches des acteurs complémentaires pour construire un leader de marché.
+Tu as identifié {competitor} de façon indépendante — ne mentionne aucune autre société ni aucune source dans le message.
 {context_block}
-Angle du mail : présenter ta stratégie de consolidation et explorer un rapprochement.
-- Objet : axé sur la vision commune du marché, sans mentionner directement "build-up" ou "rachat"
-- Commence par "Bonjour [Prénom]," — laisse "[Prénom]" entre crochets, n'invente jamais
-- Paragraphe 1 : qui tu es, ta société plateforme dans ce secteur et sa taille/ambition
-- Paragraphe 2 : 1 point concret sur l'activité de {competitor} qui montre la complémentarité
-- Paragraphe 3 : proposer un échange pour voir s'il y a une vision partagée sur l'avenir du marché
-- Ton : entrepreneur à entrepreneur, vision long terme — pas financier
-- Zéro jargon : pas de "build-up", "synergies", "closing", "multiple"
-- Pas de mise en forme (pas de tirets, pas de gras)
+Rédige un message LinkedIn de premier contact, entre pairs du même secteur.
+
+CONTRAINTES ABSOLUES :
+- Ne mentionne jamais le nom d'une autre société, ni la démarche qui t'a mené à les contacter
+- Objet (max 200 caractères) : axé vision commune du marché, sans les mots "build-up", "rachat" ou "acquisition"
+- Corps du message : 900 caractères MAXIMUM (LinkedIn InMail) — sois très concis
+- Commence par "Bonjour [Prénom]," — laisse "[Prénom]" entre crochets, n'invente jamais un prénom
+- Ligne 1 : qui tu es, ta société et son positionnement dans ce secteur (une phrase)
+- Ligne 2 : 1 point de complémentarité ou de vision partagée avec {competitor} — sans citer de source
+- Ligne 3 : proposer un échange informel de 20 min pour partager les perspectives du marché
+- Ton : entrepreneur à entrepreneur, long terme, pas financier
+- Zéro jargon : pas de "build-up", "synergies", "closing", "multiple", "plateforme"
+- Pas de mise en forme : pas de tirets, pas de gras, pas de listes
 - Signature : "[Prénom Nom] — [Titre], [Société]"
-- Entièrement en français, 8 à 10 lignes maximum""",
+- Entièrement en français""",
     }
 
     def generate_contact_email(competitor: str, main_company: str, comp_context: str = "", email_type: str = "rachat") -> str:
