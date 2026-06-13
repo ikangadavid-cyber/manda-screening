@@ -1094,189 +1094,273 @@ CONTRAINTES ABSOLUES :
         )
         return response.content[0].text
 
-    # Détecter les concurrents dans le rapport
-    # Pattern 1 : ### Concurrent N° — NOM  (format standard)
-    detected = _re.findall(r'###\s+Concurrent[^—\n]*—\s*\**([^\n*]+)', result)
-    # Pattern 2 : ### N° — NOM  (sans le mot "Concurrent")
-    detected += _re.findall(r'###\s+\d+[^\S\n]*[—–-][^\S\n]*\**([^\n*]+)', result)
-    # Pattern 3 : ### NOM DE L'ENTREPRISE  (heading direct sans numéro)
-    all_h3 = _re.findall(r'###\s+([^\n]+)', result)
-    fmt1 = set(_re.findall(r'###\s+Concurrent[^—\n]*—\s*\**([^\n*]+)', result))
-    fmt2 = set(_re.findall(r'###\s+\d+[^\S\n]*[—–-][^\S\n]*\**([^\n*]+)', result))
-    already = fmt1 | fmt2
-    skip_kw = {"étape","analyse","cartographie","synthèse","positionnement","concurrent","note","fiche","benchmark","géographique","m&a","secteur"}
-    for h in all_h3:
-        clean = h.strip().strip("*").strip()
-        if clean and not any(k in clean.lower() for k in skip_kw) and clean not in already:
-            detected.append(clean)
-    # Dédoublonner et nettoyer
-    seen, unique = set(), []
-    for c in detected:
-        c = c.strip().strip("*").strip()
-        if c and c not in seen:
-            seen.add(c)
-            unique.append(c)
-    detected = unique
+    import urllib.parse as _urlparse
 
-    st.markdown("""
-    <div style="background:linear-gradient(135deg,#1A2744 0%,#2D4A7A 100%);
-                border-radius:14px; padding:20px 24px; margin-bottom:20px;">
-        <div style="color:#FFFFFF; font-size:1.05rem; font-weight:700; margin-bottom:4px;">
-            📧 Préparer une prise de contact
+    li_svg = ('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" '
+              'viewBox="0 0 24 24" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569'
+              'c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351'
+              'V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 '
+              '5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 '
+              '2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 '
+              '.774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 '
+              '22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>')
+
+    # ══════════════════════════════════════════════════════════════════════
+    # BENCHMARK : email de prise de contact par concurrent
+    # ══════════════════════════════════════════════════════════════════════
+    if deliv_key == "benchmark":
+
+        # Détection stricte des concurrents (patterns benchmark uniquement)
+        detected = _re.findall(r'###\s+Concurrent[^—\n]*—\s*\**([^\n*]+)', result)
+        detected += _re.findall(r'###\s+\d+[^\S\n]*[—–-][^\S\n]*\**([^\n*]+)', result)
+        seen, unique = set(), []
+        for c in detected:
+            c = c.strip().strip("*").strip()
+            if c and c not in seen:
+                seen.add(c)
+                unique.append(c)
+        detected = unique
+
+        st.markdown("""
+        <div style="background:linear-gradient(135deg,#1A2744 0%,#2D4A7A 100%);
+                    border-radius:14px; padding:20px 24px; margin-bottom:20px;">
+            <div style="color:#FFFFFF; font-size:1.05rem; font-weight:700; margin-bottom:4px;">
+                Préparer une prise de contact
+            </div>
+            <div style="color:#8FA8C8; font-size:0.83rem;">
+                Choisissez le type d'approche, puis cliquez sur un concurrent pour générer le message LinkedIn.
+            </div>
         </div>
-        <div style="color:#8FA8C8; font-size:0.83rem;">
-            Cliquez sur un concurrent pour générer instantanément un email professionnel de premier contact.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
-    # ── Sélecteur du type d'email (boutons segmentés) ─────────────────────
-    _etype_current = st.session_state.get("email_type", "rachat")
-    _etype_options = [
-        ("rachat",  "Investisseur — Rachat"),
-        ("levee",   "M&A — Levée de fonds"),
-        ("buildup", "Investisseur — Build-up"),
-    ]
-    _etype_cols = st.columns(3)
-    for _ec, (_ek, _el) in zip(_etype_cols, _etype_options):
-        _css_class = "etype-btn-selected" if _etype_current == _ek else "etype-btn-idle"
-        _ec.markdown(f'<div class="{_css_class}">', unsafe_allow_html=True)
-        with _ec:
-            if st.button(_el, key=f"etype_{_ek}", use_container_width=True):
-                st.session_state.email_type = _ek
-                st.rerun()
-        _ec.markdown('</div>', unsafe_allow_html=True)
+        # Sélecteur type d'email
+        _etype_current = st.session_state.get("email_type", "rachat")
+        _etype_options = [
+            ("rachat",  "Investisseur — Rachat"),
+            ("levee",   "M&A — Levée de fonds"),
+            ("buildup", "Investisseur — Build-up"),
+        ]
+        _etype_cols = st.columns(3)
+        for _ec, (_ek, _el) in zip(_etype_cols, _etype_options):
+            _css_class = "etype-btn-selected" if _etype_current == _ek else "etype-btn-idle"
+            _ec.markdown(f'<div class="{_css_class}">', unsafe_allow_html=True)
+            with _ec:
+                if st.button(_el, key=f"etype_{_ek}", use_container_width=True):
+                    st.session_state.email_type = _ek
+                    st.rerun()
+            _ec.markdown('</div>', unsafe_allow_html=True)
 
-    if detected:
-        cols_per_row = 3
-        rows = [detected[i:i+cols_per_row] for i in range(0, len(detected), cols_per_row)]
-        for row in rows:
-            cols = st.columns(len(row))
-            for col, comp in zip(cols, row):
-                with col:
-                    if st.button(f"✉️ {comp}", key=f"email_btn_{comp}", use_container_width=True):
-                        st.session_state.email_target    = comp
-                        st.session_state.generated_email = ""
-                        st.session_state.found_executives = []
-                        with st.spinner(f"Rédaction de l'email et recherche des dirigeants..."):
-                            ctx = _extract_competitor_context(comp, result)
-                            st.session_state.generated_email  = generate_contact_email(comp, company, ctx, email_type=st.session_state.email_type)
-                            st.session_state.found_executives = find_executives(comp)
-    else:
-        # Fallback : saisie manuelle si aucun concurrent détecté
-        manual_comp = st.text_input("Nom du concurrent à contacter :",
-                                     placeholder="ex : Entreprise XYZ",
-                                     key="manual_email_target")
-        if manual_comp and st.button("✉️ Générer l'email", type="primary"):
-            st.session_state.email_target    = manual_comp
-            st.session_state.generated_email = ""
-            st.session_state.found_executives = []
-            with st.spinner(f"Rédaction de l'email et recherche des dirigeants..."):
-                ctx = _extract_competitor_context(manual_comp, result)
-                st.session_state.generated_email  = generate_contact_email(manual_comp, company, ctx, email_type=st.session_state.email_type)
-                st.session_state.found_executives = find_executives(manual_comp)
+        st.markdown('<div style="margin-top:12px;"></div>', unsafe_allow_html=True)
 
-    # Afficher l'email généré
-    if st.session_state.generated_email:
-        raw = st.session_state.generated_email.strip()
+        if detected:
+            cols_per_row = 3
+            rows = [detected[i:i+cols_per_row] for i in range(0, len(detected), cols_per_row)]
+            for row in rows:
+                cols = st.columns(len(row))
+                for col, comp in zip(cols, row):
+                    with col:
+                        if st.button(f"✉️ {comp}", key=f"email_btn_{comp}", use_container_width=True):
+                            st.session_state.email_target     = comp
+                            st.session_state.generated_email  = ""
+                            st.session_state.found_executives = []
+                            with st.spinner("Rédaction du message et recherche des dirigeants..."):
+                                ctx = _extract_competitor_context(comp, result)
+                                st.session_state.generated_email  = generate_contact_email(comp, company, ctx, email_type=st.session_state.email_type)
+                                st.session_state.found_executives = find_executives(comp)
+        else:
+            manual_comp = st.text_input("Nom du concurrent à contacter :",
+                                         placeholder="ex : Entreprise XYZ",
+                                         key="manual_email_target")
+            if manual_comp and st.button("✉️ Générer le message", type="primary"):
+                st.session_state.email_target     = manual_comp
+                st.session_state.generated_email  = ""
+                st.session_state.found_executives = []
+                with st.spinner("Rédaction du message et recherche des dirigeants..."):
+                    ctx = _extract_competitor_context(manual_comp, result)
+                    st.session_state.generated_email  = generate_contact_email(manual_comp, company, ctx, email_type=st.session_state.email_type)
+                    st.session_state.found_executives = find_executives(manual_comp)
 
-        # Séparer objet et corps
-        lines = raw.split("\n")
-        subject_line = ""
-        body_lines = []
-        in_body = False
-        for line in lines:
-            if line.lower().startswith("objet"):
-                subject_line = line.split(":", 1)[-1].strip()
-            elif in_body or (subject_line and line.strip() == "" and not in_body):
-                in_body = True
-                body_lines.append(line)
-            elif subject_line and line.strip():
-                in_body = True
-                body_lines.append(line)
+        # Afficher le message généré
+        if st.session_state.generated_email:
+            raw = st.session_state.generated_email.strip()
+            lines = raw.split("\n")
+            subject_line, body_lines, in_body = "", [], False
+            for line in lines:
+                if line.lower().startswith("objet"):
+                    subject_line = line.split(":", 1)[-1].strip()
+                elif in_body or (subject_line and line.strip() == "" and not in_body):
+                    in_body = True
+                    body_lines.append(line)
+                elif subject_line and line.strip():
+                    in_body = True
+                    body_lines.append(line)
+            body_text = "\n".join(body_lines).strip()
 
-        body_text = "\n".join(body_lines).strip()
-
-        st.markdown(
-            f'<div style="font-size:0.82rem;color:#6B7A8D;margin:18px 0 10px 0;">'
-            f'Brouillon pour <strong style="color:#1A2744;">{st.session_state.email_target}</strong>'
-            f' — personnalisez les champs entre crochets avant envoi</div>',
-            unsafe_allow_html=True,
-        )
-
-        # Rendu email
-        st.markdown(f"""
+            st.markdown(
+                f'<div style="font-size:0.82rem;color:#6B7A8D;margin:18px 0 10px 0;">'
+                f'Brouillon pour <strong style="color:#1A2744;">{st.session_state.email_target}</strong>'
+                f' — personnalisez les champs entre crochets avant envoi</div>',
+                unsafe_allow_html=True,
+            )
+            st.markdown(f"""
 <div style="background:#FFFFFF; border:1px solid #D4DCE4; border-radius:12px;
             padding:0; overflow:hidden; box-shadow:0 2px 10px rgba(26,39,68,0.07);">
-
   <div style="background:#F0F4F8; border-bottom:1px solid #D4DCE4;
               padding:12px 20px; display:flex; align-items:center; gap:10px;">
     <span style="font-size:0.78rem; font-weight:600; color:#64748B; min-width:48px;">Objet</span>
     <span style="font-size:0.92rem; font-weight:600; color:#1A2744;">{subject_line}</span>
   </div>
-
   <div style="padding:22px 24px; font-size:0.93rem; color:#1A202C;
               line-height:1.85; white-space:pre-wrap; font-family:'Inter', sans-serif;">
 {body_text}
   </div>
-
 </div>
 """, unsafe_allow_html=True)
 
-        # Zone de copie discrète
-        with st.expander("📋 Copier le texte brut"):
-            st.text_area("", value=raw, height=220, label_visibility="collapsed", key="email_copy_area")
+            with st.expander("📋 Copier le texte brut"):
+                st.text_area("", value=raw, height=220, label_visibility="collapsed", key="email_copy_area")
 
-        # Lien page entreprise LinkedIn
-        import urllib.parse as _urlparse
-        li_company = f"https://www.linkedin.com/search/results/companies/?keywords={_urlparse.quote(st.session_state.email_target)}"
-        li_svg = ('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" '
-                  'viewBox="0 0 24 24" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569'
-                  'c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351'
-                  'V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 '
-                  '5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 '
-                  '2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 '
-                  '.774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 '
-                  '22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>')
-        st.markdown(
-            f'<div style="margin-top:10px;">'
-            f'<a href="{li_company}" target="_blank" style="display:inline-flex;align-items:center;'
-            f'gap:6px;background:#FFFFFF;border:1px solid #C8D4DC;border-radius:8px;'
-            f'padding:7px 14px;font-size:0.83rem;font-weight:600;color:#0A66C2;text-decoration:none;">'
-            f'{li_svg} Voir la page entreprise</a></div>',
-            unsafe_allow_html=True,
-        )
-
-        # Cartes dirigeants trouvés
-        execs = st.session_state.get("found_executives", [])
-        if execs:
+            li_company = f"https://www.linkedin.com/search/results/companies/?keywords={_urlparse.quote(st.session_state.email_target)}"
             st.markdown(
-                '<div style="font-size:0.82rem;font-weight:600;color:#64748B;'
-                'text-transform:uppercase;letter-spacing:0.05em;margin:18px 0 10px 0;">'
-                'Dirigeants identifiés <span style="font-size:0.72rem;font-weight:400;'
-                'color:#94A3B8;text-transform:none;">(source : registre officiel Pappers / Infogreffe)</span></div>',
+                f'<div style="margin-top:10px;">'
+                f'<a href="{li_company}" target="_blank" style="display:inline-flex;align-items:center;'
+                f'gap:6px;background:#FFFFFF;border:1px solid #C8D4DC;border-radius:8px;'
+                f'padding:7px 14px;font-size:0.83rem;font-weight:600;color:#0A66C2;text-decoration:none;">'
+                f'{li_svg} Voir la page entreprise</a></div>',
                 unsafe_allow_html=True,
             )
-            cols = st.columns(min(len(execs), 3))
-            for idx, exec_ in enumerate(execs):
-                with cols[idx % 3]:
-                    st.markdown(
-                        f'<a href="{exec_["url"]}" target="_blank" style="text-decoration:none;">'
-                        f'<div style="background:#FFFFFF;border:1px solid #C8D4DC;border-radius:10px;'
-                        f'padding:12px 14px;transition:box-shadow 0.2s;">'
-                        f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
-                        f'{li_svg}'
-                        f'<span style="font-size:0.88rem;font-weight:700;color:#1A2744;">{exec_["name"]}</span>'
-                        f'</div>'
-                        f'<div style="font-size:0.78rem;color:#64748B;line-height:1.4;">{exec_["title"] or "Dirigeant"}</div>'
-                        f'<div style="font-size:0.75rem;color:#0A66C2;margin-top:6px;font-weight:600;">Voir le profil →</div>'
-                        f'</div></a>',
-                        unsafe_allow_html=True,
-                    )
-        elif st.session_state.generated_email:
+
+            execs = st.session_state.get("found_executives", [])
+            if execs:
+                st.markdown(
+                    '<div style="font-size:0.82rem;font-weight:600;color:#64748B;'
+                    'text-transform:uppercase;letter-spacing:0.05em;margin:18px 0 10px 0;">'
+                    'Dirigeants identifiés'
+                    '<span style="font-size:0.72rem;font-weight:400;color:#94A3B8;'
+                    'text-transform:none;margin-left:6px;">(Pappers / Infogreffe)</span></div>',
+                    unsafe_allow_html=True,
+                )
+                cols = st.columns(min(len(execs), 3))
+                for idx, exec_ in enumerate(execs):
+                    with cols[idx % 3]:
+                        st.markdown(
+                            f'<a href="{exec_["url"]}" target="_blank" style="text-decoration:none;">'
+                            f'<div style="background:#FFFFFF;border:1px solid #C8D4DC;border-radius:10px;'
+                            f'padding:12px 14px;">'
+                            f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
+                            f'{li_svg}'
+                            f'<span style="font-size:0.88rem;font-weight:700;color:#1A2744;">{exec_["name"]}</span>'
+                            f'</div>'
+                            f'<div style="font-size:0.78rem;color:#64748B;">{exec_["title"] or "Dirigeant"}</div>'
+                            f'<div style="font-size:0.75rem;color:#0A66C2;margin-top:6px;font-weight:600;">Voir le profil →</div>'
+                            f'</div></a>',
+                            unsafe_allow_html=True,
+                        )
+            else:
+                st.markdown(
+                    '<div style="font-size:0.8rem;color:#94A3B8;margin-top:12px;font-style:italic;">'
+                    'Aucun profil dirigeant trouvé — utilisez la page entreprise LinkedIn.</div>',
+                    unsafe_allow_html=True,
+                )
+
+    # ══════════════════════════════════════════════════════════════════════
+    # AUTRES LIVRABLES : liens LinkedIn pertinents extraits du rapport
+    # ══════════════════════════════════════════════════════════════════════
+    else:
+        import anthropic as _ant
+        import json as _json
+
+        def extract_linkedin_entities(report: str, deliv_type: str, main_co: str) -> list:
+            """Extrait via Claude Haiku les entités les plus pertinentes du rapport."""
+            instructions = {
+                "fiche": (
+                    "Ce rapport est une fiche entreprise. "
+                    "Retourne la société principale et ses filiales ou partenaires clés mentionnés."
+                ),
+                "manda": (
+                    "Ce rapport contient des actualités M&A. "
+                    "Extrais les acquéreurs actifs, fonds d'investissement et fédérations professionnelles mentionnés."
+                ),
+                "geo": (
+                    "Ce rapport est une analyse géographique. "
+                    "Extrais les entreprises et acteurs locaux les plus importants mentionnés par zone."
+                ),
+            }
+            instruction = instructions.get(deliv_type, "Extrais les principales organisations mentionnées.")
+            client = _ant.Anthropic(api_key=anthropic_key)
+            try:
+                resp = client.messages.create(
+                    model="claude-haiku-4-5",
+                    max_tokens=350,
+                    messages=[{"role": "user", "content":
+                        f"""{instruction}
+
+{report[:3500]}
+
+Règles :
+- Maximum 6 entités, pertinentes pour une prise de contact professionnelle
+- Exclure "{main_co}" lui-même
+- Retourne UNIQUEMENT ce JSON :
+[{{"name": "Nom exact", "type": "Acquéreur / Fonds / Fédération / Entreprise"}}]"""}]
+                )
+                text = resp.content[0].text.strip()
+                match = _re.search(r'\[.*?\]', text, _re.DOTALL)
+                if match:
+                    raw = _json.loads(match.group())
+                    entities = []
+                    for e in raw:
+                        n = e.get("name", "").strip()
+                        t = e.get("type", "").strip()
+                        if n and len(n) > 2:
+                            li_url = f"https://www.linkedin.com/search/results/companies/?keywords={_urlparse.quote(n)}"
+                            entities.append({"name": n, "type": t, "url": li_url})
+                    return entities[:6]
+            except Exception:
+                pass
+            return []
+
+        st.markdown("""
+        <div style="background:linear-gradient(135deg,#1A2744 0%,#2D4A7A 100%);
+                    border-radius:14px; padding:20px 24px; margin-bottom:20px;">
+            <div style="color:#FFFFFF; font-size:1.05rem; font-weight:700; margin-bottom:4px;">
+                Liens LinkedIn pertinents
+            </div>
+            <div style="color:#8FA8C8; font-size:0.83rem;">
+                Acteurs clés identifiés dans ce rapport — cliquez pour accéder directement à leur page.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        li_key = f"li_entities_{deliv_key}_{company}"
+        if li_key not in st.session_state:
+            with st.spinner("Identification des contacts LinkedIn pertinents..."):
+                st.session_state[li_key] = extract_linkedin_entities(result, deliv_key, company)
+
+        entities = st.session_state.get(li_key, [])
+        if entities:
+            cols_per_row = 3
+            rows = [entities[i:i+cols_per_row] for i in range(0, len(entities), cols_per_row)]
+            for row in rows:
+                cols = st.columns(len(row))
+                for col, ent in zip(cols, row):
+                    with col:
+                        st.markdown(
+                            f'<a href="{ent["url"]}" target="_blank" style="text-decoration:none;">'
+                            f'<div style="background:#FFFFFF;border:1px solid #C8D4DC;border-radius:10px;'
+                            f'padding:14px 16px;margin-bottom:8px;">'
+                            f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
+                            f'{li_svg}'
+                            f'<span style="font-size:0.88rem;font-weight:700;color:#1A2744;">{ent["name"]}</span>'
+                            f'</div>'
+                            f'<div style="font-size:0.75rem;color:#64748B;">{ent["type"]}</div>'
+                            f'<div style="font-size:0.75rem;color:#0A66C2;margin-top:6px;font-weight:600;">Voir sur LinkedIn →</div>'
+                            f'</div></a>',
+                            unsafe_allow_html=True,
+                        )
+        else:
             st.markdown(
-                '<div style="font-size:0.8rem;color:#94A3B8;margin-top:12px;font-style:italic;">'
-                'Aucun profil dirigeant trouvé publiquement — utilisez la page entreprise LinkedIn.</div>',
+                '<div style="font-size:0.83rem;color:#94A3B8;font-style:italic;">'
+                'Aucune entité identifiée dans ce rapport.</div>',
                 unsafe_allow_html=True,
             )
 
