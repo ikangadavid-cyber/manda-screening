@@ -1902,7 +1902,6 @@ elif st.session_state.screen == 4:
             if tavily_key:
                 os.environ["TAVILY_API_KEY"] = tavily_key
 
-            ticker_ph = st.empty()
             output_ph = st.empty()
             queries   = []
 
@@ -1910,21 +1909,6 @@ elif st.session_state.screen == 4:
                 q = (inp.get("query", inp.get("q", ""))[:75] if isinstance(inp, dict) else str(inp)[:75])
                 if q:
                     queries.append(q)
-                pills = "".join(
-                    f'<span class="ticker-pill" style="display:inline-block;background:#1E293B;'
-                    f'color:#94A3B8;border-radius:20px;padding:3px 10px;font-size:0.7rem;'
-                    f'margin:2px 2px;font-family:monospace;">🔍 {qx}</span>'
-                    for qx in queries[-7:]
-                )
-                ticker_ph.markdown(
-                    f'<div style="background:#0F172A;border-radius:10px;padding:10px 14px;'
-                    f'margin-bottom:8px;">'
-                    f'<div style="font-size:0.62rem;color:#475569;font-weight:700;'
-                    f'text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">'
-                    f'🛰 Sources consultées ({len(queries)})</div>'
-                    f'<div style="display:flex;flex-wrap:wrap;gap:3px;">{pills}</div></div>',
-                    unsafe_allow_html=True,
-                )
 
             def _on_text(text):
                 cursor = (f'<span style="display:inline-block;width:2px;height:13px;'
@@ -1954,7 +1938,6 @@ elif st.session_state.screen == 4:
                 st.session_state.ma_step_result = new_results
 
                 status_ph.empty()
-                ticker_ph.empty()
                 output_ph.empty()
 
                 # Banner de succès
@@ -2009,7 +1992,6 @@ elif st.session_state.screen == 4:
             except Exception as e:
                 import traceback
                 status_ph.empty()
-                ticker_ph.empty()
                 output_ph.empty()
                 st.error(f"❌ Erreur étape {step_info['num']} : {e}")
                 with st.expander("🔍 Détail technique", expanded=False):

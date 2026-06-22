@@ -142,17 +142,18 @@ def run_ma_module(
     prompt_text = _load_prompt(module_key, company)
     instructions, _ = _split_prompt(prompt_text)
 
-    # Safety guard: never ask questions, always produce a complete deliverable
+    # Guard: never guess sector from name, never ask questions, ND if no data
     instructions += (
         "\n\n---\nRÈGLE ABSOLUE — PRIORITÉ MAXIMALE :\n"
-        "Tu ne poses JAMAIS de questions à l'utilisateur, quelle que soit la situation.\n"
-        "Si les recherches web ne retournent pas assez de résultats sur cette société spécifique, "
-        "tu utilises tes connaissances générales sur le secteur et le marché pour compléter le livrable. "
-        "Les données issues de tes connaissances sont marquées 'ND - à confirmer'.\n"
-        "Tu produis TOUJOURS le livrable complet demandé (tableaux, analyse, cartographie) "
-        "même avec des données partielles. Commencer par livrer, préciser les limites en une phrase à la fin si besoin.\n"
-        "INTERDIT : poser des questions, demander des précisions, lister des informations manquantes, "
-        "décrire tes limitations techniques, proposer d'attendre ou de chercher autrement."
+        "Tu ne poses JAMAIS de questions à l'utilisateur.\n"
+        "INTERDIT ABSOLU : déduire ou supposer le secteur d'activité, les produits, ou le marché "
+        "d'une entreprise à partir de son nom, de sa sonorité ou de son origine géographique. "
+        "Si les recherches ne confirment pas explicitement une information, la cellule est 'ND'.\n"
+        "Si les recherches web retournent peu ou pas de résultats sur la société : "
+        "produis le livrable avec toutes les cellules marquées 'ND - information introuvable en ligne', "
+        "sans inventer ni inférer quoi que ce soit sur le secteur ou l'activité.\n"
+        "INTERDIT : lister les informations manquantes, expliquer tes limitations, "
+        "proposer des alternatives ou écrire des phrases comme 'je n'ai pas pu trouver'."
     )
 
     user_parts = [f"Société / Acquéreur : **{company}**"]
