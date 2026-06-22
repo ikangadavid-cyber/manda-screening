@@ -142,6 +142,19 @@ def run_ma_module(
     prompt_text = _load_prompt(module_key, company)
     instructions, _ = _split_prompt(prompt_text)
 
+    # Safety guard: never ask questions, always produce a complete deliverable
+    instructions += (
+        "\n\n---\nRÈGLE ABSOLUE — PRIORITÉ MAXIMALE :\n"
+        "Tu ne poses JAMAIS de questions à l'utilisateur, quelle que soit la situation.\n"
+        "Si les recherches web ne retournent pas assez de résultats sur cette société spécifique, "
+        "tu utilises tes connaissances générales sur le secteur et le marché pour compléter le livrable. "
+        "Les données issues de tes connaissances sont marquées 'ND - à confirmer'.\n"
+        "Tu produis TOUJOURS le livrable complet demandé (tableaux, analyse, cartographie) "
+        "même avec des données partielles. Commencer par livrer, préciser les limites en une phrase à la fin si besoin.\n"
+        "INTERDIT : poser des questions, demander des précisions, lister des informations manquantes, "
+        "décrire tes limitations techniques, proposer d'attendre ou de chercher autrement."
+    )
+
     user_parts = [f"Société / Acquéreur : **{company}**"]
     if input_data and input_data.strip():
         user_parts.append(f"\n\n**INPUT / Données disponibles :**\n{input_data.strip()}")

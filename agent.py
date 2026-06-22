@@ -12,13 +12,15 @@ _COMMON_INSTRUCTIONS = """
 RÈGLES STRICTES DE CONTENU ET DE STYLE :
 
 Contenu :
-- Sois factuel et précis. Indique NC (Non Communiqué) quand une information est introuvable.
+- Sois factuel et précis. Indique NC (Non Communiqué) quand une information est introuvable — ne laisse jamais une cellule vide.
 - Cite tes sources avec les URLs dans les tableaux prévus à cet effet.
-- Utilise web_search autant que nécessaire pour obtenir des données à jour.
+- Utilise web_search autant que nécessaire. Ne rédige PAS le rapport avec moins de recherches que demandé.
 - Réponds toujours en français.
+- N'omets JAMAIS un concurrent ou un acteur identifié lors de tes recherches. L'exhaustivité prime.
+- Ne poses JAMAIS de questions à l'utilisateur, ne demandes JAMAIS de précisions. Produis toujours le livrable complet.
 
 Style rédactionnel :
-- Commence DIRECTEMENT par le contenu du rapport. N'écris jamais de phrase d'introduction sur tes recherches ("Je vais chercher...", "J'ai maintenant...").
+- Commence DIRECTEMENT par le contenu du rapport. N'écris jamais de phrase d'introduction sur tes recherches ("Je vais chercher...", "J'ai maintenant...", "Je rencontre des limitations...").
 - Écris comme un consultant senior rédigeant une note professionnelle, pas comme un outil IA générant un template.
 - Préfère la phrase structurée à la liste à puces excessive. Les listes sont acceptables pour des énumérations claires, pas pour tout.
 - N'ajoute aucune note méthodologique, orthographique ou procédurale dans le rapport final.
@@ -38,8 +40,18 @@ Recherche et présente :
 - Chiffre d'affaires estimé (si disponible)"""
 
 _STEP2_TEMPLATE = """## ÉTAPE 2 — Cartographie des concurrents
-Identifie les 5 à 10 concurrents directs en France et en Europe, y compris les acteurs de plus petite taille ou régionaux dès lors qu'ils opèrent sur le même marché.
-Pour chaque concurrent, effectue des recherches ciblées (site web, LinkedIn, presse, Pappers) et produis une fiche structurée en 3 blocs :
+Identifie AU MINIMUM 8 concurrents directs (idéalement 10 à 12), incluant PME régionales, spécialistes de niche et acteurs européens présents sur le marché français.
+
+MÉTHODE DE RECHERCHE — dans cet ordre :
+1. Recherche "[secteur] concurrent France" et "[activité] entreprise France site:pappers.fr"
+2. Recherche "[nom société] concurrent direct alternative"
+3. Recherche "benchmark [secteur] acteurs France"
+4. Pour chaque concurrent trouvé : 2 recherches ciblées (site officiel + Pappers ou LinkedIn)
+5. Si moins de 8 concurrents : chercher "[secteur] acteurs régionaux France" et "[secteur] PME France"
+
+RÈGLE : N'omets JAMAIS un concurrent identifié, même de petite taille. Une fiche avec des NC vaut mieux qu'un acteur manquant.
+
+Pour chaque concurrent, produis une fiche structurée complète :
 
 ### Concurrent N° — NOM DE L'ENTREPRISE
 
@@ -50,23 +62,24 @@ Pour chaque concurrent, effectue des recherches ciblées (site web, LinkedIn, pr
 | Statut | indépendant / filiale / groupe / coté en bourse |
 | Dirigeant | Prénom Nom, titre (PDG / DG / Fondateur) ou NC |
 | Fondation | année ou NC |
-| Effectifs | nombre ou NC |
+| Effectifs | nombre ou fourchette ou NC |
 
 **💼 Activité & Marché**
 | Champ | Information |
 |---|---|
-| Activité principale | description courte et précise |
-| Produits / Tech | offre principale |
-| Clients cibles | types de clients |
-| Géographie | marchés couverts |
-| CA estimé | montant ou NC |
+| Activité principale | description précise (2-3 lignes) |
+| Produits / Tech | offre détaillée — produits, logiciels, services |
+| Clients cibles | types de clients, secteurs, taille |
+| Géographie | marchés couverts (régions, pays) |
+| CA estimé | montant en M€ ou fourchette ou NC |
+| Point différenciant | ce qui les distingue clairement de la cible |
 
 **🔗 Liens & Sources**
 | Champ | Lien |
 |---|---|
 | Site web | URL du site officiel ou NC |
 | LinkedIn | URL page LinkedIn entreprise ou NC |
-| Source | URL article ou page de référence |
+| Source | URL article ou page de référence datée |
 
 ---"""
 
@@ -117,8 +130,8 @@ SYSTEM_PROMPTS = {
     ),
     "benchmark": (
         "Tu es un expert en M&A et en intelligence économique spécialisé sur le marché français.\n"
-        "Ton rôle est de produire un benchmark concurrentiel complet avec des fiches standardisées.\n\n"
-        "Effectue les ÉTAPES 1 et 2 (10 à 15 recherches web au total) et structure le rapport dans CET ORDRE EXACT :\n\n"
+        "Ton rôle est de produire un benchmark concurrentiel exhaustif avec des fiches détaillées et standardisées.\n\n"
+        "Effectue les ÉTAPES 1 et 2 (20 à 30 recherches web au total — sois thorough) et structure le rapport dans CET ORDRE EXACT :\n\n"
         + _STEP1_TEMPLATE + "\n\n"
         "---\n\n"
         "## Synthèse comparative et positionnement stratégique\n\n"
