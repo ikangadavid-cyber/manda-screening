@@ -1675,6 +1675,7 @@ Règles :
 # ══════════════════════════════════════════════════════════════════════════════
 elif st.session_state.screen == 4:
     from ma_agent import run_ma_module
+    import re as _re4
 
     universe   = st.session_state.ma_universe
     ma_company = st.session_state.ma_company
@@ -1687,237 +1688,320 @@ elif st.session_state.screen == 4:
     step_info  = steps_by_k.get(step_key, steps_list[0])
     step_idx   = step_keys.index(step_key) if step_key in step_keys else 0
 
-    uni_label  = "📈 Buy-side — Acquisition" if universe == "buy" else "📋 Sell-side — Cession / IM"
-    uni_color  = "#2E7D55" if universe == "buy" else "#7A5FA5"
-    uni_bg     = "#E8F5EE" if universe == "buy" else "#F0EBF8"
+    uni_color    = "#2E7D55" if universe == "buy" else "#7A5FA5"
+    uni_bg       = "#E8F5EE" if universe == "buy" else "#F0EBF8"
+    uni_label    = "Buy-side — Acquisition" if universe == "buy" else "Sell-side — Cession / IM"
+    uni_icon     = "📈" if universe == "buy" else "📋"
+    n_total      = len(steps_list)
+    n_done       = sum(1 for k in step_keys if k in results)
+    already_done = step_key in results
 
-    # ── Header ──────────────────────────────────────────────────────────────
-    hcol1, hcol2 = st.columns([4, 1])
-    with hcol1:
+    # ── Animations CSS ────────────────────────────────────────────────────────
+    st.markdown("""
+<style>
+@keyframes blink  { 0%,100%{opacity:1}  50%{opacity:0}   }
+@keyframes popIn  { 0%{transform:scale(.85);opacity:0} 70%{transform:scale(1.04)} 100%{transform:scale(1);opacity:1} }
+.ticker-pill  { animation: popIn 0.25s ease both; }
+.insight-card { animation: popIn 0.35s ease both; }
+.done-banner  { animation: popIn 0.4s ease both;  }
+</style>
+""", unsafe_allow_html=True)
+
+    # ── Header mission ────────────────────────────────────────────────────────
+    hc1, hc2 = st.columns([5, 1])
+    with hc1:
+        pct = int(n_done / n_total * 100)
         st.markdown(
-            f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">'
-            f'<div class="company-badge" style="margin:0;">🏢 {ma_company}</div>'
-            f'<span style="background:{uni_bg};color:{uni_color};border:1px solid {uni_color}40;'
-            f'border-radius:20px;padding:4px 12px;font-size:0.8rem;font-weight:700;">'
-            f'{uni_label}</span></div>',
+            f"""<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+  <span style="font-size:1.5rem;">{uni_icon}</span>
+  <div>
+    <div style="font-size:1.05rem;font-weight:800;color:#1A2744;letter-spacing:-0.3px;">
+      Mission {uni_label} &nbsp;·&nbsp; <span style="color:{uni_color};">{ma_company}</span>
+    </div>
+    <div style="font-size:0.76rem;color:#94A3B8;margin-top:2px;">
+      {n_done}/{n_total} étapes complétées{"&nbsp;·&nbsp;✅ Mission terminée !" if n_done == n_total else ""}
+    </div>
+  </div>
+</div>
+<div style="background:#E2E8F0;border-radius:99px;height:5px;overflow:hidden;margin-bottom:2px;">
+  <div style="background:linear-gradient(90deg,{uni_color},{uni_color}66);width:{pct}%;height:100%;
+              border-radius:99px;transition:width .5s ease;"></div>
+</div>""",
             unsafe_allow_html=True,
         )
-    with hcol2:
-        if st.button("← Accueil", use_container_width=True):
+    with hc2:
+        if st.button("✕ Quitter", use_container_width=True):
             st.session_state.screen = 1
             st.rerun()
 
-    # ── Barre de navigation des étapes (cliquable) ───────────────────────────
-    n_total = len(steps_list)
-    n_done  = sum(1 for k in step_keys if k in results)
-
+    # ── Pastilles d'étapes (cliquables si faites) ─────────────────────────────
     step_cols = st.columns(n_total)
-    for i, (col, s) in enumerate(zip(step_cols, steps_list)):
+    for col, s in zip(step_cols, steps_list):
         is_done    = s["key"] in results
         is_current = s["key"] == step_key
         with col:
-            if is_done:
-                bg, fg, border = "#D4EDDA", "#1B5E3B", "#A8D5B8"
-                label = f"✅ {s['num']}"
-            elif is_current:
-                bg, fg, border = uni_bg, uni_color, uni_color
-                label = f"▶ {s['num']}"
-            else:
-                bg, fg, border = "#F1F5F9", "#94A3B8", "#DDE4EA"
-                label = s["num"]
-            # Cliquable si déjà fait ou étape courante
             if is_done or is_current:
-                if st.button(
-                    label,
-                    key=f"stepnav_{s['key']}",
-                    use_container_width=True,
-                    help=s["title"],
-                ):
+                lbl = ("✅ " if is_done else "▶ ") + s["num"]
+                if st.button(lbl, key=f"snav_{s['key']}", use_container_width=True, help=s["title"]):
                     st.session_state.ma_step_key = s["key"]
                     st.rerun()
             else:
                 st.markdown(
-                    f'<div style="text-align:center;background:{bg};border:1px solid {border};'
-                    f'border-radius:8px;padding:6px 4px;color:{fg};font-size:0.78rem;font-weight:700;">'
-                    f'{label}</div>',
+                    f'<div style="text-align:center;background:#F1F5F9;border:1.5px solid #DDE4EA;'
+                    f'border-radius:8px;padding:6px 2px;color:#CBD5E1;font-size:0.78rem;font-weight:700;">'
+                    f'{s["num"]}</div>',
                     unsafe_allow_html=True,
                 )
 
-    # Barre de progression linéaire
-    pct = int(n_done / n_total * 100)
+    # Barre de progression fine
     st.markdown(
-        f'<div style="background:#DDD5C8;border-radius:4px;height:4px;margin:10px 0 18px 0;overflow:hidden;">'
+        f'<div style="background:#DDD5C8;border-radius:4px;height:3px;margin:12px 0 20px 0;overflow:hidden;">'
         f'<div style="background:{uni_color};width:{pct}%;height:100%;border-radius:4px;transition:width .4s;"></div>'
-        f'</div>'
-        f'<div style="font-size:0.76rem;color:#94A3B8;margin-bottom:16px;">'
-        f'{n_done}/{n_total} étapes complétées</div>',
+        f'</div>',
         unsafe_allow_html=True,
     )
 
-    st.markdown("---")
-
-    # ── En-tête de l'étape courante ──────────────────────────────────────────
+    # ── Carte étape courante ──────────────────────────────────────────────────
+    web_badge = (
+        '<span style="background:#EAF5EE;border:1px solid #A8D5B8;color:#2E6B45;'
+        'font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">'
+        '🌐 Recherche web · Sonnet</span>'
+        if step_info.get("web_search") else
+        '<span style="background:#EEF2F6;border:1px solid #CBD5E1;color:#64748B;'
+        'font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">'
+        '⚡ Rapide · Haiku</span>'
+    )
     st.markdown(
-        f'<div style="font-size:1.2rem;font-weight:800;color:#1A2744;margin-bottom:4px;">'
-        f'Étape {step_info["num"]} — {step_info["title"]}</div>'
-        f'<div style="font-size:0.86rem;color:#6B7A8D;margin-bottom:14px;">'
-        f'{step_info["desc"]}</div>',
+        f'<div style="background:#FDFAF5;border-left:4px solid {uni_color};border-radius:0 12px 12px 0;'
+        f'padding:18px 22px;margin-bottom:18px;box-shadow:0 2px 10px rgba(26,39,68,0.06);">'
+        f'<div style="font-size:0.7rem;font-weight:700;color:{uni_color};text-transform:uppercase;'
+        f'letter-spacing:0.09em;margin-bottom:5px;">Étape {step_info["num"]} / {n_total}</div>'
+        f'<div style="font-size:1.15rem;font-weight:800;color:#1A2744;margin-bottom:4px;">'
+        f'{step_info["title"]}</div>'
+        f'<div style="font-size:0.84rem;color:#6B7A8D;margin-bottom:10px;">{step_info["desc"]}</div>'
+        f'{web_badge}</div>',
         unsafe_allow_html=True,
     )
 
-    if step_info.get("web_search"):
+    # ── ÉTAT A : résultat déjà disponible ────────────────────────────────────
+    if already_done:
+        res_text = results[step_key]
+        n_rows   = len(_re4.findall(r'^\|[^-\|]', res_text, _re4.MULTILINE))
+        n_heads  = len(_re4.findall(r'^#{1,3} ', res_text, _re4.MULTILINE))
+        n_src    = len(_re4.findall(r'https?://', res_text))
+        m1 = f"{n_rows} lignes" if n_rows > 1 else f"{n_heads} sections" if n_heads else f"{len(res_text.split())} mots"
+        m2 = f"{n_src} sources" if n_src else "Structuré"
+
+        # Cartes de métriques
         st.markdown(
-            '<span style="background:#EAF5EE;border:1px solid #A8D5B8;color:#2E6B45;'
-            'font-size:0.75rem;font-weight:600;padding:3px 12px;border-radius:20px;">'
-            '🌐 Recherche web · Claude Sonnet</span>',
+            f'<div style="display:flex;gap:10px;margin-bottom:18px;">'
+            f'<div class="insight-card" style="flex:1;background:#E8F5EE;border:1px solid #A8D5B8;'
+            f'border-radius:10px;padding:12px;text-align:center;">'
+            f'<div style="font-size:1.25rem;font-weight:800;color:#1B5E3B;">{m1}</div>'
+            f'<div style="font-size:0.7rem;color:#2E7D55;font-weight:600;margin-top:2px;">Résultat</div></div>'
+            f'<div class="insight-card" style="flex:1;background:#E8F1F8;border:1px solid #B8D0E4;'
+            f'border-radius:10px;padding:12px;text-align:center;animation-delay:.07s;">'
+            f'<div style="font-size:1.25rem;font-weight:800;color:#2D5A7A;">{m2}</div>'
+            f'<div style="font-size:0.7rem;color:#4A7FA5;font-weight:600;margin-top:2px;">Qualité</div></div>'
+            f'<div class="insight-card" style="flex:1;background:#F0EBF8;border:1px solid #C4B0D8;'
+            f'border-radius:10px;padding:12px;text-align:center;animation-delay:.14s;">'
+            f'<div style="font-size:1.25rem;font-weight:800;color:#5A3F8A;">✅ OK</div>'
+            f'<div style="font-size:0.7rem;color:#7A5FA5;font-weight:600;margin-top:2px;">Export dispo</div></div>'
+            f'</div>',
             unsafe_allow_html=True,
         )
-    else:
-        st.markdown(
-            '<span style="background:#EEF2F6;border:1px solid #CBD5E1;color:#64748B;'
-            'font-size:0.75rem;font-weight:600;padding:3px 12px;border-radius:20px;">'
-            '⚡ Sans recherche web · Claude Haiku (rapide)</span>',
-            unsafe_allow_html=True,
-        )
-    st.markdown('<div style="margin-bottom:14px;"></div>', unsafe_allow_html=True)
 
-    # ── Zone d'input ────────────────────────────────────────────────────────
-    input_key  = f"ma_input_{step_key}"
-    step_input = ""
-
-    if step_info.get("needs_input"):
-        # Pré-remplissage auto depuis l'étape précédente
-        if input_key not in st.session_state and step_idx > 0:
-            prev_key = step_keys[step_idx - 1]
-            if prev_key in results:
-                st.session_state[input_key] = results[prev_key][:4000]
-
-        step_input = st.text_area(
-            step_info["input_label"],
-            value=st.session_state.get(input_key, ""),
-            placeholder=step_info["input_hint"],
-            height=200,
-            key=f"ta_{step_key}",
-        )
-        st.session_state[input_key] = step_input
-
-        up_files = st.file_uploader(
-            "Joindre des documents (optionnel)",
-            type=["pdf", "docx", "txt", "md", "xlsx"],
-            accept_multiple_files=True,
-            key=f"up_{step_key}",
-        )
-        if up_files:
-            from document_extractor import extract_text
-            for uf in up_files[:3]:
-                step_input += f"\n\n--- {uf.name} ---\n{extract_text(uf)}"
-
-    # ── Boutons Lancer / Relancer ────────────────────────────────────────────
-    already_done = step_key in results
-    run_label = (
-        "🔄 Relancer" if already_done
-        else ("🔍 Lancer avec recherche web" if step_info.get("web_search") else "⚡ Lancer")
-    )
-    launch = st.button(run_label, key=f"run_{step_key}", type="primary", use_container_width=True)
-
-    # ── Résultat existant ────────────────────────────────────────────────────
-    if already_done and not launch:
-        st.markdown("---")
-        st.markdown(
-            '<div style="font-size:0.8rem;font-weight:600;color:#2E7D55;margin-bottom:8px;">✅ Résultat</div>',
-            unsafe_allow_html=True,
-        )
-        with st.container(border=True):
-            st.markdown(results[step_key])
-        try:
-            from word_generator import generate_word
-            fname = f"{ma_company}_{step_info['num']}_{step_info['title'].replace(' ','_')}.docx"
-            st.download_button(
-                "📝 Télécharger Word",
-                data=generate_word(results[step_key], ma_company, "fiche"),
-                file_name=fname,
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            )
-        except Exception:
-            pass
-
-    # ── Lancement ────────────────────────────────────────────────────────────
-    elif launch:
-        os.environ["ANTHROPIC_API_KEY"] = anthropic_key
-        if tavily_key:
-            os.environ["TAVILY_API_KEY"] = tavily_key
-
-        search_status = st.empty()
-        result_ph     = st.empty()
-
-        def _on_text(text):
-            result_ph.markdown(
-                f'<div class="result-box" style="max-height:400px;overflow-y:auto;">'
-                f'{text[:6000]}</div>',
-                unsafe_allow_html=True,
-            )
-
-        def _on_tool(name, inp):
-            q = inp.get("query", "")[:70] if isinstance(inp, dict) else ""
-            search_status.markdown(
-                f'<div style="font-size:0.78rem;color:#6B7A8D;padding:6px 0;">'
-                f'🔍 {q}…</div>',
-                unsafe_allow_html=True,
-            )
-
-        try:
-            with st.spinner(f"Étape {step_info['num']} — {step_info['title']}…"):
-                result = run_ma_module(
-                    module_key=step_key,
-                    company=ma_company,
-                    input_data=step_input,
-                    on_text=_on_text,
-                    on_tool_use=_on_tool,
-                )
-
-            new_results = dict(results)
-            new_results[step_key] = result
-            st.session_state.ma_step_result = new_results
-
-            search_status.empty()
-            result_ph.empty()
-            st.markdown(
-                '<div style="font-size:0.8rem;font-weight:600;color:#2E7D55;margin-bottom:8px;">✅ Terminé</div>',
-                unsafe_allow_html=True,
-            )
-            with st.container(border=True):
-                st.markdown(result)
+        with st.expander("📄 Voir le résultat complet", expanded=False):
+            st.markdown(res_text)
             try:
                 from word_generator import generate_word
-                fname = f"{ma_company}_{step_info['num']}_{step_info['title'].replace(' ','_')}.docx"
+                fname = f"{ma_company}_{step_info['num']}_{step_info['title'].replace(' ', '_')}.docx"
                 st.download_button(
-                    "📝 Télécharger Word",
-                    data=generate_word(result, ma_company, "fiche"),
+                    "📝 Télécharger en Word",
+                    data=generate_word(res_text, ma_company, "fiche"),
                     file_name=fname,
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 )
             except Exception:
                 pass
 
-        except Exception as e:
-            st.error(f"Erreur : {e}")
+        if st.button("🔄 Relancer cette étape", key=f"rerun_{step_key}"):
+            new_r = {k: v for k, v in results.items() if k != step_key}
+            st.session_state.ma_step_result = new_r
+            st.rerun()
 
-    # ── Navigation prev / next ────────────────────────────────────────────────
-    st.markdown("---")
-    nc1, nc2, nc3 = st.columns([1, 2, 1])
-    with nc1:
-        if step_idx > 0:
-            prev_s = steps_list[step_idx - 1]
-            if st.button(f"← {prev_s['num']}. {prev_s['title']}", key=f"prev_{step_key}", use_container_width=True):
-                st.session_state.ma_step_key = prev_s["key"]
-                st.rerun()
-    with nc3:
-        if step_idx < len(steps_list) - 1:
-            next_s = steps_list[step_idx + 1]
-            if st.button(f"{next_s['num']}. {next_s['title']} →", key=f"next_{step_key}", type="primary", use_container_width=True):
-                # Pré-remplir l'input de la prochaine étape avec le résultat courant
-                next_ik = f"ma_input_{next_s['key']}"
-                if next_s.get("needs_input") and step_key in st.session_state.ma_step_result:
-                    st.session_state[next_ik] = st.session_state.ma_step_result.get(step_key, "")[:4000]
-                st.session_state.ma_step_key = next_s["key"]
+        # Navigation
+        st.markdown("---")
+        nav1, _, nav3 = st.columns([1, 2, 1])
+        with nav1:
+            if step_idx > 0:
+                ps = steps_list[step_idx - 1]
+                if st.button(f"← {ps['num']}. {ps['title']}", key=f"prev_{step_key}", use_container_width=True):
+                    st.session_state.ma_step_key = ps["key"]
+                    st.rerun()
+        with nav3:
+            if step_idx < n_total - 1:
+                ns = steps_list[step_idx + 1]
+                if st.button(f"Étape suivante : {ns['title']} →", key=f"next_{step_key}",
+                             type="primary", use_container_width=True):
+                    nk = f"ma_input_{ns['key']}"
+                    if ns.get("needs_input"):
+                        st.session_state[nk] = results.get(step_key, "")[:4000]
+                    st.session_state.ma_step_key = ns["key"]
+                    st.rerun()
+            else:
+                st.success("🎉 Mission complète — toutes les étapes sont terminées.")
+
+    # ── ÉTAT B : étape à lancer ───────────────────────────────────────────────
+    else:
+        input_key  = f"ma_input_{step_key}"
+        step_input = ""
+
+        if step_info.get("needs_input"):
+            if input_key not in st.session_state and step_idx > 0:
+                pk = step_keys[step_idx - 1]
+                if pk in results:
+                    st.session_state[input_key] = results[pk][:4000]
+
+            step_input = st.text_area(
+                step_info["input_label"],
+                value=st.session_state.get(input_key, ""),
+                placeholder=step_info["input_hint"],
+                height=190,
+                key=f"ta_{step_key}",
+            )
+            st.session_state[input_key] = step_input
+
+            up_files = st.file_uploader(
+                "Joindre un document (optionnel)",
+                type=["pdf", "docx", "txt", "md", "xlsx"],
+                accept_multiple_files=True,
+                key=f"up_{step_key}",
+            )
+            if up_files:
+                from document_extractor import extract_text
+                for uf in up_files[:3]:
+                    step_input += f"\n\n--- {uf.name} ---\n{extract_text(uf)}"
+
+        run_label = "🔍 Lancer la recherche" if step_info.get("web_search") else "⚡ Lancer l'analyse"
+        launch = st.button(run_label, key=f"run_{step_key}", type="primary", use_container_width=True)
+
+        if launch:
+            os.environ["ANTHROPIC_API_KEY"] = anthropic_key
+            if tavily_key:
+                os.environ["TAVILY_API_KEY"] = tavily_key
+
+            ticker_ph = st.empty()
+            output_ph = st.empty()
+            queries   = []
+
+            def _on_tool(name, inp):
+                q = (inp.get("query", inp.get("q", ""))[:75] if isinstance(inp, dict) else str(inp)[:75])
+                if q:
+                    queries.append(q)
+                pills = "".join(
+                    f'<span class="ticker-pill" style="display:inline-block;background:#1E293B;'
+                    f'color:#94A3B8;border-radius:20px;padding:3px 10px;font-size:0.7rem;'
+                    f'margin:2px 2px;font-family:monospace;">🔍 {qx}</span>'
+                    for qx in queries[-7:]
+                )
+                ticker_ph.markdown(
+                    f'<div style="background:#0F172A;border-radius:10px;padding:10px 14px;'
+                    f'margin-bottom:8px;">'
+                    f'<div style="font-size:0.62rem;color:#475569;font-weight:700;'
+                    f'text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">'
+                    f'🛰 Sources consultées ({len(queries)})</div>'
+                    f'<div style="display:flex;flex-wrap:wrap;gap:3px;">{pills}</div></div>',
+                    unsafe_allow_html=True,
+                )
+
+            def _on_text(text):
+                cursor = (f'<span style="display:inline-block;width:2px;height:13px;'
+                          f'background:{uni_color};margin-left:2px;vertical-align:middle;'
+                          f'animation:blink 1s step-end infinite;"></span>')
+                output_ph.markdown(
+                    f'<div style="background:#FFFFFF;border:1px solid #DDD5C8;border-radius:10px;'
+                    f'padding:20px 24px;max-height:340px;overflow-y:auto;'
+                    f'font-size:0.87rem;line-height:1.8;color:#1A202C;">'
+                    + text[:5000].replace("\n", "<br>")
+                    + cursor + '</div>',
+                    unsafe_allow_html=True,
+                )
+
+            try:
+                with st.spinner(""):
+                    result = run_ma_module(
+                        module_key=step_key,
+                        company=ma_company,
+                        input_data=step_input,
+                        on_text=_on_text,
+                        on_tool_use=_on_tool,
+                    )
+
+                new_results = dict(results)
+                new_results[step_key] = result
+                st.session_state.ma_step_result = new_results
+
+                ticker_ph.empty()
+                output_ph.empty()
+
+                # Banner de succès
+                n_rows  = len(_re4.findall(r'^\|[^-\|]', result, _re4.MULTILINE))
+                n_heads = len(_re4.findall(r'^#{1,3} ', result, _re4.MULTILINE))
+                m1 = f"{n_rows} lignes" if n_rows > 1 else f"{n_heads} sections" if n_heads else f"{len(result.split())} mots"
+                src_count = f" · {len(queries)} sources" if queries else ""
+
+                st.markdown(
+                    f'<div class="done-banner" style="background:linear-gradient(135deg,{uni_color} 0%,{uni_color}99 100%);'
+                    f'border-radius:14px;padding:18px 24px;margin:12px 0;color:#FFFFFF;'
+                    f'display:flex;align-items:center;gap:16px;">'
+                    f'<div style="font-size:2rem;">✅</div>'
+                    f'<div><div style="font-weight:800;font-size:1.05rem;">Étape {step_info["num"]} terminée</div>'
+                    f'<div style="opacity:.85;font-size:0.82rem;margin-top:2px;">'
+                    f'{step_info["title"]} · {m1}{src_count}</div></div></div>',
+                    unsafe_allow_html=True,
+                )
+
+                with st.expander("📄 Voir le résultat", expanded=True):
+                    st.markdown(result)
+                    try:
+                        from word_generator import generate_word
+                        fname = f"{ma_company}_{step_info['num']}_{step_info['title'].replace(' ', '_')}.docx"
+                        st.download_button(
+                            "📝 Télécharger en Word",
+                            data=generate_word(result, ma_company, "fiche"),
+                            file_name=fname,
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        )
+                    except Exception:
+                        pass
+
+                if step_idx < n_total - 1:
+                    ns = steps_list[step_idx + 1]
+                    st.markdown('<div style="margin-top:14px;"></div>', unsafe_allow_html=True)
+                    if st.button(
+                        f"Passer à l'étape {ns['num']} — {ns['title']} →",
+                        key=f"next_after_run_{step_key}",
+                        type="primary",
+                        use_container_width=True,
+                    ):
+                        nk = f"ma_input_{ns['key']}"
+                        if ns.get("needs_input"):
+                            st.session_state[nk] = result[:4000]
+                        st.session_state.ma_step_key = ns["key"]
+                        st.rerun()
+                else:
+                    st.balloons()
+                    st.success("🎉 Mission complète — toutes les étapes sont terminées !")
+
+            except Exception as e:
+                ticker_ph.empty()
+                output_ph.empty()
+                st.error(f"Erreur : {e}")
+
+        elif step_idx > 0:
+            st.markdown("---")
+            ps = steps_list[step_idx - 1]
+            if st.button(f"← {ps['num']}. {ps['title']}", key=f"prev_{step_key}"):
+                st.session_state.ma_step_key = ps["key"]
                 st.rerun()
