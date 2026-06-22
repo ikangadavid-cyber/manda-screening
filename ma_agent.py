@@ -8,8 +8,6 @@ import time
 import anthropic
 from tools import TOOL_DEFINITIONS, execute_tool
 
-MODEL = "claude-sonnet-4-6"
-
 # Répertoire de base = dossier contenant ce fichier (manda-screening/)
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -21,6 +19,36 @@ WEB_SEARCH_MODULES = {
     "buy_04_profil_entreprise",
     "buy_05_qualification_cibles",
 }
+
+# Modèle par module : Sonnet pour web-search, Haiku pour les slides (3x plus rapide, 4x moins cher)
+MODEL_BY_MODULE = {
+    "buy_01_carto_verticale":       "claude-sonnet-4-6",
+    "buy_02_carto_horizontale":     "claude-sonnet-4-6",
+    "buy_03_recherche_cibles":      "claude-sonnet-4-6",
+    "buy_04_profil_entreprise":     "claude-sonnet-4-6",
+    "buy_05_qualification_cibles":  "claude-sonnet-4-6",
+    "buy_06_slide_bandeau":         "claude-haiku-4-5-20251001",
+    "buy_07_slide_vert_pos":        "claude-haiku-4-5-20251001",
+    "buy_08_slide_horiz_rationnel": "claude-haiku-4-5-20251001",
+    "buy_09_slide_horiz_pos":       "claude-haiku-4-5-20251001",
+    "buy_10_slide_vert_rationnel":  "claude-haiku-4-5-20251001",
+    "sell_01_rapport_entretien":    "claude-haiku-4-5-20251001",
+    "sell_02_plan_im":              "claude-sonnet-4-6",
+    "sell_03_redaction_slides":     "claude-sonnet-4-6",
+    "sell_04_reformulation":        "claude-haiku-4-5-20251001",
+}
+
+# Tokens max par module (slides n'ont pas besoin de 8096)
+MAX_TOKENS_BY_MODULE = {
+    "buy_06_slide_bandeau":         4096,
+    "buy_07_slide_vert_pos":        2048,
+    "buy_08_slide_horiz_rationnel": 2048,
+    "buy_09_slide_horiz_pos":       2048,
+    "buy_10_slide_vert_rationnel":  2048,
+    "sell_01_rapport_entretien":    6000,
+    "sell_04_reformulation":        4096,
+}
+DEFAULT_MAX_TOKENS = 8096
 
 PROMPT_FILES = {
     # Buy-side
@@ -48,7 +76,6 @@ def _load_prompt(module_key: str, company: str) -> str:
     1. st.secrets["prompts"][module_key]  → production Streamlit Cloud
     2. Fichier local prompts/…            → usage local / dev
     """
-    # ── Essai depuis st.secrets (Streamlit Cloud) ──────────────────────────
     try:
         import streamlit as _st
         text = _st.secrets["prompts"][module_key]
@@ -56,7 +83,6 @@ def _load_prompt(module_key: str, company: str) -> str:
     except Exception:
         pass
 
-    # ── Fallback : fichier local ────────────────────────────────────────────
     rel = PROMPT_FILES.get(module_key)
     if not rel:
         raise FileNotFoundError(f"Prompt introuvable : {module_key}")
@@ -73,11 +99,7 @@ def _load_prompt(module_key: str, company: str) -> str:
 
 
 def _split_prompt(prompt_text: str) -> tuple[str, str]:
-    """
-    Sépare le prompt en (system_instructions, input_placeholder).
-    Cherche 'Partie 3', 'PARTIE 3', 'INPUT', '[A compléter]' comme séparateurs.
-    """
-    # Patterns qui marquent le début de la section INPUT
+    """Sépare le prompt en (system_instructions, input_section)."""
     splits = [
         r"Partie\s+3\s*[:\-—]*\s*INPUT",
         r"PARTIE\s+3\s*[:\-—]*\s*INPUT",
@@ -89,8 +111,7 @@ def _split_prompt(prompt_text: str) -> tuple[str, str]:
     for pattern in splits:
         m = re.search(pattern, prompt_text, re.IGNORECASE)
         if m:
-            return prompt_text[: m.start()].strip(), prompt_text[m.start() :].strip()
-    # Pas de séparation trouvée : tout est instruction système
+            return prompt_text[: m.start()].strip(), prompt_text[m.start():].strip()
     return prompt_text.strip(), ""
 
 
@@ -101,7 +122,6 @@ def run_ma_module(
     on_text=None,
     on_tool_use=None,
     on_tool_result=None,
-    on_step=None,
 ):
     """
     Exécute un module M&A.
@@ -109,38 +129,38 @@ def run_ma_module(
     Args:
         module_key:   Clé du module (cf. PROMPT_FILES)
         company:      Nom de l'acquéreur ou de la société cédée
-        input_data:   Données supplémentaires à passer comme INPUT (résultats des étapes précédentes, etc.)
+        input_data:   Données à passer comme INPUT (résultats étapes précédentes, etc.)
         on_text:      Callback texte accumulé
-        on_tool_use:  Callback outil déclenché
+        on_tool_use:  Callback outil déclenché (name, inputs)
         on_tool_result: Callback résultat outil
-        on_step:      Callback changement d'étape (nom)
     """
     client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
-    prompt_text = _load_prompt(module_key, company)
-    instructions, input_section = _split_prompt(prompt_text)
+    model      = MODEL_BY_MODULE.get(module_key, "claude-sonnet-4-6")
+    max_tokens = MAX_TOKENS_BY_MODULE.get(module_key, DEFAULT_MAX_TOKENS)
 
-    # Construire le message utilisateur
+    prompt_text = _load_prompt(module_key, company)
+    instructions, _ = _split_prompt(prompt_text)
+
     user_parts = [f"Société / Acquéreur : **{company}**"]
     if input_data and input_data.strip():
         user_parts.append(f"\n\n**INPUT / Données disponibles :**\n{input_data.strip()}")
     user_message = "\n".join(user_parts)
 
     use_web = module_key in WEB_SEARCH_MODULES
-    tools = TOOL_DEFINITIONS if use_web else []
+    tools   = TOOL_DEFINITIONS if use_web else []
 
-    messages = [{"role": "user", "content": user_message}]
+    messages      = [{"role": "user", "content": user_message}]
     full_response = ""
-    emitted_steps: set = set()
 
     while True:
         for attempt in range(6):
             try:
                 kwargs = {
-                    "model": MODEL,
-                    "max_tokens": 8096,
-                    "system": instructions,
-                    "messages": messages,
+                    "model":      model,
+                    "max_tokens": max_tokens,
+                    "system":     instructions,
+                    "messages":   messages,
                 }
                 if tools:
                     kwargs["tools"] = tools
@@ -171,9 +191,9 @@ def run_ma_module(
                     if on_tool_result:
                         on_tool_result(result)
                     tool_results.append({
-                        "type": "tool_result",
+                        "type":        "tool_result",
                         "tool_use_id": block.id,
-                        "content": result,
+                        "content":     result,
                     })
             messages.append({"role": "user", "content": tool_results})
         else:

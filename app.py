@@ -401,163 +401,162 @@ ESTIMATED_SECONDS = {
 
 BUY_SIDE_STEPS = [
     {
-        "key":          "buy_01_carto_verticale",
-        "num":          "1a",
-        "title":        "Cartographie Verticale",
-        "desc":         "Mappe la chaîne de valeur (3-8 catégories d'acteurs amont/aval)",
-        "web_search":   True,
-        "needs_input":  False,
-        "input_label":  None,
-        "input_hint":   None,
+        "key":         "buy_01_carto_verticale",
+        "num":         "1a",
+        "title":       "Chaîne de valeur",
+        "desc":        "Cartographie verticale — acteurs amont / aval et position de l'acquéreur",
+        "web_search":  True,
+        "needs_input": False,
+        "input_label": None,
+        "input_hint":  None,
     },
     {
-        "key":          "buy_02_carto_horizontale",
-        "num":          "1b",
-        "title":        "Cartographie Horizontale",
-        "desc":         "Mappe les segments concurrentiels (2-5 segments)",
-        "web_search":   True,
-        "needs_input":  False,
-        "input_label":  None,
-        "input_hint":   None,
+        "key":         "buy_02_carto_horizontale",
+        "num":         "1b",
+        "title":       "Segments concurrentiels",
+        "desc":        "Cartographie horizontale — 2 à 5 segments de marché et rivalité",
+        "web_search":  True,
+        "needs_input": False,
+        "input_label": None,
+        "input_hint":  None,
     },
     {
-        "key":          "buy_03_recherche_cibles",
-        "num":          "2",
-        "title":        "Recherche de Cibles",
-        "desc":         "Génère une short-list de 30 cibles potentielles d'acquisition",
-        "web_search":   True,
-        "needs_input":  True,
-        "input_label":  "Contexte de l'acquéreur",
-        "input_hint":   (
-            "Décrivez le secteur d'activité, la taille et la stratégie de l'acquéreur.\n"
-            "Ex : intégrateur industriel en électricité et automatisme, CA ~15M€, "
-            "cherche des cibles en France entre 3 et 15M€ de CA dans l'intégration électrique."
+        "key":         "buy_03_recherche_cibles",
+        "num":         "2",
+        "title":       "Long-list de cibles",
+        "desc":        "30 cibles d'acquisition potentielles avec fit stratégique et sources",
+        "web_search":  True,
+        "needs_input": True,
+        "input_label": "Contexte de l'acquéreur",
+        "input_hint":  (
+            "Secteur d'activité, CA approximatif, fourchette de taille cible, zone géographique, stratégie.\n"
+            "Ex : intégrateur industriel électricité / automatisme, CA ~15M€, cibles France 3-15M€."
         ),
     },
     {
-        "key":          "buy_04_profil_entreprise",
-        "num":          "3",
-        "title":        "Profil des Entreprises",
-        "desc":         "Analyse approfondie de chaque cible identifiée",
-        "web_search":   True,
-        "needs_input":  True,
-        "input_label":  "Liste des cibles à analyser",
-        "input_hint":   (
-            "Copiez les noms des sociétés à analyser (une par ligne), "
-            "ou collez les résultats de l'étape Recherche de Cibles."
+        "key":         "buy_04_profil_entreprise",
+        "num":         "3",
+        "title":       "Fiches cibles",
+        "desc":        "Analyse approfondie de chaque société sélectionnée (offre, clients, finances, actionnariat)",
+        "web_search":  True,
+        "needs_input": True,
+        "input_label": "Sociétés à analyser",
+        "input_hint":  (
+            "Noms des sociétés à profiler (une par ligne). "
+            "Ou collez directement les résultats de l'étape Long-list."
         ),
     },
     {
-        "key":          "buy_05_qualification_cibles",
-        "num":          "4",
-        "title":        "Qualification des Cibles",
-        "desc":         "Note chaque cible (Liste 1 / 2 / 3) avec verdict M&A",
-        "web_search":   True,
-        "needs_input":  True,
-        "input_label":  "Profils des cibles + contexte acquéreur",
-        "input_hint":   (
-            "Collez les résultats de l'étape Profil des Entreprises. "
-            "Ajoutez en tête une description de l'acquéreur si elle n'est pas déjà fournie."
+        "key":         "buy_05_qualification_cibles",
+        "num":         "4",
+        "title":       "Sélection & verdict M&A",
+        "desc":        "Classement Liste 1 / 2 / 3 avec rationnel d'acquisition pour chaque cible",
+        "web_search":  True,
+        "needs_input": True,
+        "input_label": "Fiches cibles + contexte acquéreur",
+        "input_hint":  (
+            "Collez les fiches de l'étape précédente et, si nécessaire, "
+            "ajoutez une description de l'acquéreur en tête."
         ),
     },
     {
-        "key":          "buy_06_slide_bandeau",
-        "num":          "5a",
-        "title":        "Slide Fiche Cible (bandeau)",
-        "desc":         "Contenu PPT pour chaque cible retenue — format bandeau",
-        "web_search":   False,
-        "needs_input":  True,
-        "input_label":  "Données des cibles qualifiées",
-        "input_hint":   "Collez les résultats de la qualification (jusqu'à 3 cibles).",
+        "key":         "buy_06_slide_bandeau",
+        "num":         "5a",
+        "title":       "Slide — Fiche cible",
+        "desc":        "Contenu PPT prêt à intégrer — format bandeau (1 ligne / cible)",
+        "web_search":  False,
+        "needs_input": True,
+        "input_label": "Cibles retenues (max 3)",
+        "input_hint":  "Collez les fiches des cibles sélectionnées (liste 1 uniquement).",
     },
     {
-        "key":          "buy_07_slide_vert_pos",
-        "num":          "5b",
-        "title":        "Slide Mapping Vertical — Positionnement",
-        "desc":         "Tableau PPT : catégories verticales + note de positionnement (0-3)",
-        "web_search":   False,
-        "needs_input":  True,
-        "input_label":  "Résultats Cartographie Verticale",
-        "input_hint":   "Collez les résultats de l'étape 1a.",
+        "key":         "buy_07_slide_vert_pos",
+        "num":         "5b",
+        "title":       "Slide — Positionnement vertical",
+        "desc":        "Tableau PPT : catégories de la chaîne de valeur + note de positionnement acquéreur (0-3)",
+        "web_search":  False,
+        "needs_input": True,
+        "input_label": "Résultats étape 1a",
+        "input_hint":  "Collez le tableau de cartographie verticale (étape 1a).",
     },
     {
-        "key":          "buy_08_slide_horiz_rationnel",
-        "num":          "5c",
-        "title":        "Slide Mapping Horizontal — Rationnel M&A",
-        "desc":         "Tableau PPT : segments + rationnel de rachat + note appétit (0-3)",
-        "web_search":   False,
-        "needs_input":  True,
-        "input_label":  "Résultats Cartographie Horizontale",
-        "input_hint":   "Collez les résultats de l'étape 1b.",
+        "key":         "buy_08_slide_horiz_rationnel",
+        "num":         "5c",
+        "title":       "Slide — Rationnel M&A horizontal",
+        "desc":        "Tableau PPT : segments concurrentiels + rationnel de rachat + note d'appétit M&A (0-3)",
+        "web_search":  False,
+        "needs_input": True,
+        "input_label": "Résultats étape 1b",
+        "input_hint":  "Collez le tableau de cartographie horizontale (étape 1b).",
     },
     {
-        "key":          "buy_09_slide_horiz_pos",
-        "num":          "5d",
-        "title":        "Slide Mapping Horizontal — Positionnement",
-        "desc":         "Tableau PPT : segments + note de présence de l'acquéreur (0-3)",
-        "web_search":   False,
-        "needs_input":  True,
-        "input_label":  "Résultats Cartographie Horizontale",
-        "input_hint":   "Collez les résultats de l'étape 1b.",
+        "key":         "buy_09_slide_horiz_pos",
+        "num":         "5d",
+        "title":       "Slide — Positionnement horizontal",
+        "desc":        "Tableau PPT : segments concurrentiels + note de présence de l'acquéreur (0-3)",
+        "web_search":  False,
+        "needs_input": True,
+        "input_label": "Résultats étape 1b",
+        "input_hint":  "Collez le tableau de cartographie horizontale (étape 1b).",
     },
     {
-        "key":          "buy_10_slide_vert_rationnel",
-        "num":          "5e",
-        "title":        "Slide Mapping Vertical — Rationnel M&A",
-        "desc":         "Tableau PPT : catégories verticales + rationnel de rachat + note appétit (0-3)",
-        "web_search":   False,
-        "needs_input":  True,
-        "input_label":  "Résultats Cartographie Verticale",
-        "input_hint":   "Collez les résultats de l'étape 1a.",
+        "key":         "buy_10_slide_vert_rationnel",
+        "num":         "5e",
+        "title":       "Slide — Rationnel M&A vertical",
+        "desc":        "Tableau PPT : catégories de la chaîne de valeur + rationnel de rachat + note d'appétit (0-3)",
+        "web_search":  False,
+        "needs_input": True,
+        "input_label": "Résultats étape 1a",
+        "input_hint":  "Collez le tableau de cartographie verticale (étape 1a).",
     },
 ]
 
 SELL_SIDE_STEPS = [
     {
-        "key":          "sell_01_rapport_entretien",
-        "num":          "1",
-        "title":        "Rapport d'Entretien",
-        "desc":         "Transforme une transcription d'entretien en rapport structuré",
-        "web_search":   False,
-        "needs_input":  True,
-        "input_label":  "Transcription de l'entretien",
-        "input_hint":   "Collez ici la transcription complète de l'entretien avec le dirigeant.",
+        "key":         "sell_01_rapport_entretien",
+        "num":         "1",
+        "title":       "Rapport d'entretien",
+        "desc":        "Retranscription structurée de l'entretien dirigeant en rapport thématique factuel",
+        "web_search":  False,
+        "needs_input": True,
+        "input_label": "Transcription de l'entretien",
+        "input_hint":  "Collez ici la transcription complète de l'entretien (verbatim ou reformulé).",
     },
     {
-        "key":          "sell_02_plan_im",
-        "num":          "2",
-        "title":        "Plan de l'Information Memorandum",
-        "desc":         "Construit l'architecture du Mémo (~50 slides en 6 sections)",
-        "web_search":   False,
-        "needs_input":  True,
-        "input_label":  "Contexte de la société cédée",
-        "input_hint":   (
-            "Décrivez la société : activité, positionnement, KPIs clés, actionnariat, contexte de la cession.\n"
-            "Ajoutez si disponible le rapport d'entretien (étape 1)."
+        "key":         "sell_02_plan_im",
+        "num":         "2",
+        "title":       "Plan de l'IM",
+        "desc":        "Architecture détaillée de l'Information Memorandum — ~50 slides en 6 sections",
+        "web_search":  False,
+        "needs_input": True,
+        "input_label": "Contexte de la société",
+        "input_hint":  (
+            "Activité, positionnement, KPIs clés, actionnariat, contexte de la cession.\n"
+            "Ajoutez le rapport d'entretien (étape 1) si disponible."
         ),
     },
     {
-        "key":          "sell_03_redaction_slides",
-        "num":          "3",
-        "title":        "Rédaction des Slides IM",
-        "desc":         "Rédige le contenu complet de slides spécifiques (standalone)",
-        "web_search":   False,
-        "needs_input":  True,
-        "input_label":  "Plan IM + slides à rédiger + données source",
-        "input_hint":   (
-            "Indiquez les numéros et titres des slides à rédiger. "
-            "Collez le plan IM (étape 2) et les données source disponibles."
+        "key":         "sell_03_redaction_slides",
+        "num":         "3",
+        "title":       "Rédaction des slides",
+        "desc":        "Contenu rédactionnel complet de chaque slide — standalone, orienté investisseur",
+        "web_search":  False,
+        "needs_input": True,
+        "input_label": "Plan IM + slides à rédiger + données source",
+        "input_hint":  (
+            "Précisez les numéros et titres des slides à produire. "
+            "Collez le plan IM (étape 2) et toutes les données disponibles."
         ),
     },
     {
-        "key":          "sell_04_reformulation",
-        "num":          "4",
-        "title":        "Reformulation de Slides",
-        "desc":         "Améliore et source le contenu existant d'une slide",
-        "web_search":   False,
-        "needs_input":  True,
-        "input_label":  "Contenu de la slide à reformuler",
-        "input_hint":   "Collez le contenu existant de la slide (texte brut ou markdown).",
+        "key":         "sell_04_reformulation",
+        "num":         "4",
+        "title":       "Reformulation & sourcing",
+        "desc":        "Amélioration et sourcing du contenu d'une slide existante — original / reformulé / justification",
+        "web_search":  False,
+        "needs_input": True,
+        "input_label": "Slide à reformuler",
+        "input_hint":  "Collez le contenu brut de la slide (texte, bullet points ou markdown).",
     },
 ]
 
@@ -1672,15 +1671,15 @@ Règles :
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SCREEN 4 — MISSION M&A (buy-side ou sell-side, wizard étape par étape)
+# SCREEN 4 — MISSION M&A (wizard étape par étape)
 # ══════════════════════════════════════════════════════════════════════════════
 elif st.session_state.screen == 4:
     from ma_agent import run_ma_module
 
-    universe   = st.session_state.ma_universe   # "buy" or "sell"
+    universe   = st.session_state.ma_universe
     ma_company = st.session_state.ma_company
     step_key   = st.session_state.ma_step_key
-    results    = st.session_state.ma_step_result  # dict step_key -> text
+    results    = st.session_state.ma_step_result
 
     steps_list = BUY_SIDE_STEPS if universe == "buy" else SELL_SIDE_STEPS
     steps_by_k = BUY_SIDE_STEPS_BY_KEY if universe == "buy" else SELL_SIDE_STEPS_BY_KEY
@@ -1688,253 +1687,237 @@ elif st.session_state.screen == 4:
     step_info  = steps_by_k.get(step_key, steps_list[0])
     step_idx   = step_keys.index(step_key) if step_key in step_keys else 0
 
-    universe_label = "📈 Buy-side — Acquisition" if universe == "buy" else "📋 Sell-side — Cession / IM"
-    universe_color = "#2E7D55" if universe == "buy" else "#7A5FA5"
+    uni_label  = "📈 Buy-side — Acquisition" if universe == "buy" else "📋 Sell-side — Cession / IM"
+    uni_color  = "#2E7D55" if universe == "buy" else "#7A5FA5"
+    uni_bg     = "#E8F5EE" if universe == "buy" else "#F0EBF8"
 
     # ── Header ──────────────────────────────────────────────────────────────
-    st.markdown(
-        f'<div class="company-badge">🏢 {ma_company}</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        f'<span class="progress-deliverable" style="background:#F0EBF8;border-color:#B8A4D4;color:{universe_color};">'
-        f'{universe_label}</span>',
-        unsafe_allow_html=True,
-    )
+    hcol1, hcol2 = st.columns([4, 1])
+    with hcol1:
+        st.markdown(
+            f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">'
+            f'<div class="company-badge" style="margin:0;">🏢 {ma_company}</div>'
+            f'<span style="background:{uni_bg};color:{uni_color};border:1px solid {uni_color}40;'
+            f'border-radius:20px;padding:4px 12px;font-size:0.8rem;font-weight:700;">'
+            f'{uni_label}</span></div>',
+            unsafe_allow_html=True,
+        )
+    with hcol2:
+        if st.button("← Accueil", use_container_width=True):
+            st.session_state.screen = 1
+            st.rerun()
 
-    # ── Barre de progression des étapes ─────────────────────────────────────
-    st.markdown('<div style="margin-top:14px;"></div>', unsafe_allow_html=True)
-    n_done = sum(1 for k in step_keys[:step_idx] if k in results)
-    prog_pct = int(step_idx / max(len(step_keys), 1) * 100)
-    step_pills = ""
-    for i, s in enumerate(steps_list):
+    # ── Barre de navigation des étapes (cliquable) ───────────────────────────
+    n_total = len(steps_list)
+    n_done  = sum(1 for k in step_keys if k in results)
+
+    step_cols = st.columns(n_total)
+    for i, (col, s) in enumerate(zip(step_cols, steps_list)):
         is_done    = s["key"] in results
         is_current = s["key"] == step_key
-        if is_done:
-            bg, col = "#D4EDDA", "#1B5E3B"
-            label = f"✅ {s['num']}"
-        elif is_current:
-            bg, col = f"{universe_color}22", universe_color
-            label = f"▶ {s['num']}"
-        else:
-            bg, col = "#EEF2F6", "#94A3B8"
-            label = s["num"]
-        step_pills += (
-            f'<span style="background:{bg};color:{col};border-radius:20px;'
-            f'padding:4px 10px;font-size:0.77rem;font-weight:700;margin:2px;">{label}</span>'
-        )
+        with col:
+            if is_done:
+                bg, fg, border = "#D4EDDA", "#1B5E3B", "#A8D5B8"
+                label = f"✅ {s['num']}"
+            elif is_current:
+                bg, fg, border = uni_bg, uni_color, uni_color
+                label = f"▶ {s['num']}"
+            else:
+                bg, fg, border = "#F1F5F9", "#94A3B8", "#DDE4EA"
+                label = s["num"]
+            # Cliquable si déjà fait ou étape courante
+            if is_done or is_current:
+                if st.button(
+                    label,
+                    key=f"stepnav_{s['key']}",
+                    use_container_width=True,
+                    help=s["title"],
+                ):
+                    st.session_state.ma_step_key = s["key"]
+                    st.rerun()
+            else:
+                st.markdown(
+                    f'<div style="text-align:center;background:{bg};border:1px solid {border};'
+                    f'border-radius:8px;padding:6px 4px;color:{fg};font-size:0.78rem;font-weight:700;">'
+                    f'{label}</div>',
+                    unsafe_allow_html=True,
+                )
+
+    # Barre de progression linéaire
+    pct = int(n_done / n_total * 100)
     st.markdown(
-        f'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:18px;">{step_pills}</div>',
+        f'<div style="background:#DDD5C8;border-radius:4px;height:4px;margin:10px 0 18px 0;overflow:hidden;">'
+        f'<div style="background:{uni_color};width:{pct}%;height:100%;border-radius:4px;transition:width .4s;"></div>'
+        f'</div>'
+        f'<div style="font-size:0.76rem;color:#94A3B8;margin-bottom:16px;">'
+        f'{n_done}/{n_total} étapes complétées</div>',
         unsafe_allow_html=True,
     )
 
     st.markdown("---")
 
-    # ── Navigation latérale : liste des étapes ───────────────────────────────
-    col_nav, col_main = st.columns([1, 3])
+    # ── En-tête de l'étape courante ──────────────────────────────────────────
+    st.markdown(
+        f'<div style="font-size:1.2rem;font-weight:800;color:#1A2744;margin-bottom:4px;">'
+        f'Étape {step_info["num"]} — {step_info["title"]}</div>'
+        f'<div style="font-size:0.86rem;color:#6B7A8D;margin-bottom:14px;">'
+        f'{step_info["desc"]}</div>',
+        unsafe_allow_html=True,
+    )
 
-    with col_nav:
+    if step_info.get("web_search"):
         st.markdown(
-            f'<div style="font-size:0.78rem;font-weight:700;color:#64748B;'
-            f'text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Étapes</div>',
+            '<span style="background:#EAF5EE;border:1px solid #A8D5B8;color:#2E6B45;'
+            'font-size:0.75rem;font-weight:600;padding:3px 12px;border-radius:20px;">'
+            '🌐 Recherche web · Claude Sonnet</span>',
             unsafe_allow_html=True,
         )
-        for s in steps_list:
-            is_done    = s["key"] in results
-            is_current = s["key"] == step_key
-            bg    = "#D4EDDA" if is_done else ("#E8F1F8" if is_current else "#F8F9FA")
-            col   = "#1B5E3B" if is_done else (universe_color if is_current else "#94A3B8")
-            bdr   = f"border-left:3px solid {universe_color};" if is_current else ""
-            icon  = "✅" if is_done else ("▶" if is_current else "○")
-            st.markdown(
-                f'<div style="background:{bg};{bdr}border-radius:8px;padding:8px 10px;'
-                f'margin-bottom:5px;cursor:pointer;" '
-                f'onclick="window.location.reload()">'
-                f'<div style="font-size:0.72rem;color:{col};font-weight:700;">'
-                f'{icon} {s["num"]}. {s["title"]}</div>'
-                f'<div style="font-size:0.68rem;color:#94A3B8;line-height:1.3;">{s["desc"][:50]}...</div>'
-                f'</div>',
+    else:
+        st.markdown(
+            '<span style="background:#EEF2F6;border:1px solid #CBD5E1;color:#64748B;'
+            'font-size:0.75rem;font-weight:600;padding:3px 12px;border-radius:20px;">'
+            '⚡ Sans recherche web · Claude Haiku (rapide)</span>',
+            unsafe_allow_html=True,
+        )
+    st.markdown('<div style="margin-bottom:14px;"></div>', unsafe_allow_html=True)
+
+    # ── Zone d'input ────────────────────────────────────────────────────────
+    input_key  = f"ma_input_{step_key}"
+    step_input = ""
+
+    if step_info.get("needs_input"):
+        # Pré-remplissage auto depuis l'étape précédente
+        if input_key not in st.session_state and step_idx > 0:
+            prev_key = step_keys[step_idx - 1]
+            if prev_key in results:
+                st.session_state[input_key] = results[prev_key][:4000]
+
+        step_input = st.text_area(
+            step_info["input_label"],
+            value=st.session_state.get(input_key, ""),
+            placeholder=step_info["input_hint"],
+            height=200,
+            key=f"ta_{step_key}",
+        )
+        st.session_state[input_key] = step_input
+
+        up_files = st.file_uploader(
+            "Joindre des documents (optionnel)",
+            type=["pdf", "docx", "txt", "md", "xlsx"],
+            accept_multiple_files=True,
+            key=f"up_{step_key}",
+        )
+        if up_files:
+            from document_extractor import extract_text
+            for uf in up_files[:3]:
+                step_input += f"\n\n--- {uf.name} ---\n{extract_text(uf)}"
+
+    # ── Boutons Lancer / Relancer ────────────────────────────────────────────
+    already_done = step_key in results
+    run_label = (
+        "🔄 Relancer" if already_done
+        else ("🔍 Lancer avec recherche web" if step_info.get("web_search") else "⚡ Lancer")
+    )
+    launch = st.button(run_label, key=f"run_{step_key}", type="primary", use_container_width=True)
+
+    # ── Résultat existant ────────────────────────────────────────────────────
+    if already_done and not launch:
+        st.markdown("---")
+        st.markdown(
+            '<div style="font-size:0.8rem;font-weight:600;color:#2E7D55;margin-bottom:8px;">✅ Résultat</div>',
+            unsafe_allow_html=True,
+        )
+        with st.container(border=True):
+            st.markdown(results[step_key])
+        try:
+            from word_generator import generate_word
+            fname = f"{ma_company}_{step_info['num']}_{step_info['title'].replace(' ','_')}.docx"
+            st.download_button(
+                "📝 Télécharger Word",
+                data=generate_word(results[step_key], ma_company, "fiche"),
+                file_name=fname,
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+        except Exception:
+            pass
+
+    # ── Lancement ────────────────────────────────────────────────────────────
+    elif launch:
+        os.environ["ANTHROPIC_API_KEY"] = anthropic_key
+        if tavily_key:
+            os.environ["TAVILY_API_KEY"] = tavily_key
+
+        search_status = st.empty()
+        result_ph     = st.empty()
+
+        def _on_text(text):
+            result_ph.markdown(
+                f'<div class="result-box" style="max-height:400px;overflow-y:auto;">'
+                f'{text[:6000]}</div>',
                 unsafe_allow_html=True,
             )
-            # Clickable navigation to completed steps
-            if is_done and not is_current:
-                if st.button(f"Voir {s['num']}", key=f"nav_{s['key']}", use_container_width=True):
-                    st.session_state.ma_step_key = s["key"]
-                    st.rerun()
 
-    # ── Contenu principal de l'étape ─────────────────────────────────────────
-    with col_main:
-        st.markdown(
-            f'<div style="font-size:1.15rem;font-weight:800;color:#1A2744;margin-bottom:4px;">'
-            f'Étape {step_info["num"]} — {step_info["title"]}</div>',
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            f'<div style="font-size:0.85rem;color:#6B7A8D;margin-bottom:16px;">'
-            f'{step_info["desc"]}</div>',
-            unsafe_allow_html=True,
-        )
-        if step_info.get("web_search"):
-            st.markdown(
-                '<span style="background:#EAF5EE;border:1px solid #A8D5B8;color:#2E6B45;'
-                'font-size:0.75rem;font-weight:600;padding:3px 10px;border-radius:20px;">'
-                '🌐 Recherche web incluse</span>',
+        def _on_tool(name, inp):
+            q = inp.get("query", "")[:70] if isinstance(inp, dict) else ""
+            search_status.markdown(
+                f'<div style="font-size:0.78rem;color:#6B7A8D;padding:6px 0;">'
+                f'🔍 {q}…</div>',
                 unsafe_allow_html=True,
             )
-            st.markdown('<div style="margin-bottom:12px;"></div>', unsafe_allow_html=True)
 
-        # ── Input de l'étape ────────────────────────────────────────────────
-        input_key = f"ma_input_{step_key}"
-        step_input = ""
+        try:
+            with st.spinner(f"Étape {step_info['num']} — {step_info['title']}…"):
+                result = run_ma_module(
+                    module_key=step_key,
+                    company=ma_company,
+                    input_data=step_input,
+                    on_text=_on_text,
+                    on_tool_use=_on_tool,
+                )
 
-        if step_info.get("needs_input"):
-            # Pré-remplir avec le résultat de l'étape précédente si disponible
-            prev_result = ""
-            if step_idx > 0:
-                prev_key = step_keys[step_idx - 1]
-                if prev_key in results:
-                    prev_result = results[prev_key]
+            new_results = dict(results)
+            new_results[step_key] = result
+            st.session_state.ma_step_result = new_results
 
-            default_val = st.session_state.get(input_key, prev_result[:3000] if prev_result else "")
-            step_input = st.text_area(
-                step_info["input_label"],
-                value=default_val,
-                placeholder=step_info["input_hint"],
-                height=220,
-                key=f"ta_{step_key}",
-            )
-            st.session_state[input_key] = step_input
-
-            # Upload document optionnel
-            up_files = st.file_uploader(
-                "Joindre des documents (optionnel)",
-                type=["pdf", "docx", "txt", "md", "xlsx"],
-                accept_multiple_files=True,
-                key=f"up_{step_key}",
-            )
-            if up_files:
-                from document_extractor import extract_text
-                for uf in up_files[:3]:
-                    step_input += f"\n\n--- {uf.name} ---\n{extract_text(uf)}"
-
-        # ── Bouton Lancer ───────────────────────────────────────────────────
-        btn_col1, btn_col2 = st.columns([2, 1])
-        with btn_col1:
-            run_label = "🔍 Lancer avec recherche web" if step_info.get("web_search") else "⚡ Lancer ce module"
-            launch = st.button(run_label, key=f"run_{step_key}", type="primary", use_container_width=True)
-        with btn_col2:
-            if st.button("← Accueil", key=f"home_{step_key}", use_container_width=True):
-                st.session_state.screen = 1
-                st.rerun()
-
-        # ── Résultat existant ou lancement ──────────────────────────────────
-        if step_key in results and not launch:
-            # Afficher le résultat déjà calculé
-            st.markdown("---")
+            search_status.empty()
+            result_ph.empty()
             st.markdown(
-                '<div style="font-size:0.82rem;font-weight:600;color:#2E7D55;margin-bottom:8px;">'
-                '✅ Résultat disponible</div>',
+                '<div style="font-size:0.8rem;font-weight:600;color:#2E7D55;margin-bottom:8px;">✅ Terminé</div>',
                 unsafe_allow_html=True,
             )
             with st.container(border=True):
-                st.markdown(results[step_key])
-
-            # Boutons d'export
+                st.markdown(result)
             try:
                 from word_generator import generate_word
-                docx_b = generate_word(results[step_key], ma_company, "fiche")
+                fname = f"{ma_company}_{step_info['num']}_{step_info['title'].replace(' ','_')}.docx"
                 st.download_button(
-                    "📝 Télécharger en Word",
-                    data=docx_b,
-                    file_name=f"{ma_company}_{step_info['num']}_{step_info['title'].replace(' ','_')}.docx",
+                    "📝 Télécharger Word",
+                    data=generate_word(result, ma_company, "fiche"),
+                    file_name=fname,
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 )
             except Exception:
                 pass
 
-        elif launch:
-            st.markdown("---")
+        except Exception as e:
+            st.error(f"Erreur : {e}")
 
-            os.environ["ANTHROPIC_API_KEY"] = anthropic_key
-            if tavily_key:
-                os.environ["TAVILY_API_KEY"] = tavily_key
-
-            result_placeholder = st.empty()
-            live_text = [""]
-
-            def _on_text(text):
-                live_text[0] = text
-                result_placeholder.markdown(
-                    f'<div class="result-box">{text[:8000]}</div>',
-                    unsafe_allow_html=True,
-                )
-
-            def _on_tool(name, inp):
-                q = inp.get("query", "")[:60] if isinstance(inp, dict) else ""
-                result_placeholder.markdown(
-                    f'<div style="font-size:0.8rem;color:#6B7A8D;margin:8px 0;">'
-                    f'🔍 Recherche : {q}…</div>',
-                    unsafe_allow_html=True,
-                )
-
-            try:
-                with st.spinner(f"Module {step_info['num']} en cours..."):
-                    result = run_ma_module(
-                        module_key=step_key,
-                        company=ma_company,
-                        input_data=step_input,
-                        on_text=_on_text,
-                        on_tool_use=_on_tool,
-                    )
-
-                # Sauvegarder le résultat
-                new_results = dict(results)
-                new_results[step_key] = result
-                st.session_state.ma_step_result = new_results
-
-                # Afficher le résultat final proprement
-                result_placeholder.empty()
-                st.markdown(
-                    '<div style="font-size:0.82rem;font-weight:600;color:#2E7D55;margin-bottom:8px;">'
-                    '✅ Terminé</div>',
-                    unsafe_allow_html=True,
-                )
-                with st.container(border=True):
-                    st.markdown(result)
-
-                # Export Word
-                try:
-                    from word_generator import generate_word
-                    docx_b = generate_word(result, ma_company, "fiche")
-                    st.download_button(
-                        "📝 Télécharger en Word",
-                        data=docx_b,
-                        file_name=f"{ma_company}_{step_info['num']}_{step_info['title'].replace(' ','_')}.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    )
-                except Exception:
-                    pass
-
-            except Exception as e:
-                st.error(f"Erreur lors de l'exécution : {e}")
-
-        # ── Navigation étape suivante ────────────────────────────────────────
-        st.markdown("---")
-        nav_c1, nav_c2, nav_c3 = st.columns([1, 2, 1])
-        with nav_c1:
-            if step_idx > 0:
-                prev_s = steps_list[step_idx - 1]
-                if st.button(f"← Étape {prev_s['num']}", key=f"prev_{step_key}", use_container_width=True):
-                    st.session_state.ma_step_key = prev_s["key"]
-                    st.rerun()
-        with nav_c3:
-            if step_idx < len(steps_list) - 1:
-                next_s = steps_list[step_idx + 1]
-                btn_label = f"Étape {next_s['num']} →"
-                if st.button(btn_label, key=f"next_{step_key}", type="primary", use_container_width=True):
-                    st.session_state.ma_step_key = next_s["key"]
-                    # Pré-remplir l'input de l'étape suivante avec le résultat actuel
-                    if step_key in st.session_state.ma_step_result:
-                        next_input_key = f"ma_input_{next_s['key']}"
-                        st.session_state[next_input_key] = st.session_state.ma_step_result.get(step_key, "")[:3000]
-                    st.rerun()
+    # ── Navigation prev / next ────────────────────────────────────────────────
+    st.markdown("---")
+    nc1, nc2, nc3 = st.columns([1, 2, 1])
+    with nc1:
+        if step_idx > 0:
+            prev_s = steps_list[step_idx - 1]
+            if st.button(f"← {prev_s['num']}. {prev_s['title']}", key=f"prev_{step_key}", use_container_width=True):
+                st.session_state.ma_step_key = prev_s["key"]
+                st.rerun()
+    with nc3:
+        if step_idx < len(steps_list) - 1:
+            next_s = steps_list[step_idx + 1]
+            if st.button(f"{next_s['num']}. {next_s['title']} →", key=f"next_{step_key}", type="primary", use_container_width=True):
+                # Pré-remplir l'input de la prochaine étape avec le résultat courant
+                next_ik = f"ma_input_{next_s['key']}"
+                if next_s.get("needs_input") and step_key in st.session_state.ma_step_result:
+                    st.session_state[next_ik] = st.session_state.ma_step_result.get(step_key, "")[:4000]
+                st.session_state.ma_step_key = next_s["key"]
+                st.rerun()
