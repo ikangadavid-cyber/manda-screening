@@ -1887,6 +1887,17 @@ elif st.session_state.screen == 4:
         launch = st.button(run_label, key=f"run_{step_key}", type="primary", use_container_width=True)
 
         if launch:
+            # ── Feedback immédiat dès le clic ────────────────────────────────
+            status_ph = st.empty()
+            status_ph.markdown(
+                f'<div style="background:#1A2744;color:#C8D6E8;border-radius:10px;'
+                f'padding:14px 20px;font-size:0.88rem;font-weight:600;margin-bottom:10px;">'
+                f'⏳ &nbsp; Étape {step_info["num"]} — {step_info["title"]} en cours...'
+                f'<span style="font-size:0.78rem;font-weight:400;opacity:.7;margin-left:8px;">'
+                f'({"30–90 sec, recherches web" if step_info.get("web_search") else "10–30 sec"})</span></div>',
+                unsafe_allow_html=True,
+            )
+
             os.environ["ANTHROPIC_API_KEY"] = anthropic_key
             if tavily_key:
                 os.environ["TAVILY_API_KEY"] = tavily_key
@@ -1929,7 +1940,7 @@ elif st.session_state.screen == 4:
                 )
 
             try:
-                with st.spinner(""):
+                with st.spinner(f"Étape {step_info['num']} — {step_info['title']}…"):
                     result = run_ma_module(
                         module_key=step_key,
                         company=ma_company,
@@ -1942,6 +1953,7 @@ elif st.session_state.screen == 4:
                 new_results[step_key] = result
                 st.session_state.ma_step_result = new_results
 
+                status_ph.empty()
                 ticker_ph.empty()
                 output_ph.empty()
 
@@ -1995,9 +2007,13 @@ elif st.session_state.screen == 4:
                     st.success("🎉 Mission complète — toutes les étapes sont terminées !")
 
             except Exception as e:
+                import traceback
+                status_ph.empty()
                 ticker_ph.empty()
                 output_ph.empty()
-                st.error(f"Erreur : {e}")
+                st.error(f"❌ Erreur étape {step_info['num']} : {e}")
+                with st.expander("🔍 Détail technique", expanded=False):
+                    st.code(traceback.format_exc())
 
         elif step_idx > 0:
             st.markdown("---")
