@@ -52,8 +52,8 @@ def _export_button(result: str, company: str, step_key: str, step_info: dict):
                 file_name=f"{fname_base}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             )
-    except Exception:
-        pass
+    except Exception as _export_err:
+        st.warning(f"⚠️ Export indisponible : {_export_err}")
 
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"), override=True)
 
