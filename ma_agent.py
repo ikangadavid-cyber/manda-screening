@@ -146,8 +146,6 @@ def run_ma_module(
     instructions += _COMMON_INSTRUCTIONS  # mêmes règles que les analyses rapides
 
     user_parts = [f"Société / Acquéreur : **{company}**"]
-    if sector and sector.strip():
-        user_parts.append(f"Secteur d'activité : **{sector.strip()}**")
     if input_data and input_data.strip():
         user_parts.append(f"\n\n**INPUT / Données disponibles :**\n{input_data.strip()}")
     user_message = "\n".join(user_parts)
