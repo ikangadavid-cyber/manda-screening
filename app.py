@@ -1901,9 +1901,10 @@ elif st.session_state.screen == 4:
             unsafe_allow_html=True,
         )
 
+        _export_button(res_text, ma_company, step_key, step_info)
+
         with st.expander("📄 Voir le résultat complet", expanded=False):
             st.markdown(res_text)
-            _export_button(res_text, ma_company, step_key, step_info)
 
         if st.button("🔄 Relancer cette étape", key=f"rerun_{step_key}"):
             new_r = {k: v for k, v in results.items() if k != step_key}
@@ -2039,7 +2040,8 @@ elif st.session_state.screen == 4:
 
                 with st.expander("📄 Voir le résultat", expanded=True):
                     st.markdown(result)
-                    _export_button(result, ma_company, step_key, step_info)
+
+                _export_button(result, ma_company, step_key, step_info)
 
                 if step_idx < n_total - 1:
                     ns = steps_list[step_idx + 1]
