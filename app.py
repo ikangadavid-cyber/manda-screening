@@ -18,8 +18,9 @@ def _export_button(result: str, company: str, step_key: str, step_info: dict):
     fname_base = f"{company.replace(' ', '_').lower()}_{step_info['num']}_{step_info['title'].replace(' ', '_')}"
     try:
         if step_key in _PPT_MODULES_SELL:
-            from export_pptx import generate_sell_pptx
-            data = generate_sell_pptx(result, company)
+            from export_pptx import generate_sell_pptx, try_exec_pptx_code
+            # Priorité : exécuter le code python-pptx généré par l'IA
+            data = try_exec_pptx_code(result) or generate_sell_pptx(result, company)
             st.download_button(
                 "📊 Télécharger en PowerPoint",
                 data=data,
@@ -27,8 +28,8 @@ def _export_button(result: str, company: str, step_key: str, step_info: dict):
                 mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
             )
         elif step_key in _PPT_MODULES_BUY:
-            from export_pptx import generate_buy_pptx
-            data = generate_buy_pptx(result, company, step_info.get("title", "Cibles"))
+            from export_pptx import generate_buy_pptx, try_exec_pptx_code
+            data = try_exec_pptx_code(result) or generate_buy_pptx(result, company, step_info.get("title", "Cibles"))
             st.download_button(
                 "📊 Télécharger en PowerPoint",
                 data=data,

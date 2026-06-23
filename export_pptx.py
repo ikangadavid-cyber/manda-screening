@@ -5,7 +5,7 @@ Sell-side : PPT au format Inspirit Partners (charte du template 3b)
 Buy-side  : PPT cibles de croissance + Excel screening
 """
 from __future__ import annotations
-import io, re, datetime
+import io, re, datetime, textwrap
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu, Cm
 from pptx.dml.color import RGBColor
@@ -447,3 +447,50 @@ def _parse_companies_from_md(content: str) -> list[dict]:
             companies.append(co)
 
     return companies if companies else [{"nom": "À compléter", "activite": content[:200]}]
+
+
+# ── Exécution du code python-pptx généré par l'IA (sell_03) ──────────────────
+
+_DANGEROUS = [
+    "subprocess", "os.system", "os.popen", "__import__",
+    "eval(", "exec(", "open(", "shutil", "socket",
+]
+
+def try_exec_pptx_code(ai_output: str) -> bytes | None:
+    """
+    Si la réponse de l'IA contient un bloc ```python``` avec du code python-pptx,
+    l'exécute et renvoie les bytes du PPTX résultant.
+    Renvoie None si pas de code ou si l'exécution échoue.
+    """
+    # Extraire le ou les blocs python
+    blocks = re.findall(r"```python\s*(.*?)```", ai_output, re.DOTALL)
+    if not blocks:
+        # Essayer aussi les blocs sans langage
+        blocks = re.findall(r"```\s*(from pptx|import pptx.*?)```", ai_output, re.DOTALL)
+    if not blocks:
+        return None
+
+    code = "\n".join(blocks)
+
+    # Vérification de sécurité minimale
+    for danger in _DANGEROUS:
+        if danger in code:
+            return None
+
+    # Remplacer prs.save("quelquechose") par prs.save(_output_buf)
+    code = re.sub(r'prs\.save\(["\'][^"\']*["\']\)', "prs.save(_output_buf)", code)
+    # Même chose avec des variables : prs.save(output_path) etc.
+    code = re.sub(r'prs\.save\(\w+\)', "prs.save(_output_buf)", code)
+
+    buf = io.BytesIO()
+    namespace: dict = {"_output_buf": buf}
+
+    try:
+        exec(textwrap.dedent(code), namespace)  # noqa: S102
+        buf.seek(0)
+        data = buf.read()
+        if len(data) < 1000:          # trop petit = probablement pas un vrai PPTX
+            return None
+        return data
+    except Exception:
+        return None
