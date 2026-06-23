@@ -5,3 +5,4 @@ __pycache__/
 prompts/
 inbox/
 streamlit_secrets_prompts.toml
+assets/

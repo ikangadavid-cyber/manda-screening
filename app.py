@@ -3,6 +3,58 @@ import time
 import streamlit as st
 from dotenv import load_dotenv
 
+# Modules qui produisent du PPT ou de l'Excel (pas du Word)
+_PPT_MODULES_SELL = {"sell_03_redaction_slides"}
+_PPT_MODULES_BUY  = {
+    "buy_06_slide_bandeau", "buy_07_slide_vert_pos",
+    "buy_08_slide_horiz_rationnel", "buy_09_slide_horiz_pos",
+    "buy_10_slide_vert_rationnel",
+}
+_EXCEL_MODULES = {"buy_04_profil_entreprise", "buy_05_qualification_cibles"}
+
+
+def _export_button(result: str, company: str, step_key: str, step_info: dict):
+    """Affiche le bon bouton de téléchargement selon le type de module."""
+    fname_base = f"{company.replace(' ', '_').lower()}_{step_info['num']}_{step_info['title'].replace(' ', '_')}"
+    try:
+        if step_key in _PPT_MODULES_SELL:
+            from export_pptx import generate_sell_pptx
+            data = generate_sell_pptx(result, company)
+            st.download_button(
+                "📊 Télécharger en PowerPoint",
+                data=data,
+                file_name=f"{fname_base}.pptx",
+                mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            )
+        elif step_key in _PPT_MODULES_BUY:
+            from export_pptx import generate_buy_pptx
+            data = generate_buy_pptx(result, company, step_info.get("title", "Cibles"))
+            st.download_button(
+                "📊 Télécharger en PowerPoint",
+                data=data,
+                file_name=f"{fname_base}.pptx",
+                mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            )
+        elif step_key in _EXCEL_MODULES:
+            from export_pptx import generate_screening_xlsx
+            data = generate_screening_xlsx(result, company)
+            st.download_button(
+                "📥 Télécharger en Excel",
+                data=data,
+                file_name=f"{fname_base}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        else:
+            from word_generator import generate_word
+            st.download_button(
+                "📝 Télécharger en Word",
+                data=generate_word(result, company, "fiche"),
+                file_name=f"{fname_base}.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+    except Exception:
+        pass
+
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"), override=True)
 
 st.set_page_config(
@@ -1851,17 +1903,7 @@ elif st.session_state.screen == 4:
 
         with st.expander("📄 Voir le résultat complet", expanded=False):
             st.markdown(res_text)
-            try:
-                from word_generator import generate_word
-                fname = f"{ma_company}_{step_info['num']}_{step_info['title'].replace(' ', '_')}.docx"
-                st.download_button(
-                    "Télécharger en Word",
-                    data=generate_word(res_text, ma_company, "fiche"),
-                    file_name=fname,
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                )
-            except Exception:
-                pass
+            _export_button(res_text, ma_company, step_key, step_info)
 
         if st.button("🔄 Relancer cette étape", key=f"rerun_{step_key}"):
             new_r = {k: v for k, v in results.items() if k != step_key}
@@ -1997,17 +2039,7 @@ elif st.session_state.screen == 4:
 
                 with st.expander("📄 Voir le résultat", expanded=True):
                     st.markdown(result)
-                    try:
-                        from word_generator import generate_word
-                        fname = f"{ma_company}_{step_info['num']}_{step_info['title'].replace(' ', '_')}.docx"
-                        st.download_button(
-                            "Télécharger en Word",
-                            data=generate_word(result, ma_company, "fiche"),
-                            file_name=fname,
-                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        )
-                    except Exception:
-                        pass
+                    _export_button(result, ma_company, step_key, step_info)
 
                 if step_idx < n_total - 1:
                     ns = steps_list[step_idx + 1]
