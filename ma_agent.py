@@ -118,6 +118,7 @@ def _split_prompt(prompt_text: str) -> tuple[str, str]:
 def run_ma_module(
     module_key: str,
     company: str,
+    sector: str = "",
     input_data: str = "",
     on_text=None,
     on_tool_use=None,
@@ -157,6 +158,8 @@ def run_ma_module(
     )
 
     user_parts = [f"Société / Acquéreur : **{company}**"]
+    if sector and sector.strip():
+        user_parts.append(f"Secteur d'activité : **{sector.strip()}**")
     if input_data and input_data.strip():
         user_parts.append(f"\n\n**INPUT / Données disponibles :**\n{input_data.strip()}")
     user_message = "\n".join(user_parts)

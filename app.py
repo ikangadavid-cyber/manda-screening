@@ -581,6 +581,7 @@ def init_state():
         "ma_universe":      "",   # "buy" or "sell"
         "ma_step_key":      "",   # current module key
         "ma_company":       "",
+        "ma_sector":        "",   # secteur d'activité — contexte clé pour les recherches
         "ma_step_result":   {},   # dict: step_key -> result text
         "ma_running":       False,
     }
@@ -731,17 +732,25 @@ if st.session_state.screen == 1:
             """, unsafe_allow_html=True)
             buy_company = st.text_input(
                 "Nom de l'acquéreur",
-                placeholder="Ex : Milliris, Acuitis...",
+                placeholder="Ex : Milliris, Bonioni...",
                 key="buy_company_input",
+            )
+            buy_sector = st.text_input(
+                "Secteur / activité",
+                placeholder="Ex : frappe à froid, optique, logistique...",
+                key="buy_sector_input",
             )
             if st.button("📈 Lancer la mission Buy-side", key="start_buy", use_container_width=True, type="primary"):
                 if not buy_company.strip():
                     st.warning("⚠️ Entrez le nom de l'acquéreur.")
+                elif not buy_sector.strip():
+                    st.warning("⚠️ Entrez le secteur d'activité — indispensable pour les recherches web.")
                 elif not anthropic_key or not tavily_key:
                     st.error("🔑 Clés API manquantes.")
                 else:
                     st.session_state.ma_universe    = "buy"
                     st.session_state.ma_company     = buy_company.strip()
+                    st.session_state.ma_sector      = buy_sector.strip()
                     st.session_state.ma_step_key    = BUY_SIDE_STEPS[0]["key"]
                     st.session_state.ma_step_result = {}
                     st.session_state.screen         = 4
@@ -768,6 +777,11 @@ if st.session_state.screen == 1:
                 placeholder="Ex : Koki Software...",
                 key="sell_company_input",
             )
+            sell_sector = st.text_input(
+                "Secteur / activité",
+                placeholder="Ex : édition logicielle, industrie agroalimentaire...",
+                key="sell_sector_input",
+            )
             if st.button("📋 Lancer la mission Sell-side", key="start_sell", use_container_width=True, type="primary"):
                 if not sell_company.strip():
                     st.warning("⚠️ Entrez le nom de la société.")
@@ -776,6 +790,7 @@ if st.session_state.screen == 1:
                 else:
                     st.session_state.ma_universe    = "sell"
                     st.session_state.ma_company     = sell_company.strip()
+                    st.session_state.ma_sector      = sell_sector.strip()
                     st.session_state.ma_step_key    = SELL_SIDE_STEPS[0]["key"]
                     st.session_state.ma_step_result = {}
                     st.session_state.screen         = 4
@@ -1679,6 +1694,7 @@ elif st.session_state.screen == 4:
 
     universe   = st.session_state.ma_universe
     ma_company = st.session_state.ma_company
+    ma_sector  = st.session_state.get("ma_sector", "")
     step_key   = st.session_state.ma_step_key
     results    = st.session_state.ma_step_result
 
@@ -1899,8 +1915,7 @@ elif st.session_state.screen == 4:
             )
 
             os.environ["ANTHROPIC_API_KEY"] = anthropic_key
-            if tavily_key:
-                os.environ["TAVILY_API_KEY"] = tavily_key
+            os.environ["TAVILY_API_KEY"]    = tavily_key
 
             output_ph = st.empty()
             queries   = []
@@ -1928,6 +1943,7 @@ elif st.session_state.screen == 4:
                     result = run_ma_module(
                         module_key=step_key,
                         company=ma_company,
+                        sector=ma_sector,
                         input_data=step_input,
                         on_text=_on_text,
                         on_tool_use=_on_tool,
