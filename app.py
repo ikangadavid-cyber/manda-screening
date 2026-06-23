@@ -7,7 +7,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), ".env"), override=True)
 
 st.set_page_config(
     page_title="Screening M&A",
-    page_icon="🔍",
+    page_icon=None,
     layout="wide",
 )
 
@@ -373,28 +373,28 @@ button[data-baseweb="tab"] {
 DELIVERABLES = [
     {
         "key":   "fiche",
-        "icon":  "🏢",
+        "icon":  "",
         "title": "Fiche Entreprise",
         "desc":  "Identité, activité, CA, effectifs, clients, actionnariat",
         "steps": ["Analyse de l'entreprise"],
     },
     {
         "key":   "benchmark",
-        "icon":  "⚔️",
+        "icon":  "",
         "title": "Benchmark Concurrents",
         "desc":  "Cartographie des acteurs avec fiches standardisées",
         "steps": ["Analyse de l'entreprise", "Cartographie des concurrents"],
     },
     {
         "key":   "manda",
-        "icon":  "📰",
+        "icon":  "",
         "title": "Note M&A & Secteur",
         "desc":  "Transactions récentes, valorisations, fédérations, salons",
         "steps": ["Actualités M&A", "Qualification du secteur"],
     },
     {
         "key":   "geo",
-        "icon":  "🌍",
+        "icon":  "",
         "title": "Analyse Géographique",
         "desc":  "Opportunités d'expansion internationale et acteurs locaux",
         "steps": ["Analyse de l'entreprise", "Analyse géographique"],
@@ -608,7 +608,7 @@ init_state()
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown(
-        '<div class="sidebar-logo">🔍 M&A <span class="sidebar-accent">Screening</span></div>',
+        '<div class="sidebar-logo">M&A <span class="sidebar-accent">Screening</span></div>',
         unsafe_allow_html=True,
     )
     st.markdown("---")
@@ -666,7 +666,7 @@ with st.sidebar:
             'border:1px solid rgba(255,255,255,0.25); border-radius:8px; '
             'color:#C8D6E8 !important; font-size:0.85rem; font-weight:600; '
             'padding:8px 0; margin-top:6px; text-decoration:none; cursor:pointer;">'
-            '📨 Envoyer l\'invitation</a>',
+            'Envoyer l\'invitation</a>',
             unsafe_allow_html=True,
         )
     elif invite_email:
@@ -685,7 +685,7 @@ with st.sidebar:
         "<strong style='color:#C8D6E8;'>M&A Screening IA</strong><br>"
         "Outil d'intelligence économique alimenté par l'IA pour les professionnels du M&A.<br><br>"
         "Analyse d'entreprises, cartographie concurrentielle, actualités sectorielle et prise de contact — en quelques minutes.<br><br>"
-        "✉️ <a href='mailto:contact@screening-ma.fr' style='color:#7EB8D4;'>contact@screening-ma.fr</a>"
+        "<a href='mailto:contact@screening-ma.fr' style='color:#7EB8D4;'>contact@screening-ma.fr</a>"
         "</div>",
         unsafe_allow_html=True,
     )
@@ -710,7 +710,7 @@ if st.session_state.screen == 1:
         unsafe_allow_html=True,
     )
 
-    tab_standard, tab_mission = st.tabs(["🔍 Analyses rapides", "💼 Mission M&A"])
+    tab_standard, tab_mission = st.tabs(["Analyses rapides", "Mission M&A"])
 
     # ── TAB 2 : Mission M&A ────────────────────────────────────────────────
     with tab_mission:
@@ -732,7 +732,7 @@ if st.session_state.screen == 1:
             st.markdown("""
             <div style="background:#E8F5EE; border:2px solid #2E7D5540;
                         border-left:4px solid #2E7D55; border-radius:12px; padding:18px 20px;">
-                <div style="font-size:1.5rem;">📈</div>
+                
                 <div style="font-weight:700; color:#1A2744; font-size:0.97rem; margin:8px 0 4px 0;">
                     Buy-side — Acquisition
                 </div>
@@ -749,11 +749,11 @@ if st.session_state.screen == 1:
                 placeholder="Ex : Milliris, Acuitis...",
                 key="buy_company_input",
             )
-            if st.button("📈 Lancer la mission Buy-side", key="start_buy", use_container_width=True, type="primary"):
+            if st.button("Lancer la mission Buy-side", key="start_buy", use_container_width=True, type="primary"):
                 if not buy_company.strip():
-                    st.warning("⚠️ Entrez le nom de l'acquéreur.")
+                    st.warning("Entrez le nom de l'acquéreur.")
                 elif not anthropic_key or not tavily_key:
-                    st.error("🔑 Clés API manquantes.")
+                    st.error("Clés API manquantes.")
                 else:
                     st.session_state.ma_universe    = "buy"
                     st.session_state.ma_company     = buy_company.strip()
@@ -767,7 +767,7 @@ if st.session_state.screen == 1:
             st.markdown("""
             <div style="background:#F0EBF8; border:2px solid #7A5FA540;
                         border-left:4px solid #7A5FA5; border-radius:12px; padding:18px 20px;">
-                <div style="font-size:1.5rem;">📋</div>
+                
                 <div style="font-weight:700; color:#1A2744; font-size:0.97rem; margin:8px 0 4px 0;">
                     Sell-side — Cession / IM
                 </div>
@@ -784,11 +784,11 @@ if st.session_state.screen == 1:
                 placeholder="Ex : Koki Software...",
                 key="sell_company_input",
             )
-            if st.button("📋 Lancer la mission Sell-side", key="start_sell", use_container_width=True, type="primary"):
+            if st.button("Lancer la mission Sell-side", key="start_sell", use_container_width=True, type="primary"):
                 if not sell_company.strip():
-                    st.warning("⚠️ Entrez le nom de la société.")
+                    st.warning("Entrez le nom de la société.")
                 elif not anthropic_key:
-                    st.error("🔑 Clé API Anthropic manquante.")
+                    st.error("Clé API Anthropic manquante.")
                 else:
                     st.session_state.ma_universe    = "sell"
                     st.session_state.ma_company     = sell_company.strip()
@@ -818,7 +818,7 @@ if st.session_state.screen == 1:
             align-items: center;
             gap: 12px;
         ">
-            <span style="font-size:1.3rem;">📊</span>
+            
             <div>
                 <div style="color:#FFFFFF; font-size:1.05rem; font-weight:700; letter-spacing:-0.3px;">
                     Choisissez le type d'analyse
@@ -873,9 +873,9 @@ if st.session_state.screen == 1:
         # Validation centralisée — messages visibles
         if clicked_key:
             if not company_input.strip():
-                error_zone.warning("⚠️ Veuillez entrer le nom d'une entreprise avant de choisir un type d'analyse.")
+                error_zone.warning("Veuillez entrer le nom d'une entreprise avant de choisir un type d'analyse.")
             elif not anthropic_key or not tavily_key:
-                error_zone.error("🔑 Clés API manquantes. Contactez l'administrateur.")
+                error_zone.error("Clés API manquantes. Contactez l'administrateur.")
             else:
                 st.session_state.company          = company_input.strip()
                 st.session_state.deliverable_type = clicked_key
@@ -886,8 +886,8 @@ if st.session_state.screen == 1:
                 st.rerun()
 
         # Context section — tabs for manual input and document import
-        with st.expander("💡 Informations déjà connues (optionnel)"):
-            tab_manual, tab_docs = st.tabs(["✏️ Saisie libre", "📎 Importer des documents"])
+        with st.expander("Informations déjà connues (optionnel)"):
+            tab_manual, tab_docs = st.tabs(["Saisie libre", "Importer des documents"])
 
             with tab_manual:
                 manual_context = st.text_area(
@@ -925,7 +925,7 @@ if st.session_state.screen == 1:
                         )
                         st.markdown(
                             f'<div class="file-badge">'
-                            f'📄 <span class="file-badge-name">{uf.name}</span>'
+                            f'<span class="file-badge-name">{uf.name}</span>'
                             f' &nbsp;·&nbsp; {char_count:,} car.'
                             f'</div>',
                             unsafe_allow_html=True,
@@ -959,7 +959,7 @@ elif st.session_state.screen == 2:
 
     # Header with company + deliverable type
     st.markdown(
-        f'<div class="company-badge">🏢 {company}</div>',
+        f'<div class="company-badge">{company}</div>',
         unsafe_allow_html=True,
     )
     st.markdown(
@@ -1020,15 +1020,15 @@ elif st.session_state.screen == 2:
         for step in all_steps:
             if step in steps_done:
                 css   = "done"
-                icon  = "✅"
+                icon  = "·"
                 pulse = ""
             elif step == current_step:
                 css   = "active"
-                icon  = "⏳"
+                icon  = "›"
                 pulse = '<span class="pulse-dot"></span>'
             else:
                 css   = "pending"
-                icon  = "⬜"
+                icon  = "○"
                 pulse = ""
             html_rows += (
                 f'<div class="step-row {css}">'
@@ -1061,7 +1061,7 @@ elif st.session_state.screen == 2:
 
     # Vérification des clés avant de lancer
     if not anthropic_key or not tavily_key:
-        st.error("🔑 Clés API manquantes — impossible de lancer l'analyse. Contactez l'administrateur.")
+        st.error("Clés API manquantes — impossible de lancer l'analyse. Contactez l'administrateur.")
         if st.button("← Retour"):
             st.session_state.screen = 1
             st.rerun()
@@ -1136,10 +1136,10 @@ elif st.session_state.screen == 3:
 
     # Header
     st.markdown(
-        f'<div class="company-badge">🏢 {company}</div>',
+        f'<div class="company-badge">{company}</div>',
         unsafe_allow_html=True,
     )
-    st.markdown(f"**{deliv_info['icon']} {deliv_info['title']}** — Analyse terminée ✅")
+    st.markdown(f"**{deliv_info['title']}** — Analyse terminée")
     st.markdown("---")
 
     # Download buttons
@@ -1150,7 +1150,7 @@ elif st.session_state.screen == 3:
             from word_generator import generate_word
             docx_bytes = generate_word(result, company, deliv_key)
             st.download_button(
-                label="📝 Télécharger en Word",
+                label="Télécharger en Word",
                 data=docx_bytes,
                 file_name=f"screening_{company.replace(' ', '_').lower()}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -1164,7 +1164,7 @@ elif st.session_state.screen == 3:
             from pdf_generator import generate_pdf
             pdf_bytes = generate_pdf(result, company, deliv_key)
             st.download_button(
-                label="📕 Télécharger en PDF",
+                label="Télécharger en PDF",
                 data=pdf_bytes,
                 file_name=f"screening_{company.replace(' ', '_').lower()}.pdf",
                 mime="application/pdf",
@@ -1441,7 +1441,7 @@ CONTRAINTES ABSOLUES :
                 cols = st.columns(len(row))
                 for col, comp in zip(cols, row):
                     with col:
-                        if st.button(f"✉️ {comp}", key=f"email_btn_{comp}", use_container_width=True):
+                        if st.button(f"{comp}", key=f"email_btn_{comp}", use_container_width=True):
                             st.session_state.email_target     = comp
                             st.session_state.generated_email  = ""
                             st.session_state.found_executives = []
@@ -1453,7 +1453,7 @@ CONTRAINTES ABSOLUES :
             manual_comp = st.text_input("Nom du concurrent à contacter :",
                                          placeholder="ex : Entreprise XYZ",
                                          key="manual_email_target")
-            if manual_comp and st.button("✉️ Générer le message", type="primary"):
+            if manual_comp and st.button("Générer le message", type="primary"):
                 st.session_state.email_target     = manual_comp
                 st.session_state.generated_email  = ""
                 st.session_state.found_executives = []
@@ -1499,7 +1499,7 @@ CONTRAINTES ABSOLUES :
 </div>
 """, unsafe_allow_html=True)
 
-            with st.expander("📋 Copier le texte brut"):
+            with st.expander("Copier le texte brut"):
                 st.text_area("", value=raw, height=220, label_visibility="collapsed", key="email_copy_area")
 
             li_company = f"https://www.linkedin.com/search/results/companies/?keywords={_urlparse.quote(st.session_state.email_target)}"
@@ -1649,7 +1649,7 @@ Règles :
     st.markdown("---")
 
     # New analysis button
-    if st.button("🔍 Nouvelle analyse", type="primary"):
+    if st.button("Nouvelle analyse", type="primary"):
         for k in ["screen", "company", "deliverable_type", "context", "result_text",
                   "current_step", "steps_done", "email_target", "generated_email",
                   "found_executives", "email_type"]:
@@ -1676,7 +1676,7 @@ Règles :
             color: #7A6E62;
             line-height: 1.6;
         ">
-        <strong style="color:#5A5048;">⚠️ Avertissement</strong> — Les informations présentées dans ce rapport sont
+        <strong style="color:#5A5048;">Avertissement</strong> — Les informations présentées dans ce rapport sont
         issues de sources publiques disponibles sur Internet à la date de l'analyse. Elles sont fournies
         à titre indicatif et ne constituent en aucun cas un conseil en investissement, une recommandation
         financière ou une due diligence. Les données (chiffre d'affaires, effectifs, valorisations) sont
@@ -1709,7 +1709,7 @@ elif st.session_state.screen == 4:
     uni_color    = "#2E7D55" if universe == "buy" else "#7A5FA5"
     uni_bg       = "#E8F5EE" if universe == "buy" else "#F0EBF8"
     uni_label    = "Buy-side — Acquisition" if universe == "buy" else "Sell-side — Cession / IM"
-    uni_icon     = "📈" if universe == "buy" else "📋"
+    uni_icon     = "" if universe == "buy" else ""
     n_total      = len(steps_list)
     n_done       = sum(1 for k in step_keys if k in results)
     already_done = step_key in results
@@ -1737,7 +1737,7 @@ elif st.session_state.screen == 4:
       Mission {uni_label} &nbsp;·&nbsp; <span style="color:{uni_color};">{ma_company}</span>
     </div>
     <div style="font-size:0.76rem;color:#94A3B8;margin-top:2px;">
-      {n_done}/{n_total} étapes complétées{"&nbsp;·&nbsp;✅ Mission terminée !" if n_done == n_total else ""}
+      {n_done}/{n_total} étapes complétées{"&nbsp;·&nbsp;Mission terminée !" if n_done == n_total else ""}
     </div>
   </div>
 </div>
@@ -1759,7 +1759,7 @@ elif st.session_state.screen == 4:
         is_current = s["key"] == step_key
         with col:
             if is_done or is_current:
-                lbl = ("✅ " if is_done else "▶ ") + s["num"]
+                lbl = ("" if is_done else "") + s["num"]
                 if st.button(lbl, key=f"snav_{s['key']}", use_container_width=True, help=s["title"]):
                     st.session_state.ma_step_key = s["key"]
                     st.rerun()
@@ -1783,11 +1783,11 @@ elif st.session_state.screen == 4:
     web_badge = (
         '<span style="background:#EAF5EE;border:1px solid #A8D5B8;color:#2E6B45;'
         'font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">'
-        '🌐 Recherche web · Sonnet</span>'
+        'Recherche web · Sonnet</span>'
         if step_info.get("web_search") else
         '<span style="background:#EEF2F6;border:1px solid #CBD5E1;color:#64748B;'
         'font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">'
-        '⚡ Rapide · Haiku</span>'
+        'Rapide · Haiku</span>'
     )
     st.markdown(
         f'<div style="background:#FDFAF5;border-left:4px solid {uni_color};border-radius:0 12px 12px 0;'
@@ -1823,19 +1823,19 @@ elif st.session_state.screen == 4:
             f'<div style="font-size:0.7rem;color:#4A7FA5;font-weight:600;margin-top:2px;">Qualité</div></div>'
             f'<div class="insight-card" style="flex:1;background:#F0EBF8;border:1px solid #C4B0D8;'
             f'border-radius:10px;padding:12px;text-align:center;animation-delay:.14s;">'
-            f'<div style="font-size:1.25rem;font-weight:800;color:#5A3F8A;">✅ OK</div>'
+            f'<div style="font-size:1.25rem;font-weight:800;color:#5A3F8A;">Fait</div>'
             f'<div style="font-size:0.7rem;color:#7A5FA5;font-weight:600;margin-top:2px;">Export dispo</div></div>'
             f'</div>',
             unsafe_allow_html=True,
         )
 
-        with st.expander("📄 Voir le résultat complet", expanded=False):
+        with st.expander("Voir le résultat complet", expanded=False):
             st.markdown(res_text)
             try:
                 from word_generator import generate_word
                 fname = f"{ma_company}_{step_info['num']}_{step_info['title'].replace(' ', '_')}.docx"
                 st.download_button(
-                    "📝 Télécharger en Word",
+                    "Télécharger en Word",
                     data=generate_word(res_text, ma_company, "fiche"),
                     file_name=fname,
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -1843,7 +1843,7 @@ elif st.session_state.screen == 4:
             except Exception:
                 pass
 
-        if st.button("🔄 Relancer cette étape", key=f"rerun_{step_key}"):
+        if st.button("Relancer cette étape", key=f"rerun_{step_key}"):
             new_r = {k: v for k, v in results.items() if k != step_key}
             st.session_state.ma_step_result = new_r
             st.rerun()
@@ -1868,7 +1868,7 @@ elif st.session_state.screen == 4:
                     st.session_state.ma_step_key = ns["key"]
                     st.rerun()
             else:
-                st.success("🎉 Mission complète — toutes les étapes sont terminées.")
+                st.success("Mission complète — toutes les étapes sont terminées.")
 
     # ── ÉTAT B : étape à lancer ───────────────────────────────────────────────
     else:
@@ -1901,7 +1901,7 @@ elif st.session_state.screen == 4:
                 for uf in up_files[:3]:
                     step_input += f"\n\n--- {uf.name} ---\n{extract_text(uf)}"
 
-        run_label = "🔍 Lancer la recherche" if step_info.get("web_search") else "⚡ Lancer l'analyse"
+        run_label = "Lancer la recherche" if step_info.get("web_search") else "Lancer l'analyse"
         launch = st.button(run_label, key=f"run_{step_key}", type="primary", use_container_width=True)
 
         if launch:
@@ -1910,7 +1910,7 @@ elif st.session_state.screen == 4:
             status_ph.markdown(
                 f'<div style="background:#1A2744;color:#C8D6E8;border-radius:10px;'
                 f'padding:14px 20px;font-size:0.88rem;font-weight:600;margin-bottom:10px;">'
-                f'⏳ &nbsp; Étape {step_info["num"]} — {step_info["title"]} en cours...'
+                f'Étape {step_info["num"]} — {step_info["title"]} en cours...'
                 f'<span style="font-size:0.78rem;font-weight:400;opacity:.7;margin-left:8px;">'
                 f'({"30–90 sec, recherches web" if step_info.get("web_search") else "10–30 sec"})</span></div>',
                 unsafe_allow_html=True,
@@ -1968,20 +1968,20 @@ elif st.session_state.screen == 4:
                     f'<div class="done-banner" style="background:linear-gradient(135deg,{uni_color} 0%,{uni_color}99 100%);'
                     f'border-radius:14px;padding:18px 24px;margin:12px 0;color:#FFFFFF;'
                     f'display:flex;align-items:center;gap:16px;">'
-                    f'<div style="font-size:2rem;">✅</div>'
+                    f''
                     f'<div><div style="font-weight:800;font-size:1.05rem;">Étape {step_info["num"]} terminée</div>'
                     f'<div style="opacity:.85;font-size:0.82rem;margin-top:2px;">'
                     f'{step_info["title"]} · {m1}{src_count}</div></div></div>',
                     unsafe_allow_html=True,
                 )
 
-                with st.expander("📄 Voir le résultat", expanded=True):
+                with st.expander("Voir le résultat", expanded=True):
                     st.markdown(result)
                     try:
                         from word_generator import generate_word
                         fname = f"{ma_company}_{step_info['num']}_{step_info['title'].replace(' ', '_')}.docx"
                         st.download_button(
-                            "📝 Télécharger en Word",
+                            "Télécharger en Word",
                             data=generate_word(result, ma_company, "fiche"),
                             file_name=fname,
                             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -2005,14 +2005,14 @@ elif st.session_state.screen == 4:
                         st.rerun()
                 else:
                     st.balloons()
-                    st.success("🎉 Mission complète — toutes les étapes sont terminées !")
+                    st.success("Mission complète — toutes les étapes sont terminées !")
 
             except Exception as e:
                 import traceback
                 status_ph.empty()
                 output_ph.empty()
-                st.error(f"❌ Erreur étape {step_info['num']} : {e}")
-                with st.expander("🔍 Détail technique", expanded=False):
+                st.error(f"Erreur étape {step_info['num']} : {e}")
+                with st.expander("Détail technique", expanded=False):
                     st.code(traceback.format_exc())
 
         elif step_idx > 0:
