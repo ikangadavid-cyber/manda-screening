@@ -7,6 +7,7 @@ import re
 import time
 import anthropic
 from tools import TOOL_DEFINITIONS, execute_tool
+from agent import _COMMON_INSTRUCTIONS
 
 # Répertoire de base = dossier contenant ce fichier (manda-screening/)
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -142,20 +143,7 @@ def run_ma_module(
 
     prompt_text = _load_prompt(module_key, company)
     instructions, _ = _split_prompt(prompt_text)
-
-    # Guard: never guess sector from name, never ask questions, ND if no data
-    instructions += (
-        "\n\n---\nRÈGLE ABSOLUE — PRIORITÉ MAXIMALE :\n"
-        "Tu ne poses JAMAIS de questions à l'utilisateur.\n"
-        "INTERDIT ABSOLU : déduire ou supposer le secteur d'activité, les produits, ou le marché "
-        "d'une entreprise à partir de son nom, de sa sonorité ou de son origine géographique. "
-        "Si les recherches ne confirment pas explicitement une information, la cellule est 'ND'.\n"
-        "Si les recherches web retournent peu ou pas de résultats sur la société : "
-        "produis le livrable avec toutes les cellules marquées 'ND - information introuvable en ligne', "
-        "sans inventer ni inférer quoi que ce soit sur le secteur ou l'activité.\n"
-        "INTERDIT : lister les informations manquantes, expliquer tes limitations, "
-        "proposer des alternatives ou écrire des phrases comme 'je n'ai pas pu trouver'."
-    )
+    instructions += _COMMON_INSTRUCTIONS  # mêmes règles que les analyses rapides
 
     user_parts = [f"Société / Acquéreur : **{company}**"]
     if sector and sector.strip():
