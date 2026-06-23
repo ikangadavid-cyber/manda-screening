@@ -353,6 +353,20 @@ button[data-baseweb="tab"] {
     color: #1A2744 !important;
 }
 </style>
+<script>
+(function() {
+  function disableAutocorrect() {
+    document.querySelectorAll('input[type="text"], textarea').forEach(function(el) {
+      el.setAttribute('autocorrect', 'off');
+      el.setAttribute('autocomplete', 'off');
+      el.setAttribute('autocapitalize', 'off');
+      el.setAttribute('spellcheck', 'false');
+    });
+  }
+  disableAutocorrect();
+  new MutationObserver(disableAutocorrect).observe(document.body, { childList: true, subtree: true });
+})();
+</script>
 """, unsafe_allow_html=True)
 
 # ── Deliverable type definitions ──────────────────────────────────────────────
