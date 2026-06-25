@@ -10,117 +10,169 @@ _EXCEL_MODULES    = set()
 
 def _render_question_cards(step_key: str, step_info: dict, company: str):
     """
-    Affiche les cartes de questions style Claude (chips st.pills) et retourne (step_input, variables).
+    Affiche les questions UNE PAR UNE (wizard) avec navigation Précédent / Suivant.
+    Retourne (step_input, variables, ready) :
+      - ready=False tant que toutes les questions n'ont pas été validées
+      - ready=True quand l'utilisateur a cliqué "Valider" sur la dernière question
     """
-    questions  = step_info.get("questions", [])
-    step_input = ""
-    variables  = {}
+    questions = step_info.get("questions", [])
+    if not questions:
+        return "", {}, True
 
-    for q in questions:
-        qk       = q["key"]
-        label    = q["label"].replace("{company}", company)
-        qtype    = q["type"]
-        required = q.get("required", True)
-        badge    = "" if required else '<span class="q-optional-badge">optionnel</span>'
+    n       = len(questions)
+    idx_key = f"q_idx_{step_key}"
+    if idx_key not in st.session_state:
+        st.session_state[idx_key] = 0
 
-        with st.container(border=True):
-            st.markdown(
-                f'<p class="q-card-label">{label}{badge}</p>',
-                unsafe_allow_html=True,
+    current_idx = st.session_state[idx_key]
+
+    # ── Toutes les questions validées ────────────────────────────────────────
+    if current_idx >= n:
+        variables  = {}
+        step_input = ""
+        for q in questions:
+            qk    = q["key"]
+            qtype = q["type"]
+            if qtype == "chips_or_custom":
+                chip = st.session_state.get(f"q_{step_key}_{qk}_pill")
+                val  = (st.session_state.get(f"q_{step_key}_{qk}_custom", "")
+                        if chip == "Autre..." else chip or "")
+            elif qtype == "text_or_file":
+                mode = st.session_state.get(f"q_{step_key}_{qk}_mode", "✏️  Coller du texte")
+                if mode == "📎  Uploader un fichier":
+                    val = st.session_state.get(f"q_file_{step_key}_{qk}", "")
+                else:
+                    val = st.session_state.get(f"q_{step_key}_{qk}_text", "")
+                step_input = val
+            else:
+                val = st.session_state.get(f"q_{step_key}_{qk}", "")
+            variables[qk] = val
+
+        if not step_input:
+            parts = [
+                f"Positionnement : {variables['positionnement']}" if variables.get("positionnement") else "",
+                f"Catégories verticales :\n{variables['categories']}" if variables.get("categories") else "",
+                f"Zone géographique : {variables['zone_geo']}" if variables.get("zone_geo") else "",
+                f"Fourchette CA : {variables['fourchette_ca']}" if variables.get("fourchette_ca") else "",
+                f"Entreprises à exclure :\n{variables['exclusions']}" if variables.get("exclusions") else "",
+            ]
+            step_input = "\n".join(p for p in parts if p)
+
+        # Récap compact + lien pour modifier
+        st.markdown(
+            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">'
+            '<span style="font-size:0.85rem;color:#2D8A5E;font-weight:600;">✓ Questions renseignées</span>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        if st.button("✏️ Modifier les réponses", key=f"q_reset_{step_key}"):
+            st.session_state[idx_key] = 0
+            st.rerun()
+
+        return step_input, variables, True
+
+    # ── Question courante ────────────────────────────────────────────────────
+    q        = questions[current_idx]
+    qk       = q["key"]
+    label    = q["label"].replace("{company}", company)
+    qtype    = q["type"]
+    required = q.get("required", True)
+    badge    = "" if required else '<span class="q-optional-badge">optionnel</span>'
+
+    # Indicateur de progression (points)
+    dots = ""
+    for i in range(n):
+        if i < current_idx:
+            dots += '<div style="width:8px;height:8px;border-radius:50%;background:#1A2744;flex-shrink:0;"></div>'
+        elif i == current_idx:
+            dots += '<div style="width:10px;height:10px;border-radius:50%;background:#1A2744;flex-shrink:0;"></div>'
+        else:
+            dots += '<div style="width:8px;height:8px;border-radius:50%;background:#CBD5E0;flex-shrink:0;"></div>'
+    st.markdown(
+        f'<div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">'
+        f'{dots}'
+        f'<span style="font-size:0.76rem;color:#94A3B8;margin-left:3px;">{current_idx + 1} / {n}</span>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    with st.container(border=True):
+        st.markdown(f'<p class="q-card-label">{label}{badge}</p>', unsafe_allow_html=True)
+
+        # ── Texte court ──────────────────────────────────────────────────────
+        if qtype == "text_input":
+            st.text_input(
+                label, placeholder=q.get("hint", ""),
+                key=f"q_{step_key}_{qk}", label_visibility="collapsed",
             )
 
-            # ── Texte court ──────────────────────────────────────────────────
-            if qtype == "text_input":
-                val = st.text_input(
-                    label,
-                    placeholder=q.get("hint", ""),
-                    key=f"q_{step_key}_{qk}",
-                    label_visibility="collapsed",
+        # ── Texte long ───────────────────────────────────────────────────────
+        elif qtype == "textarea":
+            st.text_area(
+                label, placeholder=q.get("hint", ""), height=120,
+                key=f"q_{step_key}_{qk}", label_visibility="collapsed",
+            )
+
+        # ── Chips + "Autre" ──────────────────────────────────────────────────
+        elif qtype == "chips_or_custom":
+            options = q.get("options", []) + ["Autre..."]
+            chip = st.pills(
+                label, options=options, selection_mode="single",
+                key=f"q_{step_key}_{qk}_pill", label_visibility="collapsed",
+            )
+            if chip == "Autre...":
+                st.text_input(
+                    "Précisez", placeholder=q.get("hint", ""),
+                    key=f"q_{step_key}_{qk}_custom",
                 )
-                variables[qk] = val
 
-            # ── Texte long ───────────────────────────────────────────────────
-            elif qtype == "textarea":
-                val = st.text_area(
-                    label,
-                    placeholder=q.get("hint", ""),
-                    height=120,
-                    key=f"q_{step_key}_{qk}",
-                    label_visibility="collapsed",
+        # ── Texte ou fichier ─────────────────────────────────────────────────
+        elif qtype == "text_or_file":
+            mode = st.pills(
+                "Mode",
+                options=["✏️  Coller du texte", "📎  Uploader un fichier"],
+                selection_mode="single", default="✏️  Coller du texte",
+                key=f"q_{step_key}_{qk}_mode", label_visibility="collapsed",
+            )
+            if mode != "📎  Uploader un fichier":
+                st.text_area(
+                    label, placeholder=q.get("hint_text", ""), height=180,
+                    key=f"q_{step_key}_{qk}_text", label_visibility="collapsed",
                 )
-                variables[qk] = val
-
-            # ── Chips + champ "Autre" ────────────────────────────────────────
-            elif qtype == "chips_or_custom":
-                options = q.get("options", []) + ["Autre..."]
-                chip = st.pills(
-                    label,
-                    options=options,
-                    selection_mode="single",
-                    key=f"q_{step_key}_{qk}_pill",
+            else:
+                up = st.file_uploader(
+                    "Document", type=["pdf", "docx", "txt", "md"],
+                    accept_multiple_files=True,
+                    key=f"q_{step_key}_{qk}_file",
                     label_visibility="collapsed",
+                    help="Formats : .docx, .pdf, .txt — max 3 fichiers",
                 )
-                if chip == "Autre...":
-                    val = st.text_input(
-                        "Précisez",
-                        placeholder=q.get("hint", ""),
-                        key=f"q_{step_key}_{qk}_custom",
-                    )
-                else:
-                    val = chip or ""
-                variables[qk] = val
+                if up:
+                    from document_extractor import extract_text
+                    content = ""
+                    for uf in up[:3]:
+                        content += f"\n\n--- {uf.name} ---\n{extract_text(uf)}"
+                    st.session_state[f"q_file_{step_key}_{qk}"] = content
 
-            # ── Texte ou fichier (modules 1a / 1b) ──────────────────────────
-            elif qtype == "text_or_file":
-                mode = st.pills(
-                    "Mode",
-                    options=["✏️  Coller du texte", "📎  Uploader un fichier"],
-                    selection_mode="single",
-                    default="✏️  Coller du texte",
-                    key=f"q_{step_key}_{qk}_mode",
-                    label_visibility="collapsed",
-                )
-                if mode != "📎  Uploader un fichier":
-                    val = st.text_area(
-                        label,
-                        placeholder=q.get("hint_text", ""),
-                        height=180,
-                        key=f"q_{step_key}_{qk}_text",
-                        label_visibility="collapsed",
-                    )
-                else:
-                    up = st.file_uploader(
-                        "Document",
-                        type=["pdf", "docx", "txt", "md"],
-                        accept_multiple_files=True,
-                        key=f"q_{step_key}_{qk}_file",
-                        label_visibility="collapsed",
-                        help="Formats : .docx, .pdf, .txt — max 3 fichiers",
-                    )
-                    val = ""
-                    if up:
-                        from document_extractor import extract_text
-                        for uf in up[:3]:
-                            val += f"\n\n--- {uf.name} ---\n{extract_text(uf)}"
-                variables[qk] = val
-                step_input = val
+        # ── Navigation ───────────────────────────────────────────────────────
+        st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+        col_prev, col_next = st.columns([1, 2])
 
-    # Module 2 — assembler l'input structuré
-    if not step_input and variables:
-        parts = []
-        if variables.get("positionnement"):
-            parts.append(f"Positionnement : {variables['positionnement']}")
-        if variables.get("categories"):
-            parts.append(f"Catégories verticales cibles :\n{variables['categories']}")
-        if variables.get("zone_geo"):
-            parts.append(f"Zone géographique : {variables['zone_geo']}")
-        if variables.get("fourchette_ca"):
-            parts.append(f"Fourchette CA cibles : {variables['fourchette_ca']}")
-        if variables.get("exclusions"):
-            parts.append(f"Entreprises à exclure :\n{variables['exclusions']}")
-        step_input = "\n".join(parts)
+        with col_prev:
+            if current_idx > 0:
+                if st.button("← Retour", key=f"q_prev_{step_key}_{current_idx}",
+                             use_container_width=True):
+                    st.session_state[idx_key] = current_idx - 1
+                    st.rerun()
 
-    return step_input, variables
+        with col_next:
+            btn_label = "Valider →" if current_idx == n - 1 else "Suivant →"
+            if st.button(btn_label, key=f"q_next_{step_key}_{current_idx}",
+                         type="primary", use_container_width=True):
+                st.session_state[idx_key] = current_idx + 1
+                st.rerun()
+
+    return "", {}, False
 
 
 def _export_button(result: str, company: str, step_key: str, step_info: dict):
@@ -1953,8 +2005,11 @@ elif st.session_state.screen == 4:
         step_input   = ""
         step_variables = {}
 
+        questions_ready = True
         if step_info.get("questions"):
-            step_input, step_variables = _render_question_cards(step_key, step_info, ma_company)
+            step_input, step_variables, questions_ready = _render_question_cards(
+                step_key, step_info, ma_company
+            )
         elif step_info.get("needs_input"):
             if input_key not in st.session_state and step_idx > 0:
                 pk = step_keys[step_idx - 1]
@@ -1970,7 +2025,10 @@ elif st.session_state.screen == 4:
             st.session_state[input_key] = step_input
 
         run_label = "🔍 Lancer la recherche" if step_info.get("web_search") else "⚡ Lancer l'analyse"
-        launch = st.button(run_label, key=f"run_{step_key}", type="primary", use_container_width=True)
+        launch = (
+            st.button(run_label, key=f"run_{step_key}", type="primary", use_container_width=True)
+            if questions_ready else False
+        )
 
         if launch:
             # ── Feedback immédiat dès le clic ────────────────────────────────
