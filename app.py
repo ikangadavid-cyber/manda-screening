@@ -467,27 +467,35 @@ footer { visibility:hidden!important; }
 
 .q-optional-badge { font-size:0.72rem; font-weight:400; color:#9CA3AF; margin-left:8px; text-transform:uppercase; letter-spacing:0.05em; }
 
-/* ── Cacher la barre décorative Streamlit (anciennement rouge) ── */
+/* ── Fond général ── */
+[data-testid="stAppViewContainer"] { background: #D0D0D0; }
+
+/* ── Header ── */
+header[data-testid="stHeader"] {
+    background:#D0D0D0!important; box-shadow:none!important; border-bottom:none!important;
+}
+
+/* ── Cacher la barre décorative Streamlit ── */
 [data-testid="stDecoration"] { display:none!important; }
 
-/* ── st.pills → chips dark-mode ── */
+/* ── st.pills → chips (fond clair, texte sombre) ── */
 div[data-testid="stPills"] > label { display:none!important; }
 button[data-testid="stPillsOptionButton"] {
-    border:1px solid rgba(255,255,255,0.3)!important; border-radius:100px!important;
-    background:transparent!important;
+    border:1px solid #D0D0D0!important; border-radius:100px!important;
+    background:#F5F5F5!important; color:#333333!important;
     font-size:0.87rem!important; padding:7px 18px!important;
     margin:0 6px 6px 0!important; font-weight:400!important; box-shadow:none!important;
     transition:all 0.12s!important;
 }
 button[data-testid="stPillsOptionButton"]:hover {
-    border-color:rgba(255,255,255,0.7)!important;
+    border-color:#555555!important;
 }
 button[data-testid="stPillsOptionButton"][aria-pressed="true"] {
-    background:#FFFFFF!important; border-color:#FFFFFF!important; color:#111111!important;
+    background:#111111!important; border-color:#111111!important; color:#FFFFFF!important;
 }
 
-/* ── Question card label — hérite du thème dark ── */
-.q-card-label { font-size:0.94rem; font-weight:500; margin:4px 0 12px 0; line-height:1.5; }
+/* ── Question card label ── */
+.q-card-label { font-size:0.94rem; font-weight:500; color:#111111; margin:4px 0 12px 0; line-height:1.5; }
 </style>
 <script>
 (function() {
