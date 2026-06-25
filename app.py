@@ -244,7 +244,7 @@ html, body, [class*="css"] {
 @keyframes progressSlide { from{width:0%} to{width:100%} }
 
 /* ── Fond général ── */
-[data-testid="stAppViewContainer"] { background: #E8E8E8; }
+[data-testid="stAppViewContainer"] { background: #D0D0D0; }
 .main .block-container {
     max-width: 900px;
     padding-top: 2rem;
@@ -405,7 +405,7 @@ div[data-testid="stSpinner"] > div { font-size:0.9rem; color:#6B7280; }
 
 /* ── Header Streamlit ── */
 header[data-testid="stHeader"] {
-    background:#E8E8E8!important; box-shadow:none!important; border-bottom:none!important;
+    background:#D0D0D0!important; box-shadow:none!important; border-bottom:none!important;
 }
 footer { visibility:hidden!important; }
 
