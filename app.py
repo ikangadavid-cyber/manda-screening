@@ -1832,18 +1832,47 @@ elif st.session_state.screen == 4:
             with st.container(border=True):
                 st.markdown(
                     f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
-                    f'<span style="font-size:0.7rem;font-weight:700;opacity:.5;text-transform:uppercase;letter-spacing:0.08em;">Étape {mod_num}</span>'
-                    f'<span style="font-size:0.75rem;opacity:.5;">{m1} · {m2}</span></div>'
-                    f'<div style="font-size:0.97rem;font-weight:700;">{mod_label}</div>',
+                    f'<span style="font-size:0.7rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;">Étape {mod_num}</span>'
+                    f'<span style="font-size:0.75rem;color:#9CA3AF;">{m1} · {m2}</span></div>'
+                    f'<div style="font-size:0.97rem;font-weight:700;color:#111111;">{mod_label}</div>',
                     unsafe_allow_html=True,
                 )
-                _export_button(res_text, ma_company, mod_key, {"num": mod_num, "title": mod_label})
                 with st.expander("Voir le résultat complet"):
                     st.markdown(res_text)
+
+        # ── Export Excel groupé ──
+        st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(
+                '<div style="font-size:0.95rem;font-weight:700;color:#111111;margin-bottom:4px;">📥 Exporter le rapport complet</div>'
+                '<div style="font-size:0.82rem;color:#6B7280;margin-bottom:12px;">Mapping vertical, Mapping horizontal et Long-list dans un seul fichier Excel</div>',
+                unsafe_allow_html=True,
+            )
+            try:
+                from export_ma_xlsx import generate_ma_xlsx
+                os.environ["ANTHROPIC_API_KEY"] = anthropic_key
+                xlsx_bytes = generate_ma_xlsx(
+                    company   = ma_company,
+                    text_v    = results.get("buy_01_carto_verticale", ""),
+                    text_h    = results.get("buy_02_carto_horizontale", ""),
+                    text_cibles = results.get("buy_03_recherche_cibles", ""),
+                )
+                fname = f"screening_{ma_company.replace(' ', '_').lower()}.xlsx"
+                st.download_button(
+                    "📥 Télécharger en Excel",
+                    data=xlsx_bytes,
+                    file_name=fname,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True,
+                    type="primary",
+                )
+            except Exception as _xe:
+                st.warning(f"Export Excel indisponible : {_xe}")
+
         st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
         if st.button("🔄 Recommencer la mission", use_container_width=True):
             for k in list(st.session_state.keys()):
-                if k.startswith("q_ma_buy_wizard") or k in ("ma_company_info", "ma_wizard_confirmed"):
+                if k.startswith("q_ma_buy_wizard") or k in ("ma_company_info", "ma_wizard_confirmed", "ma_mission_running"):
                     del st.session_state[k]
             st.session_state.ma_step_result = {}
             st.rerun()
@@ -1963,9 +1992,15 @@ elif st.session_state.screen == 4:
                 parts2.append(f"Entreprises à exclure :\n{variables['exclusions']}")
             step2_input = "\n".join(parts2)
 
-            launch = st.button("🔍 Lancer la mission", type="primary", use_container_width=True)
+            if not st.session_state.get("ma_mission_running", False):
+                launch = st.button("🔍 Lancer la mission", type="primary", use_container_width=True)
+                if launch:
+                    st.session_state.ma_mission_running = True
+                    st.rerun()
+            else:
+                launch = True
 
-            if launch:
+            if st.session_state.get("ma_mission_running", False) and launch:
                 os.environ["ANTHROPIC_API_KEY"] = anthropic_key
                 os.environ["TAVILY_API_KEY"]    = tavily_key
 
@@ -1981,8 +2016,7 @@ elif st.session_state.screen == 4:
                     ph.markdown(
                         f'<div style="border:1px solid #CCCCCC;border-radius:10px;'
                         f'background:#FFFFFF;padding:14px 20px;font-size:0.88rem;font-weight:600;color:#111111;margin-bottom:8px;">'
-                        f'⏳ &nbsp;{mod_label} en cours…'
-                        f'<span style="font-weight:400;opacity:.55;margin-left:8px;font-size:0.8rem;">(30–90 s · web)</span></div>',
+                        f'⏳ &nbsp;{mod_label} en cours…</div>',
                         unsafe_allow_html=True,
                     )
                     def _on_text(text, _ph=out_ph):
@@ -2018,4 +2052,5 @@ elif st.session_state.screen == 4:
                         with st.expander("Détail"):
                             st.code(traceback.format_exc())
                 st.session_state.ma_step_result = new_results
+                st.session_state.ma_mission_running = False
                 st.rerun()
