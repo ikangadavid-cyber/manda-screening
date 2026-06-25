@@ -64,6 +64,42 @@ def _load_prompt(module_key: str, company: str) -> str:
     return text.replace("{company}", company)
 
 
+def _substitute_variables(prompt_text: str, company: str, variables: dict) -> str:
+    """
+    Remplace dans le prompt les valeurs hardcodées par celles fournies par l'utilisateur.
+    Appliqué APRÈS le chargement du fichier / secrets.
+    """
+    # Nom de l'acquéreur — les prompts ont "Milliris" en dur
+    if company and company != "Milliris":
+        prompt_text = prompt_text.replace("Milliris", company)
+
+    if not variables:
+        return prompt_text
+
+    # Module 2 — substitutions spécifiques
+    if variables.get("positionnement"):
+        prompt_text = prompt_text.replace(
+            "intégrateur industriel en électricité, automatisme, mécanisation et maintenance",
+            variables["positionnement"],
+        )
+    if variables.get("zone_geo"):
+        prompt_text = prompt_text.replace("France uniquement", variables["zone_geo"])
+    if variables.get("fourchette_ca"):
+        prompt_text = prompt_text.replace("5–20 M€", variables["fourchette_ca"])
+    if variables.get("categories"):
+        prompt_text = prompt_text.replace(
+            "V4 - Intégrateurs de systèmes et lignes de production",
+            variables["categories"],
+        )
+    exclusions = (variables.get("exclusions") or "").strip()
+    prompt_text = prompt_text.replace(
+        "[À RENSEIGNER le cas échéant]",
+        exclusions if exclusions else "Aucune exclusion particulière",
+    )
+
+    return prompt_text
+
+
 def _split_prompt(prompt_text: str) -> tuple[str, str]:
     """Sépare le prompt en (system_instructions, input_section)."""
     splits = [
@@ -86,6 +122,7 @@ def run_ma_module(
     company: str,
     sector: str = "",
     input_data: str = "",
+    variables: dict = None,
     on_text=None,
     on_tool_use=None,
     on_tool_result=None,
@@ -107,6 +144,7 @@ def run_ma_module(
     max_tokens = MAX_TOKENS_BY_MODULE.get(module_key, DEFAULT_MAX_TOKENS)
 
     prompt_text = _load_prompt(module_key, company)
+    prompt_text = _substitute_variables(prompt_text, company, variables or {})
     instructions, _ = _split_prompt(prompt_text)
     instructions += _COMMON_INSTRUCTIONS  # mêmes règles que les analyses rapides
 

@@ -8,6 +8,118 @@ _PPT_MODULES_BUY  = set()
 _EXCEL_MODULES    = set()
 
 
+def _render_question_cards(step_key: str, step_info: dict, company: str):
+    """
+    Affiche les cartes de questions style Claude et retourne (step_input, variables).
+    step_input  : texte brut à passer comme INPUT au module
+    variables   : dict des valeurs collectées, pour substitution dans le prompt
+    """
+    questions = step_info.get("questions", [])
+    step_input = ""
+    variables  = {}
+
+    for q in questions:
+        qk       = q["key"]
+        label    = q["label"].replace("{company}", company)
+        qtype    = q["type"]
+        required = q.get("required", True)
+        badge    = "" if required else '<span class="q-optional-badge">optionnel</span>'
+
+        with st.container(border=True):
+            st.markdown(
+                f'<p class="q-card-label">{label}{badge}</p>',
+                unsafe_allow_html=True,
+            )
+
+            if qtype == "text_input":
+                val = st.text_input(
+                    label,
+                    placeholder=q.get("hint", ""),
+                    key=f"q_{step_key}_{qk}",
+                    label_visibility="collapsed",
+                )
+                variables[qk] = val
+
+            elif qtype == "textarea":
+                val = st.text_area(
+                    label,
+                    placeholder=q.get("hint", ""),
+                    height=120,
+                    key=f"q_{step_key}_{qk}",
+                    label_visibility="collapsed",
+                )
+                variables[qk] = val
+
+            elif qtype == "chips_or_custom":
+                options = q.get("options", []) + ["Autre..."]
+                chip = st.radio(
+                    label,
+                    options=options,
+                    horizontal=True,
+                    key=f"q_{step_key}_{qk}_chip",
+                    label_visibility="collapsed",
+                )
+                if chip == "Autre...":
+                    val = st.text_input(
+                        "Précisez",
+                        placeholder=q.get("hint", ""),
+                        key=f"q_{step_key}_{qk}_custom",
+                    )
+                else:
+                    val = chip or ""
+                variables[qk] = val
+
+            elif qtype == "text_or_file":
+                mode = st.radio(
+                    "Mode",
+                    options=["✏️  Coller du texte", "📎  Uploader un fichier"],
+                    horizontal=True,
+                    key=f"q_{step_key}_{qk}_mode",
+                    label_visibility="collapsed",
+                )
+                if mode == "✏️  Coller du texte":
+                    val = st.text_area(
+                        label,
+                        placeholder=q.get("hint_text", ""),
+                        height=180,
+                        key=f"q_{step_key}_{qk}_text",
+                        label_visibility="collapsed",
+                    )
+                else:
+                    up = st.file_uploader(
+                        "Document",
+                        type=["pdf", "docx", "txt", "md"],
+                        accept_multiple_files=True,
+                        key=f"q_{step_key}_{qk}_file",
+                        label_visibility="collapsed",
+                        help="Formats : .docx, .pdf, .txt — max 3 fichiers",
+                    )
+                    val = ""
+                    if up:
+                        from document_extractor import extract_text
+                        for uf in up[:3]:
+                            val += f"\n\n--- {uf.name} ---\n{extract_text(uf)}"
+                variables[qk] = val
+                step_input = val  # input principal pour modules 1a/1b
+
+    # Module 2 : construire l'input à partir des variables structurées
+    if not step_input and variables:
+        parts = []
+        if variables.get("positionnement"):
+            parts.append(f"Positionnement : {variables['positionnement']}")
+        if variables.get("categories"):
+            parts.append(f"Catégories verticales cibles :\n{variables['categories']}")
+        if variables.get("zone_geo"):
+            parts.append(f"Zone géographique : {variables['zone_geo']}")
+        if variables.get("fourchette_ca"):
+            parts.append(f"Fourchette CA cibles : {variables['fourchette_ca']}")
+        if variables.get("exclusions"):
+            parts.append(f"Entreprises à exclure :\n{variables['exclusions']}")
+        step_input = "\n".join(parts)
+
+    return step_input, variables
+
+
 def _export_button(result: str, company: str, step_key: str, step_info: dict):
     """Affiche le bon bouton de téléchargement selon le type de module."""
     fname_base = f"{company.replace(' ', '_').lower()}_{step_info['num']}_{step_info['title'].replace(' ', '_')}"
@@ -391,6 +503,61 @@ button[data-baseweb="tab"] {
     border-color: #4A7FA5 !important;
     color: #1A2744 !important;
 }
+
+/* ── Question cards (style Claude) ── */
+div[data-testid="stVerticalBlockBorderWrapper"].q-card-wrapper {
+    border-radius: 16px !important;
+    border: 1px solid #E2E8F0 !important;
+    padding: 2px 6px 6px 6px !important;
+    margin-bottom: 10px !important;
+    background: #FFFFFF !important;
+}
+.q-card-label {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #1A202C;
+    margin: 4px 0 10px 0;
+    line-height: 1.5;
+}
+.q-optional-badge {
+    font-size: 0.73rem;
+    font-weight: 400;
+    color: #94A3B8;
+    margin-left: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+/* Radio as chips */
+div[data-testid="stVerticalBlockBorderWrapper"].q-card-wrapper div[data-testid="stRadio"] > label {
+    display: none !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"].q-card-wrapper div[data-testid="stRadio"] > div {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin-top: 2px !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"].q-card-wrapper div[data-testid="stRadio"] label[data-baseweb="radio"] {
+    padding: 7px 18px !important;
+    border: 1.5px solid #CBD5E0 !important;
+    border-radius: 100px !important;
+    margin: 0 !important;
+    background: transparent !important;
+    transition: all 0.12s !important;
+    font-size: 0.87rem !important;
+    color: #2D3748 !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"].q-card-wrapper div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
+    background: #1A2744 !important;
+    border-color: #1A2744 !important;
+    color: #FFFFFF !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"].q-card-wrapper div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] {
+    display: none !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"].q-card-wrapper div[data-testid="stRadio"] div[data-baseweb="radio"] > div:first-child {
+    display: none !important;
+}
 </style>
 <script>
 (function() {
@@ -461,7 +628,16 @@ BUY_SIDE_STEPS = [
         "web_search":  True,
         "needs_input": True,
         "input_label": "Présentation de la société",
-        "input_hint":  "Activité cœur, offres / technologies, segments clients, canaux de vente, zones géographiques, modèle économique (marque propre, OEM, MDD…), effectifs, CA approximatif.",
+        "input_hint":  "",
+        "questions": [
+            {
+                "key":       "input_societe",
+                "label":     "Informations sur {company}",
+                "type":      "text_or_file",
+                "hint_text": "Activité cœur, offres / technologies, segments clients, canaux de vente, zones géographiques, modèle économique (marque propre, OEM, MDD…), effectifs, CA approximatif.",
+                "required":  True,
+            },
+        ],
     },
     {
         "key":         "buy_02_carto_horizontale",
@@ -471,7 +647,16 @@ BUY_SIDE_STEPS = [
         "web_search":  True,
         "needs_input": True,
         "input_label": "Présentation de la société",
-        "input_hint":  "Activité cœur, offres / technologies, segments clients, canaux de vente, zones géographiques, modèle économique (marque propre, OEM, MDD…), effectifs, CA approximatif.",
+        "input_hint":  "",
+        "questions": [
+            {
+                "key":       "input_societe",
+                "label":     "Informations sur {company}",
+                "type":      "text_or_file",
+                "hint_text": "Activité cœur, offres / technologies, segments clients, canaux de vente, zones géographiques, modèle économique (marque propre, OEM, MDD…), effectifs, CA approximatif.",
+                "required":  True,
+            },
+        ],
     },
     {
         "key":         "buy_03_recherche_cibles",
@@ -481,10 +666,46 @@ BUY_SIDE_STEPS = [
         "web_search":  True,
         "needs_input": True,
         "input_label": "Contexte de l'acquéreur",
-        "input_hint":  (
-            "Secteur d'activité, CA approximatif, fourchette de taille cible, zone géographique, stratégie.\n"
-            "Ex : intégrateur industriel électricité / automatisme, CA ~15M€, cibles France 3-15M€."
-        ),
+        "input_hint":  "",
+        "questions": [
+            {
+                "key":      "positionnement",
+                "label":    "Quel est le positionnement de {company} ?",
+                "type":     "text_input",
+                "hint":     "Ex : intégrateur industriel en électricité, automatisme, mécanisation et maintenance",
+                "required": True,
+            },
+            {
+                "key":      "categories",
+                "label":    "Quelles catégories verticales cibler ?",
+                "type":     "textarea",
+                "hint":     "Copiez les catégories issues de la cartographie verticale (étape 1a).\nEx : V4 — Intégrateurs de systèmes et lignes de production",
+                "required": True,
+            },
+            {
+                "key":      "zone_geo",
+                "label":    "Quelle zone géographique pour les cibles ?",
+                "type":     "chips_or_custom",
+                "options":  ["France", "France + Belgique", "France + Europe", "Europe"],
+                "hint":     "Autre zone...",
+                "required": True,
+            },
+            {
+                "key":      "fourchette_ca",
+                "label":    "Quelle fourchette de CA pour les cibles ?",
+                "type":     "chips_or_custom",
+                "options":  ["2–5 M€", "5–20 M€", "10–50 M€", "20–100 M€"],
+                "hint":     "Ex : 3–15 M€",
+                "required": True,
+            },
+            {
+                "key":      "exclusions",
+                "label":    "Entreprises à exclure ?",
+                "type":     "textarea",
+                "hint":     "Laissez vide si aucune exclusion. Une société par ligne.",
+                "required": False,
+            },
+        ],
     },
 ]
 
@@ -1740,44 +1961,24 @@ elif st.session_state.screen == 4:
     # ── ÉTAT B : étape à lancer ───────────────────────────────────────────────
     else:
         input_key  = f"ma_input_{step_key}"
-        step_input = ""
+        step_input   = ""
+        step_variables = {}
 
-        if step_info.get("needs_input"):
+        if step_info.get("questions"):
+            step_input, step_variables = _render_question_cards(step_key, step_info, ma_company)
+        elif step_info.get("needs_input"):
             if input_key not in st.session_state and step_idx > 0:
                 pk = step_keys[step_idx - 1]
                 if pk in results:
                     st.session_state[input_key] = results[pk][:4000]
-
-            input_mode_key = f"input_mode_{step_key}"
-            input_mode = st.radio(
-                "Comment souhaitez-vous fournir les informations ?",
-                options=["✏️  Saisir / coller du texte", "📎  Uploader un fichier"],
-                horizontal=True,
-                key=input_mode_key,
-                label_visibility="visible",
+            step_input = st.text_area(
+                step_info["input_label"],
+                value=st.session_state.get(input_key, ""),
+                placeholder=step_info.get("input_hint", ""),
+                height=190,
+                key=f"ta_{step_key}",
             )
-
-            if input_mode == "✏️  Saisir / coller du texte":
-                step_input = st.text_area(
-                    step_info["input_label"],
-                    value=st.session_state.get(input_key, ""),
-                    placeholder=step_info["input_hint"],
-                    height=190,
-                    key=f"ta_{step_key}",
-                )
-                st.session_state[input_key] = step_input
-            else:
-                up_files = st.file_uploader(
-                    step_info["input_label"],
-                    type=["pdf", "docx", "txt", "md"],
-                    accept_multiple_files=True,
-                    key=f"up_{step_key}",
-                    help="Formats acceptés : .docx, .pdf, .txt, .md — max 3 fichiers",
-                )
-                if up_files:
-                    from document_extractor import extract_text
-                    for uf in up_files[:3]:
-                        step_input += f"\n\n--- {uf.name} ---\n{extract_text(uf)}"
+            st.session_state[input_key] = step_input
 
         run_label = "🔍 Lancer la recherche" if step_info.get("web_search") else "⚡ Lancer l'analyse"
         launch = st.button(run_label, key=f"run_{step_key}", type="primary", use_container_width=True)
@@ -1825,6 +2026,7 @@ elif st.session_state.screen == 4:
                         company=ma_company,
                         sector=ma_sector,
                         input_data=step_input,
+                        variables=step_variables,
                         on_text=_on_text,
                         on_tool_use=_on_tool,
                     )
