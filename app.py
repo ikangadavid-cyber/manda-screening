@@ -870,6 +870,21 @@ if st.session_state.screen == 1:
                 label_visibility="collapsed",
                 key="buy_company_input",
             )
+            st.markdown(
+                '<p style="font-size:0.82rem;color:#9CA3AF;margin-top:10px;margin-bottom:4px;'
+                'font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">'
+                'Documents de contexte <span style="font-weight:400;text-transform:none;'
+                'letter-spacing:0;font-size:0.75rem;">— facultatif</span></p>',
+                unsafe_allow_html=True,
+            )
+            ma_docs_upload = st.file_uploader(
+                "Documents",
+                type=["pdf", "docx", "txt", "md", "xlsx", "csv"],
+                accept_multiple_files=True,
+                label_visibility="collapsed",
+                key="ma_start_docs",
+                help="Plaquette, rapport annuel, mémo… L'IA les utilisera pendant la mission.",
+            )
             submitted = st.form_submit_button(
                 "Commencer →", type="primary", use_container_width=True
             )
@@ -879,6 +894,15 @@ if st.session_state.screen == 1:
             elif not anthropic_key or not tavily_key:
                 st.error("🔑 Clés API manquantes.")
             else:
+                # Extraire le contenu des documents uploadés
+                docs_text = ""
+                if ma_docs_upload:
+                    from document_extractor import extract_text as _ext_start
+                    for uf in ma_docs_upload:
+                        extracted = _ext_start(uf)
+                        if extracted.strip():
+                            docs_text += f"\n\n--- Document fourni : {uf.name} ---\n{extracted}"
+                st.session_state["ma_context_docs"] = docs_text
                 # Reset wizard state for fresh start
                 for k in list(st.session_state.keys()):
                     if k.startswith("q_ma_buy_wizard") or k.startswith("q_idx_ma_buy_wizard"):
@@ -1991,40 +2015,6 @@ elif st.session_state.screen == 4:
             if variables.get("exclusions"):
                 parts2.append(f"Entreprises à exclure :\n{variables['exclusions']}")
             step2_input = "\n".join(parts2)
-
-            # ── Zone documents contexte ──────────────────────────────────
-            st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
-            with st.container(border=True):
-                st.markdown(
-                    '<div style="font-size:0.85rem;font-weight:600;color:#111111;margin-bottom:2px;">'
-                    '📎 Documents de contexte <span style="font-weight:400;color:#9CA3AF;font-size:0.78rem;">(facultatif)</span></div>'
-                    '<div style="font-size:0.78rem;color:#6B7280;margin-bottom:8px;">'
-                    'Plaquette commerciale, rapport annuel, mémo interne… L\'IA les intégrera dans sa recherche.</div>',
-                    unsafe_allow_html=True,
-                )
-                uploaded_docs = st.file_uploader(
-                    "Documents",
-                    type=["pdf", "docx", "txt", "md", "xlsx", "csv"],
-                    accept_multiple_files=True,
-                    label_visibility="collapsed",
-                    key="ma_context_files",
-                )
-                if uploaded_docs:
-                    from document_extractor import extract_text as _extract_doc
-                    docs_text = ""
-                    for uf in uploaded_docs:
-                        extracted = _extract_doc(uf)
-                        if extracted.strip():
-                            docs_text += f"\n\n--- Document fourni : {uf.name} ---\n{extracted}"
-                    if docs_text:
-                        st.session_state["ma_context_docs"] = docs_text
-                        st.markdown(
-                            f'<div style="font-size:0.78rem;color:#059669;margin-top:6px;">'
-                            f'✓ {len(uploaded_docs)} document(s) chargé(s) — sera(ont) intégré(s) à la recherche</div>',
-                            unsafe_allow_html=True,
-                        )
-                else:
-                    st.session_state.pop("ma_context_docs", None)
 
             # Injecter les docs dans l'input
             context_docs = st.session_state.get("ma_context_docs", "")
