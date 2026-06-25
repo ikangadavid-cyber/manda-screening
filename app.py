@@ -1992,6 +1992,46 @@ elif st.session_state.screen == 4:
                 parts2.append(f"Entreprises à exclure :\n{variables['exclusions']}")
             step2_input = "\n".join(parts2)
 
+            # ── Zone documents contexte ──────────────────────────────────
+            st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown(
+                    '<div style="font-size:0.85rem;font-weight:600;color:#111111;margin-bottom:2px;">'
+                    '📎 Documents de contexte <span style="font-weight:400;color:#9CA3AF;font-size:0.78rem;">(facultatif)</span></div>'
+                    '<div style="font-size:0.78rem;color:#6B7280;margin-bottom:8px;">'
+                    'Plaquette commerciale, rapport annuel, mémo interne… L\'IA les intégrera dans sa recherche.</div>',
+                    unsafe_allow_html=True,
+                )
+                uploaded_docs = st.file_uploader(
+                    "Documents",
+                    type=["pdf", "docx", "txt", "md", "xlsx", "csv"],
+                    accept_multiple_files=True,
+                    label_visibility="collapsed",
+                    key="ma_context_files",
+                )
+                if uploaded_docs:
+                    from document_extractor import extract_text as _extract_doc
+                    docs_text = ""
+                    for uf in uploaded_docs:
+                        extracted = _extract_doc(uf)
+                        if extracted.strip():
+                            docs_text += f"\n\n--- Document fourni : {uf.name} ---\n{extracted}"
+                    if docs_text:
+                        st.session_state["ma_context_docs"] = docs_text
+                        st.markdown(
+                            f'<div style="font-size:0.78rem;color:#059669;margin-top:6px;">'
+                            f'✓ {len(uploaded_docs)} document(s) chargé(s) — sera(ont) intégré(s) à la recherche</div>',
+                            unsafe_allow_html=True,
+                        )
+                else:
+                    st.session_state.pop("ma_context_docs", None)
+
+            # Injecter les docs dans l'input
+            context_docs = st.session_state.get("ma_context_docs", "")
+            if context_docs:
+                step2_input = step2_input + "\n\n" + context_docs
+
+            st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
             if not st.session_state.get("ma_mission_running", False):
                 launch = st.button("🔍 Lancer la mission", type="primary", use_container_width=True)
                 if launch:
@@ -2005,9 +2045,9 @@ elif st.session_state.screen == 4:
                 os.environ["TAVILY_API_KEY"]    = tavily_key
 
                 modules_to_run = [
-                    ("buy_01_carto_verticale",   "", "1a — Cartographie verticale"),
-                    ("buy_02_carto_horizontale", "", "1b — Cartographie horizontale"),
-                    ("buy_03_recherche_cibles",  step2_input, "2 — Long-list de cibles"),
+                    ("buy_01_carto_verticale",   context_docs, "1a — Cartographie verticale"),
+                    ("buy_02_carto_horizontale", context_docs, "1b — Cartographie horizontale"),
+                    ("buy_03_recherche_cibles",  step2_input,  "2 — Long-list de cibles"),
                 ]
                 new_results = dict(results)
                 for mod_key, mod_input, mod_label in modules_to_run:
