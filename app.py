@@ -244,7 +244,7 @@ html, body, [class*="css"] {
 @keyframes progressSlide { from{width:0%} to{width:100%} }
 
 /* ── Fond général ── */
-[data-testid="stAppViewContainer"] { background: #FFFFFF; }
+[data-testid="stAppViewContainer"] { background: #F5F5F5; }
 .main .block-container {
     max-width: 900px;
     padding-top: 2rem;
@@ -255,7 +255,7 @@ html, body, [class*="css"] {
 
 /* ── Sidebar ── */
 section[data-testid="stSidebar"] {
-    background: #F7F7F7;
+    background: #FFFFFF;
     border-right: 1px solid #E5E5E5;
     box-shadow: none;
 }
@@ -405,7 +405,7 @@ div[data-testid="stSpinner"] > div { font-size:0.9rem; color:#6B7280; }
 
 /* ── Header Streamlit ── */
 header[data-testid="stHeader"] {
-    background:#FFFFFF!important; box-shadow:none!important; border-bottom:1px solid #F0F0F0!important;
+    background:#F5F5F5!important; box-shadow:none!important; border-bottom:none!important;
 }
 footer { visibility:hidden!important; }
 
