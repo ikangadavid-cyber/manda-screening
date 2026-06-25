@@ -61,7 +61,7 @@ def _render_question_cards(step_key: str, step_info: dict, company: str):
         # Récap compact + lien pour modifier
         st.markdown(
             '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">'
-            '<span style="font-size:0.85rem;color:#2D8A5E;font-weight:600;">✓ Questions renseignées</span>'
+            '<span style="font-size:0.85rem;color:#111111;font-weight:600;">✓ Questions renseignées</span>'
             '</div>',
             unsafe_allow_html=True,
         )
@@ -83,15 +83,15 @@ def _render_question_cards(step_key: str, step_info: dict, company: str):
     dots = ""
     for i in range(n):
         if i < current_idx:
-            dots += '<div style="width:8px;height:8px;border-radius:50%;background:#1A2744;flex-shrink:0;"></div>'
+            dots += '<div style="width:8px;height:8px;border-radius:50%;background:#111111;flex-shrink:0;"></div>'
         elif i == current_idx:
-            dots += '<div style="width:10px;height:10px;border-radius:50%;background:#1A2744;flex-shrink:0;"></div>'
+            dots += '<div style="width:10px;height:10px;border-radius:50%;background:#111111;flex-shrink:0;"></div>'
         else:
-            dots += '<div style="width:8px;height:8px;border-radius:50%;background:#CBD5E0;flex-shrink:0;"></div>'
+            dots += '<div style="width:8px;height:8px;border-radius:50%;background:#D5D5D5;flex-shrink:0;"></div>'
     st.markdown(
         f'<div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">'
         f'{dots}'
-        f'<span style="font-size:0.76rem;color:#94A3B8;margin-left:3px;">{current_idx + 1} / {n}</span>'
+        f'<span style="font-size:0.76rem;color:#9CA3AF;margin-left:3px;">{current_idx + 1} / {n}</span>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -233,371 +233,208 @@ st.markdown("""
 /* ── Fonts ── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-
 html, body, [class*="css"] {
     font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
-    color: #1A202C;
-}
-
-/* ── Texte du rapport (markdown Streamlit) ── */
-.stMarkdown p, .stMarkdown li, .stMarkdown td, .stMarkdown th {
-    color: #1A202C !important;
-    font-size: 0.95rem;
-    line-height: 1.75;
-}
-.stMarkdown h1 { color: #1A2744 !important; font-size: 1.5rem !important; font-weight: 800 !important; border-bottom: 2px solid #4A7FA5; padding-bottom: 6px; margin-top: 24px !important; }
-.stMarkdown h2 { color: #1A2744 !important; font-size: 1.2rem !important; font-weight: 700 !important; margin-top: 20px !important; }
-.stMarkdown h3 { color: #2D5A7A !important; font-size: 1.05rem !important; font-weight: 600 !important; }
-.stMarkdown strong { color: #1A2744 !important; font-weight: 700 !important; }
-.stMarkdown em { color: #3A5068 !important; }
-.stMarkdown code { background: #E8EDF2 !important; color: #1A2744 !important; border-radius: 4px; padding: 1px 5px; }
-.stMarkdown blockquote { border-left: 3px solid #4A7FA5 !important; padding-left: 12px; color: #3A5068 !important; }
-.stMarkdown hr { border-color: #C8D4DC !important; margin: 16px 0 !important; }
-
-/* ── Tableaux ── */
-.stMarkdown table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-.stMarkdown th { background: #1A2744 !important; color: #F0F4F8 !important; font-weight: 600; padding: 10px 14px; text-align: left; }
-.stMarkdown td { color: #1A202C !important; padding: 8px 14px; border-bottom: 1px solid #D4DCE4; }
-.stMarkdown tr:nth-child(even) td { background: #EEF2F6 !important; }
-.stMarkdown tr:hover td { background: #E4ECF4 !important; }
-
-/* ── Zone résultats ── */
-.result-box {
-    background: #FFFFFF;
-    border: 1px solid #C8D4DC;
-    border-radius: 14px;
-    padding: 28px 32px;
-    margin-top: 16px;
-    box-shadow: 0 2px 12px rgba(26,39,68,0.07);
+    color: #111111;
 }
 
 /* ── Animations ── */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0);    }
-}
-@keyframes pulse {
-    0%   { opacity: 1;   transform: scale(1);    }
-    50%  { opacity: 0.3; transform: scale(1.4);  }
-    100% { opacity: 1;   transform: scale(1);    }
-}
-@keyframes progressSlide {
-    from { width: 0%; }
-    to   { width: 100%; }
-}
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes pulse  { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(1.4)} }
+@keyframes progressSlide { from{width:0%} to{width:100%} }
 
-/* ── Fond général : crème chaude ── */
-[data-testid="stAppViewContainer"] {
-    background: #F5F0E8;
-}
+/* ── Fond général ── */
+[data-testid="stAppViewContainer"] { background: #FFFFFF; }
 .main .block-container {
-    max-width: 920px;
+    max-width: 900px;
     padding-top: 2rem;
     margin: 0 auto;
-    animation: fadeIn 0.4s ease both;
     background: transparent;
+    animation: fadeIn 0.3s ease both;
 }
 
-/* ── Sidebar : bleu nuit avec texte clair ── */
+/* ── Sidebar ── */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #1A2744 0%, #243352 100%);
-    border-right: none;
-    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+    background: #F7F7F7;
+    border-right: 1px solid #E5E5E5;
+    box-shadow: none;
 }
-section[data-testid="stSidebar"] * {
-    color: #C8D6E8 !important;
-}
-section[data-testid="stSidebar"] hr {
-    border-color: rgba(200,214,232,0.2) !important;
-}
+section[data-testid="stSidebar"] * { color: #111111 !important; }
+section[data-testid="stSidebar"] hr { border-color: #E5E5E5 !important; }
 section[data-testid="stSidebar"] .sidebar-logo {
-    font-size: 1.5rem;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    padding: 8px 0 4px 0;
-    color: #FFFFFF !important;
-}
-section[data-testid="stSidebar"] .sidebar-accent {
-    color: #7EB8D4 !important;
+    font-size: 1.2rem; font-weight: 700; letter-spacing: -0.3px;
+    color: #111111 !important;
 }
 section[data-testid="stSidebar"] .sidebar-sources {
-    font-size: 0.83rem;
-    line-height: 1.9;
-    color: #8FA8C4 !important;
+    font-size: 0.82rem; line-height: 1.9; color: #6B7280 !important;
 }
 section[data-testid="stSidebar"] button {
-    background: rgba(255,255,255,0.1) !important;
-    border: 1px solid rgba(255,255,255,0.2) !important;
-    color: #C8D6E8 !important;
+    background: #FFFFFF !important;
+    border: 1px solid #E5E5E5 !important;
+    color: #111111 !important;
 }
-section[data-testid="stSidebar"] button:hover {
-    background: rgba(255,255,255,0.18) !important;
+section[data-testid="stSidebar"] button:hover { background: #F0F0F0 !important; }
+
+/* ── Markdown ── */
+.stMarkdown p, .stMarkdown li, .stMarkdown td, .stMarkdown th {
+    color: #111111 !important; font-size: 0.94rem; line-height: 1.75;
 }
+.stMarkdown h1 { color:#111111!important; font-size:1.4rem!important; font-weight:700!important; border-bottom:1px solid #E5E5E5; padding-bottom:8px; margin-top:24px!important; }
+.stMarkdown h2 { color:#111111!important; font-size:1.15rem!important; font-weight:700!important; margin-top:20px!important; }
+.stMarkdown h3 { color:#333333!important; font-size:1.0rem!important; font-weight:600!important; }
+.stMarkdown strong { color:#111111!important; font-weight:600!important; }
+.stMarkdown em { color:#555555!important; }
+.stMarkdown code { background:#F5F5F5!important; color:#111111!important; border-radius:4px; padding:1px 5px; }
+.stMarkdown blockquote { border-left:2px solid #111111!important; padding-left:12px; color:#555555!important; }
+.stMarkdown hr { border-color:#E5E5E5!important; margin:16px 0!important; }
+
+/* ── Tableaux ── */
+.stMarkdown table { width:100%; border-collapse:collapse; margin:12px 0; }
+.stMarkdown th { background:#111111!important; color:#FFFFFF!important; font-weight:600; padding:10px 14px; text-align:left; }
+.stMarkdown td { color:#111111!important; padding:8px 14px; border-bottom:1px solid #E5E5E5; }
+.stMarkdown tr:nth-child(even) td { background:#F9F9F9!important; }
+.stMarkdown tr:hover td { background:#F3F3F3!important; }
 
 /* ── Titre principal ── */
-.main-title {
-    font-size: 2.4rem;
-    font-weight: 800;
-    color: #1A2744;
-    letter-spacing: -1px;
-    margin-bottom: 0.2rem;
-}
-.main-title span { color: #4A7FA5; }
-.main-subtitle {
-    font-size: 1.0rem;
-    color: #6B7A8D;
-    margin-bottom: 2rem;
-    line-height: 1.6;
-}
+.main-title { font-size:2rem; font-weight:700; color:#111111; letter-spacing:-0.5px; margin-bottom:0.2rem; }
+.main-title span { color:#111111; }
+.main-subtitle { font-size:0.95rem; color:#6B7280; margin-bottom:2rem; line-height:1.6; }
 
 /* ── Cartes livrables ── */
 .card-btn {
-    background: #FDFAF5;
-    border: 1.5px solid #DDD5C8;
-    border-radius: 14px;
-    padding: 18px 20px;
-    cursor: pointer;
-    transition: all 0.22s ease;
-    width: 100%;
-    text-align: left;
+    background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px;
+    padding: 18px 20px; cursor: pointer; transition: all 0.15s ease;
+    width: 100%; text-align: left;
 }
-.card-btn:hover {
-    border-color: #4A7FA5;
-    border-left: 4px solid #4A7FA5;
-    box-shadow: 0 8px 24px rgba(74,127,165,0.18);
-    transform: translateY(-3px);
-    background: #EEF4F8;
-}
-.card-btn.selected {
-    background: #E8F1F8;
-    border: 1.5px solid #4A7FA5;
-    border-left: 4px solid #4A7FA5;
-}
-.card-icon  { font-size: 1.6rem; display: block; margin-bottom: 8px; }
-.card-title { font-size: 0.96rem; font-weight: 700; color: #1A2744; display: block; margin-bottom: 4px; }
-.card-desc  { font-size: 0.79rem; color: #6B7A8D; line-height: 1.5; }
+.card-btn:hover { border-color:#111111; box-shadow:0 4px 14px rgba(0,0,0,0.08); transform:translateY(-2px); }
+.card-btn.selected { background:#F7F7F7; border:1.5px solid #111111; }
+.card-icon  { font-size:1.4rem; display:block; margin-bottom:8px; }
+.card-title { font-size:0.95rem; font-weight:600; color:#111111; display:block; margin-bottom:4px; }
+.card-desc  { font-size:0.79rem; color:#6B7280; line-height:1.5; }
 
-/* ── Écran d'attente ── */
-.progress-topbar      { height: 4px; background: #DDD5C8; border-radius: 2px; margin-bottom: 20px; overflow: hidden; }
-.progress-topbar-fill { height: 100%; background: linear-gradient(90deg, #4A7FA5, #5BAD8C); border-radius: 2px; animation: progressSlide 40s linear forwards; }
+/* ── Barre de progression ── */
+.progress-topbar { height:2px; background:#E5E5E5; border-radius:1px; margin-bottom:20px; overflow:hidden; }
+.progress-topbar-fill { height:100%; background:#111111; border-radius:1px; animation:progressSlide 40s linear forwards; }
 
 .progress-container {
-    background: #FDFAF5;
-    border: 1px solid #DDD5C8;
-    border-radius: 14px;
-    padding: 26px 30px;
-    margin: 16px 0;
-    box-shadow: 0 4px 16px rgba(26,39,68,0.07);
+    background:#FFFFFF; border:1px solid #E5E5E5; border-radius:12px;
+    padding:24px 28px; margin:16px 0;
 }
-.progress-header    { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-.progress-title     { font-size: 1.05rem; font-weight: 700; color: #1A2744; }
-.progress-company   { font-size: 0.88rem; color: #6B7A8D; }
+.progress-header  { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+.progress-title   { font-size:1.0rem; font-weight:700; color:#111111; }
+.progress-company { font-size:0.87rem; color:#6B7280; }
 .progress-deliverable {
-    display: inline-block;
-    background: #E8F1F8;
-    border: 1px solid #B8D0E4;
-    color: #2D5A7A;
-    font-weight: 600;
-    font-size: 0.82rem;
-    padding: 3px 10px;
-    border-radius: 20px;
-    margin-top: 2px;
+    display:inline-block; background:#F5F5F5; border:1px solid #E5E5E5;
+    color:#333333; font-weight:600; font-size:0.8rem;
+    padding:3px 10px; border-radius:20px; margin-top:2px;
 }
-
-.step-row           { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 0.91rem; color: #4A5568; border-bottom: 1px solid #EDE8DF; transition: all 0.25s ease; }
-.step-row:last-of-type { border-bottom: none; }
-.step-row.done      { color: #2E7D55; }
-.step-row.active    { color: #4A7FA5; font-weight: 600; }
-.step-row.pending   { color: #A0ADB8; }
-.step-icon          { font-size: 1.1rem; min-width: 24px; }
-
-.pulse-dot {
-    display: inline-block; width: 8px; height: 8px;
-    background: #4A7FA5; border-radius: 50%;
-    margin-left: 6px; animation: pulse 1.4s ease-in-out infinite; vertical-align: middle;
-}
-.searching-label { font-size: 0.82rem; color: #A0ADB8; margin-top: 16px; font-style: italic; display: flex; align-items: center; gap: 6px; }
+.step-row           { display:flex; align-items:center; gap:10px; padding:8px 0; font-size:0.9rem; color:#6B7280; border-bottom:1px solid #F0F0F0; }
+.step-row:last-of-type { border-bottom:none; }
+.step-row.done      { color:#111111; }
+.step-row.active    { color:#111111; font-weight:600; }
+.step-row.pending   { color:#C0C0C0; }
+.step-icon          { font-size:1.0rem; min-width:24px; }
+.pulse-dot { display:inline-block; width:7px; height:7px; background:#111111; border-radius:50%; margin-left:6px; animation:pulse 1.4s ease-in-out infinite; vertical-align:middle; }
+.searching-label { font-size:0.82rem; color:#B0B0B0; margin-top:16px; display:flex; align-items:center; gap:6px; }
 
 /* ── Résultat ── */
-.result-header { font-size: 1.05rem; font-weight: 700; color: #1A2744; margin-bottom: 14px; }
+.result-box { background:#FFFFFF; border:1px solid #E5E5E5; border-radius:12px; padding:28px 32px; margin-top:16px; }
+.result-header { font-size:1.0rem; font-weight:700; color:#111111; margin-bottom:14px; }
 .company-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: #E8F1F8; border: 1px solid #B8D0E4;
-    color: #2D5A7A; font-weight: 700; font-size: 1.05rem;
-    padding: 6px 16px; border-radius: 8px; margin-bottom: 10px;
+    display:inline-flex; align-items:center; gap:6px;
+    background:#F5F5F5; border:1px solid #E5E5E5;
+    color:#111111; font-weight:700; font-size:1.0rem;
+    padding:6px 14px; border-radius:8px; margin-bottom:10px;
 }
 
 /* ── Boutons Streamlit ── */
 div[data-testid="stButton"] > button {
-    border-radius: 10px; font-weight: 600; font-size: 0.9rem;
-    transition: all 0.2s ease; letter-spacing: 0.01em;
-    background: #FDFAF5; border: 1.5px solid #DDD5C8; color: #1A2744;
+    border-radius:8px; font-weight:500; font-size:0.88rem;
+    transition:all 0.15s ease;
+    background:#FFFFFF; border:1px solid #E5E5E5; color:#111111;
 }
-div[data-testid="stButton"] > button[kind="primary"] {
-    background: #1A2744; border: none; color: #F5F0E8;
-}
-div[data-testid="stButton"] > button[kind="primary"]:hover {
-    background: #243352;
-    box-shadow: 0 4px 16px rgba(26,39,68,0.3);
-    transform: translateY(-1px);
-}
+div[data-testid="stButton"] > button:hover { border-color:#111111; }
+div[data-testid="stButton"] > button[kind="primary"] { background:#111111; border:none; color:#FFFFFF; }
+div[data-testid="stButton"] > button[kind="primary"]:hover { background:#333333; }
 div[data-testid="stDownloadButton"] > button {
-    border-radius: 10px; font-size: 0.88rem; font-weight: 600; transition: all 0.2s ease;
+    border-radius:8px; font-size:0.88rem; font-weight:500;
+    background:#FFFFFF; border:1px solid #E5E5E5; color:#111111;
+    transition:all 0.15s ease;
 }
+div[data-testid="stDownloadButton"] > button:hover { border-color:#111111; }
 
 /* ── Expander ── */
-details {
-    border: 1px solid #DDD5C8 !important; border-radius: 12px !important;
-    margin-bottom: 16px !important; background: #FDFAF5 !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
-}
-details summary { font-weight: 600 !important; color: #1A2744 !important; padding: 2px 0 !important; }
+details { border:1px solid #E5E5E5!important; border-radius:10px!important; margin-bottom:12px!important; background:#FFFFFF!important; }
+details summary { font-weight:600!important; color:#111111!important; }
 
 /* ── Inputs ── */
 div[data-testid="stTextInput"] input, div[data-testid="stTextArea"] textarea {
-    background: #FDFAF5 !important;
-    border: 1.5px solid #DDD5C8 !important;
-    border-radius: 10px !important;
-    color: #2D3748 !important;
+    background:#FFFFFF!important; border:1px solid #E5E5E5!important;
+    border-radius:8px!important; color:#111111!important;
 }
 div[data-testid="stTextInput"] input:focus, div[data-testid="stTextArea"] textarea:focus {
-    border-color: #4A7FA5 !important;
-    box-shadow: 0 0 0 3px rgba(74,127,165,0.15) !important;
+    border-color:#111111!important; box-shadow:0 0 0 2px rgba(0,0,0,0.08)!important;
 }
 
 /* ── File uploader ── */
 div[data-testid="stFileUploader"] {
-    background: #FDFAF5 !important;
-    border: 1.5px dashed #B8C4CC !important;
-    border-radius: 12px !important;
+    background:#FAFAFA!important; border:1.5px dashed #E5E5E5!important; border-radius:10px!important;
 }
 
 /* ── Tabs ── */
-div[data-testid="stTabs"] button {
-    color: #6B7A8D !important;
-    font-weight: 500 !important;
-}
-div[data-testid="stTabs"] button[aria-selected="true"] {
-    color: #1A2744 !important;
-    font-weight: 700 !important;
-    border-bottom: 2px solid #4A7FA5 !important;
-}
+div[data-testid="stTabs"] button { color:#6B7280!important; font-weight:500!important; }
+div[data-testid="stTabs"] button[aria-selected="true"] { color:#111111!important; font-weight:700!important; border-bottom:2px solid #111111!important; }
+button[data-baseweb="tab"] { font-size:0.88rem!important; font-weight:600!important; }
 
-/* ── File badge ── */
+/* ── Badges fichiers ── */
 .file-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: #EAF5EE; border: 1px solid #A8D5B8;
-    color: #2E6B45; font-size: 0.8rem;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 20px;
-    margin: 4px 4px 4px 0;
+    display:inline-flex; align-items:center; gap:6px;
+    background:#F5F5F5; border:1px solid #E5E5E5; color:#333333;
+    font-size:0.8rem; font-weight:500; padding:4px 10px; border-radius:20px; margin:4px 4px 4px 0;
 }
-.file-badge-name {
-    max-width: 160px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
+.file-badge-name { max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-/* ── Section label ── */
+/* ── Labels section ── */
 .section-label {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #64748B;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 6px;
+    font-size:0.75rem; font-weight:600; color:#9CA3AF;
+    text-transform:uppercase; letter-spacing:0.07em; margin-bottom:8px;
 }
 
 /* ── Spinner ── */
-div[data-testid="stSpinner"] > div {
-    font-size: 0.9rem;
-    color: #64748B;
-}
+div[data-testid="stSpinner"] > div { font-size:0.9rem; color:#6B7280; }
 
-/* ── Barre Streamlit : fond crème, icônes grises ── */
+/* ── Header Streamlit ── */
 header[data-testid="stHeader"] {
-    background: #F5F0E8 !important;
-    box-shadow: none !important;
-    border-bottom: none !important;
+    background:#FFFFFF!important; box-shadow:none!important; border-bottom:1px solid #F0F0F0!important;
 }
-header[data-testid="stHeader"] svg,
-header[data-testid="stHeader"] span,
-header[data-testid="stHeader"] p,
-header[data-testid="stHeader"] button {
-    filter: invert(1) !important;
-    color: #000000 !important;
-}
-footer { visibility: hidden !important; }
+footer { visibility:hidden!important; }
 
 /* ── Scrollbar ── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #F1F5F9; }
-::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:#FAFAFA; }
+::-webkit-scrollbar-thumb { background:#D5D5D5; border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:#A0A0A0; }
 
-/* ── Tabs ── */
-button[data-baseweb="tab"] {
-    font-size: 0.88rem !important;
-    font-weight: 600 !important;
-}
+/* ── Segmented control email ── */
+.etype-btn-selected > div > button { background:#111111!important; border-color:#111111!important; color:#FFFFFF!important; }
+.etype-btn-idle > div > button { background:#FFFFFF!important; border:1px solid #E5E5E5!important; color:#333333!important; }
+.etype-btn-idle > div > button:hover { border-color:#111111!important; color:#111111!important; }
 
-/* ── Email type segmented control ── */
-.etype-btn-selected > div > button {
-    background: #1A2744 !important;
-    border-color: #1A2744 !important;
-    color: #F5F0E8 !important;
-}
-.etype-btn-idle > div > button {
-    background: #FDFAF5 !important;
-    border: 1.5px solid #C8D4DC !important;
-    color: #4A5568 !important;
-}
-.etype-btn-idle > div > button:hover {
-    border-color: #4A7FA5 !important;
-    color: #1A2744 !important;
-}
+/* ── Question cards ── */
+.q-card-label { font-size:0.94rem; font-weight:500; color:#111111; margin:4px 0 12px 0; line-height:1.5; }
+.q-optional-badge { font-size:0.72rem; font-weight:400; color:#9CA3AF; margin-left:8px; text-transform:uppercase; letter-spacing:0.05em; }
 
-/* ── Question cards (style Claude) ── */
-.q-card-label {
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: #1A202C;
-    margin: 4px 0 12px 0;
-    line-height: 1.5;
-}
-.q-optional-badge {
-    font-size: 0.72rem;
-    font-weight: 400;
-    color: #94A3B8;
-    margin-left: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-/* st.pills → style chips Claude : non-sélectionné = contour, sélectionné = noir plein */
-div[data-testid="stPills"] > label { display: none !important; }
-div[data-testid="stPills"] { gap: 0 !important; }
+/* ── st.pills → chips B&W ── */
+div[data-testid="stPills"] > label { display:none!important; }
 button[data-testid="stPillsOptionButton"] {
-    border: 1.5px solid #CBD5E0 !important;
-    border-radius: 100px !important;
-    background: transparent !important;
-    color: #2D3748 !important;
-    font-size: 0.87rem !important;
-    padding: 7px 18px !important;
-    margin: 0 6px 6px 0 !important;
-    font-weight: 400 !important;
-    transition: all 0.12s !important;
-    box-shadow: none !important;
+    border:1px solid #E5E5E5!important; border-radius:100px!important;
+    background:transparent!important; color:#333333!important;
+    font-size:0.87rem!important; padding:7px 18px!important;
+    margin:0 6px 6px 0!important; font-weight:400!important; box-shadow:none!important;
 }
-button[data-testid="stPillsOptionButton"]:hover {
-    border-color: #718096 !important;
-    color: #1A202C !important;
-}
+button[data-testid="stPillsOptionButton"]:hover { border-color:#333333!important; }
 button[data-testid="stPillsOptionButton"][aria-pressed="true"] {
-    background: #1A2744 !important;
-    border-color: #1A2744 !important;
-    color: #FFFFFF !important;
+    background:#111111!important; border-color:#111111!important; color:#FFFFFF!important;
 }
 </style>
 <script>
@@ -839,7 +676,7 @@ with st.sidebar:
             f'<a href="{mailto}" target="_blank" style="'
             'display:block; text-align:center; background:rgba(255,255,255,0.12); '
             'border:1px solid rgba(255,255,255,0.25); border-radius:8px; '
-            'color:#C8D6E8 !important; font-size:0.85rem; font-weight:600; '
+            'color:#CCCCCC !important; font-size:0.85rem; font-weight:600; '
             'padding:8px 0; margin-top:6px; text-decoration:none; cursor:pointer;">'
             'Envoyer l\'invitation</a>',
             unsafe_allow_html=True,
@@ -857,15 +694,15 @@ with st.sidebar:
     )
     st.markdown(
         '<div class="sidebar-sources">'
-        "<strong style='color:#C8D6E8;'>M&A Screening IA</strong><br>"
+        "<strong style='color:#CCCCCC;'>M&A Screening IA</strong><br>"
         "Outil d'intelligence économique alimenté par l'IA pour les professionnels du M&A.<br><br>"
         "Analyse d'entreprises, cartographie concurrentielle, actualités sectorielle et prise de contact — en quelques minutes.<br><br>"
-        "<a href='mailto:contact@screening-ma.fr' style='color:#7EB8D4;'>contact@screening-ma.fr</a>"
+        "<a href='mailto:contact@screening-ma.fr' style='color:#9CA3AF;'>contact@screening-ma.fr</a>"
         "</div>",
         unsafe_allow_html=True,
     )
     st.markdown(
-        '<div class="sidebar-sources" style="margin-top:10px;color:#5A7A94;font-size:0.75rem;">'
+        '<div class="sidebar-sources" style="margin-top:10px;color:#9CA3AF;font-size:0.75rem;">'
         "v1.0 · 2026 · Tous droits réservés"
         "</div>",
         unsafe_allow_html=True,
@@ -890,12 +727,12 @@ if st.session_state.screen == 1:
     # ── TAB 2 : Mission M&A ────────────────────────────────────────────────
     with tab_mission:
         st.markdown("""
-        <div style="background:linear-gradient(135deg,#1A2744 0%,#243352 100%);
+        <div style="background:#111111;
                     border-radius:14px; padding:20px 24px; margin-bottom:20px;">
             <div style="color:#FFFFFF; font-size:1.1rem; font-weight:700; margin-bottom:6px;">
                 Missions M&A professionnelles
             </div>
-            <div style="color:#8FA8C8; font-size:0.85rem; line-height:1.6;">
+            <div style="color:#9CA3AF; font-size:0.85rem; line-height:1.6;">
                 Flux guidé étape par étape. Chaque résultat alimente l'étape suivante.
                 Choisissez votre type de mission ci-dessous.
             </div>
@@ -903,16 +740,16 @@ if st.session_state.screen == 1:
         """, unsafe_allow_html=True)
 
         st.markdown("""
-        <div style="background:#E8F5EE; border:2px solid #2E7D5540;
-                    border-left:4px solid #2E7D55; border-radius:12px; padding:18px 20px; margin-bottom:12px;">
+        <div style="background:#F5F5F5; border:2px solid #11111140;
+                    border-left:4px solid #111111; border-radius:12px; padding:18px 20px; margin-bottom:12px;">
             <div style="font-size:1.5rem;">📈</div>
-            <div style="font-weight:700; color:#1A2744; font-size:0.97rem; margin:8px 0 4px 0;">
+            <div style="font-weight:700; color:#111111; font-size:0.97rem; margin:8px 0 4px 0;">
                 Mission Buy-side — Croissance externe
             </div>
-            <div style="font-size:0.79rem; color:#5A6A7A; line-height:1.5;">
+            <div style="font-size:0.79rem; color:#6B7280; line-height:1.5;">
                 Cartographie du marché, recherche et qualification de cibles, préparation des slides PPT.
             </div>
-            <div style="font-size:0.76rem; color:#2E7D55; font-weight:600; margin-top:10px;">
+            <div style="font-size:0.76rem; color:#111111; font-weight:600; margin-top:10px;">
                 3 modules · Recherche web incluse
             </div>
         </div>
@@ -948,7 +785,7 @@ if st.session_state.screen == 1:
 
         st.markdown("""
         <div style="
-            background: linear-gradient(135deg, #1A2744 0%, #2D4A7A 100%);
+            background: linear-gradient(135deg, #111111 0%, #1A1A1A 100%);
             border-radius: 14px;
             padding: 14px 22px;
             margin: 18px 0 14px 0;
@@ -961,7 +798,7 @@ if st.session_state.screen == 1:
                 <div style="color:#FFFFFF; font-size:1.05rem; font-weight:700; letter-spacing:-0.3px;">
                     Choisissez le type d'analyse
                 </div>
-                <div style="color:#8FA8C8; font-size:0.82rem; margin-top:2px;">
+                <div style="color:#9CA3AF; font-size:0.82rem; margin-top:2px;">
                     Cliquez sur un livrable pour lancer l'analyse
                 </div>
             </div>
@@ -970,10 +807,10 @@ if st.session_state.screen == 1:
 
         # Couleurs d'accent par livrable
         CARD_COLORS = {
-            "complet":   ("#4A7FA5", "#E8F1F8"),
-            "fiche":     ("#7A5FA5", "#F0EBF8"),
+            "complet":   ("#333333", "#F5F5F5"),
+            "fiche":     ("#555555", "#F5F5F5"),
             "benchmark": ("#A5614A", "#F8EEE8"),
-            "manda":     ("#2E7D55", "#E8F5EE"),
+            "manda":     ("#111111", "#F5F5F5"),
             "geo":       ("#A5944A", "#F8F3E8"),
         }
 
@@ -1001,8 +838,8 @@ if st.session_state.screen == 1:
                     margin-bottom:8px;
                 ">
                     <span style="font-size:1.5rem;">{deliv['icon']}</span>
-                    <div style="font-weight:700;color:#1A2744;font-size:0.95rem;margin:6px 0 3px 0;">{deliv['title']}</div>
-                    <div style="font-size:0.78rem;color:#5A6A7A;line-height:1.4;">{deliv['desc']}</div>
+                    <div style="font-weight:700;color:#111111;font-size:0.95rem;margin:6px 0 3px 0;">{deliv['title']}</div>
+                    <div style="font-size:0.78rem;color:#6B7280;line-height:1.4;">{deliv['desc']}</div>
                 </div>
                 """, unsafe_allow_html=True)
                 if st.button("Sélectionner", key=f"card_{deliv['key']}", use_container_width=True):
@@ -1124,33 +961,33 @@ elif st.session_state.screen == 2:
             m_re, s_re  = divmod(int(remaining), 60)
             if remaining <= 0:
                 rem_str   = "Finalisation..."
-                rem_color = "#5BAD8C"
+                rem_color = "#333333"
             else:
                 rem_str   = f"{m_re}:{s_re:02d}"
-                rem_color = "#4A7FA5" if remaining > 60 else "#E67E22"
+                rem_color = "#333333" if remaining > 60 else "#E67E22"
             pct_bar = min(97, int(elapsed / estimated * 100)) if estimated else 50
             timing_html = f"""
-            <div style="background:#EEF2F6; border-radius:8px; padding:12px 18px; margin-bottom:12px; font-size:0.85rem;">
+            <div style="background:#F5F5F5; border-radius:8px; padding:12px 18px; margin-bottom:12px; font-size:0.85rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <span style="color:#4A5568;">⏱ Temps écoulé</span>
-                    <span style="color:#4A5568;">Temps restant</span>
+                    <span style="color:#555555;">⏱ Temps écoulé</span>
+                    <span style="color:#555555;">Temps restant</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong style="color:#1A2744; font-size:1.3rem; font-family:monospace; letter-spacing:1px;">{elapsed_str}</strong>
+                    <strong style="color:#111111; font-size:1.3rem; font-family:monospace; letter-spacing:1px;">{elapsed_str}</strong>
                     <strong style="color:{rem_color}; font-size:1.3rem; font-family:monospace; letter-spacing:1px;">{rem_str}</strong>
                 </div>
             </div>
-            <div style="background:#DDD5C8; border-radius:4px; height:6px; margin-bottom:18px; overflow:hidden;">
-                <div style="background:linear-gradient(90deg,#4A7FA5,#5BAD8C); width:{pct_bar}%; height:100%; border-radius:4px; transition:width 0.5s;"></div>
+            <div style="background:#E5E5E5; border-radius:4px; height:6px; margin-bottom:18px; overflow:hidden;">
+                <div style="background:#111111; width:{pct_bar}%; height:100%; border-radius:4px; transition:width 0.5s;"></div>
             </div>"""
         else:
             est_min = max(1, int(estimated / 60))
             m_est, s_est = divmod(estimated, 60)
             timing_html = f"""
-            <div style="background:#EEF2F6; border-radius:8px; padding:12px 18px; margin-bottom:12px;
-                        display:flex; align-items:center; gap:8px; font-size:0.83rem; color:#4A5568;">
+            <div style="background:#F5F5F5; border-radius:8px; padding:12px 18px; margin-bottom:12px;
+                        display:flex; align-items:center; gap:8px; font-size:0.83rem; color:#555555;">
                 <span>⏱</span>
-                <span>Durée estimée : <strong style="color:#4A7FA5; font-family:monospace;">{est_min}:{s_est:02d}</strong></span>
+                <span>Durée estimée : <strong style="color:#333333; font-family:monospace;">{est_min}:{s_est:02d}</strong></span>
             </div>"""
 
         # ── Step rows ──
@@ -1517,7 +1354,7 @@ CONTRAINTES ABSOLUES :
     import urllib.parse as _urlparse
 
     li_svg = ('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" '
-              'viewBox="0 0 24 24" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569'
+              'viewBox="0 0 24 24" fill="#555555"><path d="M20.447 20.452h-3.554v-5.569'
               'c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351'
               'V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 '
               '5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 '
@@ -1542,12 +1379,12 @@ CONTRAINTES ABSOLUES :
         detected = unique
 
         st.markdown("""
-        <div style="background:linear-gradient(135deg,#1A2744 0%,#2D4A7A 100%);
+        <div style="background:#111111;
                     border-radius:14px; padding:20px 24px; margin-bottom:20px;">
             <div style="color:#FFFFFF; font-size:1.05rem; font-weight:700; margin-bottom:4px;">
                 Préparer une prise de contact
             </div>
-            <div style="color:#8FA8C8; font-size:0.83rem;">
+            <div style="color:#9CA3AF; font-size:0.83rem;">
                 Choisissez le type d'approche, puis cliquez sur un concurrent pour générer le message LinkedIn.
             </div>
         </div>
@@ -1617,18 +1454,18 @@ CONTRAINTES ABSOLUES :
             body_text = "\n".join(body_lines).strip()
 
             st.markdown(
-                f'<div style="font-size:0.82rem;color:#6B7A8D;margin:18px 0 10px 0;">'
-                f'Brouillon pour <strong style="color:#1A2744;">{st.session_state.email_target}</strong>'
+                f'<div style="font-size:0.82rem;color:#6B7280;margin:18px 0 10px 0;">'
+                f'Brouillon pour <strong style="color:#111111;">{st.session_state.email_target}</strong>'
                 f' — personnalisez les champs entre crochets avant envoi</div>',
                 unsafe_allow_html=True,
             )
             st.markdown(f"""
-<div style="background:#FFFFFF; border:1px solid #D4DCE4; border-radius:12px;
-            padding:0; overflow:hidden; box-shadow:0 2px 10px rgba(26,39,68,0.07);">
-  <div style="background:#F0F4F8; border-bottom:1px solid #D4DCE4;
+<div style="background:#FFFFFF; border:1px solid #E5E5E5; border-radius:12px;
+            padding:0; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.06);">
+  <div style="background:#F5F5F5; border-bottom:1px solid #E5E5E5;
               padding:12px 20px; display:flex; align-items:center; gap:10px;">
     <span style="font-size:0.78rem; font-weight:600; color:#64748B; min-width:48px;">Objet</span>
-    <span style="font-size:0.92rem; font-weight:600; color:#1A2744;">{subject_line}</span>
+    <span style="font-size:0.92rem; font-weight:600; color:#111111;">{subject_line}</span>
   </div>
   <div style="padding:22px 24px; font-size:0.93rem; color:#1A202C;
               line-height:1.85; white-space:pre-wrap; font-family:'Inter', sans-serif;">
@@ -1644,8 +1481,8 @@ CONTRAINTES ABSOLUES :
             st.markdown(
                 f'<div style="margin-top:10px;">'
                 f'<a href="{li_company}" target="_blank" style="display:inline-flex;align-items:center;'
-                f'gap:6px;background:#FFFFFF;border:1px solid #C8D4DC;border-radius:8px;'
-                f'padding:7px 14px;font-size:0.83rem;font-weight:600;color:#0A66C2;text-decoration:none;">'
+                f'gap:6px;background:#FFFFFF;border:1px solid #E5E5E5;border-radius:8px;'
+                f'padding:7px 14px;font-size:0.83rem;font-weight:600;color:#555555;text-decoration:none;">'
                 f'{li_svg} Voir la page entreprise</a></div>',
                 unsafe_allow_html=True,
             )
@@ -1656,7 +1493,7 @@ CONTRAINTES ABSOLUES :
                     '<div style="font-size:0.82rem;font-weight:600;color:#64748B;'
                     'text-transform:uppercase;letter-spacing:0.05em;margin:18px 0 10px 0;">'
                     'Dirigeants identifiés'
-                    '<span style="font-size:0.72rem;font-weight:400;color:#94A3B8;'
+                    '<span style="font-size:0.72rem;font-weight:400;color:#9CA3AF;'
                     'text-transform:none;margin-left:6px;">(Pappers / Infogreffe)</span></div>',
                     unsafe_allow_html=True,
                 )
@@ -1665,20 +1502,20 @@ CONTRAINTES ABSOLUES :
                     with cols[idx % 3]:
                         st.markdown(
                             f'<a href="{exec_["url"]}" target="_blank" style="text-decoration:none;">'
-                            f'<div style="background:#FFFFFF;border:1px solid #C8D4DC;border-radius:10px;'
+                            f'<div style="background:#FFFFFF;border:1px solid #E5E5E5;border-radius:10px;'
                             f'padding:12px 14px;">'
                             f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
                             f'{li_svg}'
-                            f'<span style="font-size:0.88rem;font-weight:700;color:#1A2744;">{exec_["name"]}</span>'
+                            f'<span style="font-size:0.88rem;font-weight:700;color:#111111;">{exec_["name"]}</span>'
                             f'</div>'
                             f'<div style="font-size:0.78rem;color:#64748B;">{exec_["title"] or "Dirigeant"}</div>'
-                            f'<div style="font-size:0.75rem;color:#0A66C2;margin-top:6px;font-weight:600;">Voir le profil →</div>'
+                            f'<div style="font-size:0.75rem;color:#555555;margin-top:6px;font-weight:600;">Voir le profil →</div>'
                             f'</div></a>',
                             unsafe_allow_html=True,
                         )
             else:
                 st.markdown(
-                    '<div style="font-size:0.8rem;color:#94A3B8;margin-top:12px;font-style:italic;">'
+                    '<div style="font-size:0.8rem;color:#9CA3AF;margin-top:12px;font-style:italic;">'
                     'Aucun profil dirigeant trouvé — utilisez la page entreprise LinkedIn.</div>',
                     unsafe_allow_html=True,
                 )
@@ -1740,12 +1577,12 @@ Règles :
             return []
 
         st.markdown("""
-        <div style="background:linear-gradient(135deg,#1A2744 0%,#2D4A7A 100%);
+        <div style="background:#111111;
                     border-radius:14px; padding:20px 24px; margin-bottom:20px;">
             <div style="color:#FFFFFF; font-size:1.05rem; font-weight:700; margin-bottom:4px;">
                 Liens LinkedIn pertinents
             </div>
-            <div style="color:#8FA8C8; font-size:0.83rem;">
+            <div style="color:#9CA3AF; font-size:0.83rem;">
                 Acteurs clés identifiés dans ce rapport — cliquez pour accéder directement à leur page.
             </div>
         </div>
@@ -1766,20 +1603,20 @@ Règles :
                     with col:
                         st.markdown(
                             f'<a href="{ent["url"]}" target="_blank" style="text-decoration:none;">'
-                            f'<div style="background:#FFFFFF;border:1px solid #C8D4DC;border-radius:10px;'
+                            f'<div style="background:#FFFFFF;border:1px solid #E5E5E5;border-radius:10px;'
                             f'padding:14px 16px;margin-bottom:8px;">'
                             f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
                             f'{li_svg}'
-                            f'<span style="font-size:0.88rem;font-weight:700;color:#1A2744;">{ent["name"]}</span>'
+                            f'<span style="font-size:0.88rem;font-weight:700;color:#111111;">{ent["name"]}</span>'
                             f'</div>'
                             f'<div style="font-size:0.75rem;color:#64748B;">{ent["type"]}</div>'
-                            f'<div style="font-size:0.75rem;color:#0A66C2;margin-top:6px;font-weight:600;">Voir sur LinkedIn →</div>'
+                            f'<div style="font-size:0.75rem;color:#555555;margin-top:6px;font-weight:600;">Voir sur LinkedIn →</div>'
                             f'</div></a>',
                             unsafe_allow_html=True,
                         )
         else:
             st.markdown(
-                '<div style="font-size:0.83rem;color:#94A3B8;font-style:italic;">'
+                '<div style="font-size:0.83rem;color:#9CA3AF;font-style:italic;">'
                 'Aucune entité identifiée dans ce rapport.</div>',
                 unsafe_allow_html=True,
             )
@@ -1814,7 +1651,7 @@ Règles :
             color: #7A6E62;
             line-height: 1.6;
         ">
-        <strong style="color:#5A5048;">⚠️ Avertissement</strong> — Les informations présentées dans ce rapport sont
+        <strong style="color:#555555;">⚠️ Avertissement</strong> — Les informations présentées dans ce rapport sont
         issues de sources publiques disponibles sur Internet à la date de l'analyse. Elles sont fournies
         à titre indicatif et ne constituent en aucun cas un conseil en investissement, une recommandation
         financière ou une due diligence. Les données (chiffre d'affaires, effectifs, valorisations) sont
@@ -1844,8 +1681,8 @@ elif st.session_state.screen == 4:
     step_info  = steps_by_k.get(step_key, steps_list[0])
     step_idx   = step_keys.index(step_key) if step_key in step_keys else 0
 
-    uni_color    = "#2E7D55" if universe == "buy" else "#7A5FA5"
-    uni_bg       = "#E8F5EE" if universe == "buy" else "#F0EBF8"
+    uni_color    = "#111111"
+    uni_bg       = "#F5F5F5"
     uni_label    = "Mission Buy-side — Croissance externe"
     uni_icon     = "" if universe == "buy" else ""
     n_total      = len(steps_list)
@@ -1871,17 +1708,16 @@ elif st.session_state.screen == 4:
             f"""<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
   <span style="font-size:1.5rem;">{uni_icon}</span>
   <div>
-    <div style="font-size:1.05rem;font-weight:800;color:#1A2744;letter-spacing:-0.3px;">
+    <div style="font-size:1.05rem;font-weight:800;color:#111111;letter-spacing:-0.3px;">
       Mission {uni_label} &nbsp;·&nbsp; <span style="color:{uni_color};">{ma_company}</span>
     </div>
-    <div style="font-size:0.76rem;color:#94A3B8;margin-top:2px;">
+    <div style="font-size:0.76rem;color:#9CA3AF;margin-top:2px;">
       {n_done}/{n_total} étapes complétées{"&nbsp;·&nbsp;Mission terminée !" if n_done == n_total else ""}
     </div>
   </div>
 </div>
-<div style="background:#E2E8F0;border-radius:99px;height:5px;overflow:hidden;margin-bottom:2px;">
-  <div style="background:linear-gradient(90deg,{uni_color},{uni_color}66);width:{pct}%;height:100%;
-              border-radius:99px;transition:width .5s ease;"></div>
+<div style="background:#E5E5E5;border-radius:99px;height:5px;overflow:hidden;margin-bottom:2px;">
+  <div style="background:{uni_color};width:{pct}%;height:100%;border-radius:99px;transition:width .5s ease;"></div>
 </div>""",
             unsafe_allow_html=True,
         )
@@ -1903,15 +1739,15 @@ elif st.session_state.screen == 4:
                     st.rerun()
             else:
                 st.markdown(
-                    f'<div style="text-align:center;background:#F1F5F9;border:1.5px solid #DDE4EA;'
-                    f'border-radius:8px;padding:6px 2px;color:#CBD5E1;font-size:0.78rem;font-weight:700;">'
+                    f'<div style="text-align:center;background:#F5F5F5;border:1.5px solid #E5E5E5;'
+                    f'border-radius:8px;padding:6px 2px;color:#E5E5E5;font-size:0.78rem;font-weight:700;">'
                     f'{s["num"]}</div>',
                     unsafe_allow_html=True,
                 )
 
     # Barre de progression fine
     st.markdown(
-        f'<div style="background:#DDD5C8;border-radius:4px;height:3px;margin:12px 0 20px 0;overflow:hidden;">'
+        f'<div style="background:#E5E5E5;border-radius:4px;height:3px;margin:12px 0 20px 0;overflow:hidden;">'
         f'<div style="background:{uni_color};width:{pct}%;height:100%;border-radius:4px;transition:width .4s;"></div>'
         f'</div>',
         unsafe_allow_html=True,
@@ -1919,22 +1755,22 @@ elif st.session_state.screen == 4:
 
     # ── Carte étape courante ──────────────────────────────────────────────────
     web_badge = (
-        '<span style="background:#EAF5EE;border:1px solid #A8D5B8;color:#2E6B45;'
+        '<span style="background:#F5F5F5;border:1px solid #E5E5E5;color:#333333;'
         'font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">'
         '🌐 Recherche web · Sonnet</span>'
         if step_info.get("web_search") else
-        '<span style="background:#EEF2F6;border:1px solid #CBD5E1;color:#64748B;'
+        '<span style="background:#F5F5F5;border:1px solid #E5E5E5;color:#64748B;'
         'font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">'
         '⚡ Rapide · Haiku</span>'
     )
     st.markdown(
-        f'<div style="background:#FDFAF5;border-left:4px solid {uni_color};border-radius:0 12px 12px 0;'
-        f'padding:18px 22px;margin-bottom:18px;box-shadow:0 2px 10px rgba(26,39,68,0.06);">'
+        f'<div style="background:#FFFFFF;border-left:4px solid {uni_color};border-radius:0 12px 12px 0;'
+        f'padding:18px 22px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,0.06);">'
         f'<div style="font-size:0.7rem;font-weight:700;color:{uni_color};text-transform:uppercase;'
         f'letter-spacing:0.09em;margin-bottom:5px;">Étape {step_info["num"]} / {n_total}</div>'
-        f'<div style="font-size:1.15rem;font-weight:800;color:#1A2744;margin-bottom:4px;">'
+        f'<div style="font-size:1.15rem;font-weight:800;color:#111111;margin-bottom:4px;">'
         f'{step_info["title"]}</div>'
-        f'<div style="font-size:0.84rem;color:#6B7A8D;margin-bottom:10px;">{step_info["desc"]}</div>'
+        f'<div style="font-size:0.84rem;color:#6B7280;margin-bottom:10px;">{step_info["desc"]}</div>'
         f'{web_badge}</div>',
         unsafe_allow_html=True,
     )
@@ -1951,18 +1787,18 @@ elif st.session_state.screen == 4:
         # Cartes de métriques
         st.markdown(
             f'<div style="display:flex;gap:10px;margin-bottom:18px;">'
-            f'<div class="insight-card" style="flex:1;background:#E8F5EE;border:1px solid #A8D5B8;'
+            f'<div class="insight-card" style="flex:1;background:#F5F5F5;border:1px solid #E5E5E5;'
             f'border-radius:10px;padding:12px;text-align:center;">'
-            f'<div style="font-size:1.25rem;font-weight:800;color:#1B5E3B;">{m1}</div>'
-            f'<div style="font-size:0.7rem;color:#2E7D55;font-weight:600;margin-top:2px;">Résultat</div></div>'
-            f'<div class="insight-card" style="flex:1;background:#E8F1F8;border:1px solid #B8D0E4;'
+            f'<div style="font-size:1.25rem;font-weight:800;color:#111111;">{m1}</div>'
+            f'<div style="font-size:0.7rem;color:#111111;font-weight:600;margin-top:2px;">Résultat</div></div>'
+            f'<div class="insight-card" style="flex:1;background:#F5F5F5;border:1px solid #E5E5E5;'
             f'border-radius:10px;padding:12px;text-align:center;animation-delay:.07s;">'
-            f'<div style="font-size:1.25rem;font-weight:800;color:#2D5A7A;">{m2}</div>'
-            f'<div style="font-size:0.7rem;color:#4A7FA5;font-weight:600;margin-top:2px;">Qualité</div></div>'
-            f'<div class="insight-card" style="flex:1;background:#F0EBF8;border:1px solid #C4B0D8;'
+            f'<div style="font-size:1.25rem;font-weight:800;color:#333333;">{m2}</div>'
+            f'<div style="font-size:0.7rem;color:#333333;font-weight:600;margin-top:2px;">Qualité</div></div>'
+            f'<div class="insight-card" style="flex:1;background:#F5F5F5;border:1px solid #C4B0D8;'
             f'border-radius:10px;padding:12px;text-align:center;animation-delay:.14s;">'
             f'<div style="font-size:1.25rem;font-weight:800;color:#5A3F8A;">✅ OK</div>'
-            f'<div style="font-size:0.7rem;color:#7A5FA5;font-weight:600;margin-top:2px;">Export dispo</div></div>'
+            f'<div style="font-size:0.7rem;color:#555555;font-weight:600;margin-top:2px;">Export dispo</div></div>'
             f'</div>',
             unsafe_allow_html=True,
         )
@@ -2034,7 +1870,7 @@ elif st.session_state.screen == 4:
             # ── Feedback immédiat dès le clic ────────────────────────────────
             status_ph = st.empty()
             status_ph.markdown(
-                f'<div style="background:#1A2744;color:#C8D6E8;border-radius:10px;'
+                f'<div style="background:#111111;color:#CCCCCC;border-radius:10px;'
                 f'padding:14px 20px;font-size:0.88rem;font-weight:600;margin-bottom:10px;">'
                 f'⏳ &nbsp; Étape {step_info["num"]} — {step_info["title"]} en cours...'
                 f'<span style="font-size:0.78rem;font-weight:400;opacity:.7;margin-left:8px;">'
@@ -2058,7 +1894,7 @@ elif st.session_state.screen == 4:
                           f'background:{uni_color};margin-left:2px;vertical-align:middle;'
                           f'animation:blink 1s step-end infinite;"></span>')
                 output_ph.markdown(
-                    f'<div style="background:#FFFFFF;border:1px solid #DDD5C8;border-radius:10px;'
+                    f'<div style="background:#FFFFFF;border:1px solid #E5E5E5;border-radius:10px;'
                     f'padding:20px 24px;max-height:340px;overflow-y:auto;'
                     f'font-size:0.87rem;line-height:1.8;color:#1A202C;">'
                     + text[:5000].replace("\n", "<br>")
@@ -2092,7 +1928,7 @@ elif st.session_state.screen == 4:
                 src_count = f" · {len(queries)} sources" if queries else ""
 
                 st.markdown(
-                    f'<div class="done-banner" style="background:linear-gradient(135deg,{uni_color} 0%,{uni_color}99 100%);'
+                    f'<div class="done-banner" style="background:#111111;'
                     f'border-radius:14px;padding:18px 24px;margin:12px 0;color:#FFFFFF;'
                     f'display:flex;align-items:center;gap:16px;">'
                     f''
