@@ -10,11 +10,9 @@ _EXCEL_MODULES    = set()
 
 def _render_question_cards(step_key: str, step_info: dict, company: str):
     """
-    Affiche les cartes de questions style Claude et retourne (step_input, variables).
-    step_input  : texte brut à passer comme INPUT au module
-    variables   : dict des valeurs collectées, pour substitution dans le prompt
+    Affiche les cartes de questions style Claude (chips st.pills) et retourne (step_input, variables).
     """
-    questions = step_info.get("questions", [])
+    questions  = step_info.get("questions", [])
     step_input = ""
     variables  = {}
 
@@ -31,6 +29,7 @@ def _render_question_cards(step_key: str, step_info: dict, company: str):
                 unsafe_allow_html=True,
             )
 
+            # ── Texte court ──────────────────────────────────────────────────
             if qtype == "text_input":
                 val = st.text_input(
                     label,
@@ -40,6 +39,7 @@ def _render_question_cards(step_key: str, step_info: dict, company: str):
                 )
                 variables[qk] = val
 
+            # ── Texte long ───────────────────────────────────────────────────
             elif qtype == "textarea":
                 val = st.text_area(
                     label,
@@ -50,13 +50,14 @@ def _render_question_cards(step_key: str, step_info: dict, company: str):
                 )
                 variables[qk] = val
 
+            # ── Chips + champ "Autre" ────────────────────────────────────────
             elif qtype == "chips_or_custom":
                 options = q.get("options", []) + ["Autre..."]
-                chip = st.radio(
+                chip = st.pills(
                     label,
                     options=options,
-                    horizontal=True,
-                    key=f"q_{step_key}_{qk}_chip",
+                    selection_mode="single",
+                    key=f"q_{step_key}_{qk}_pill",
                     label_visibility="collapsed",
                 )
                 if chip == "Autre...":
@@ -69,15 +70,17 @@ def _render_question_cards(step_key: str, step_info: dict, company: str):
                     val = chip or ""
                 variables[qk] = val
 
+            # ── Texte ou fichier (modules 1a / 1b) ──────────────────────────
             elif qtype == "text_or_file":
-                mode = st.radio(
+                mode = st.pills(
                     "Mode",
                     options=["✏️  Coller du texte", "📎  Uploader un fichier"],
-                    horizontal=True,
+                    selection_mode="single",
+                    default="✏️  Coller du texte",
                     key=f"q_{step_key}_{qk}_mode",
                     label_visibility="collapsed",
                 )
-                if mode == "✏️  Coller du texte":
+                if mode != "📎  Uploader un fichier":
                     val = st.text_area(
                         label,
                         placeholder=q.get("hint_text", ""),
@@ -100,9 +103,9 @@ def _render_question_cards(step_key: str, step_info: dict, company: str):
                         for uf in up[:3]:
                             val += f"\n\n--- {uf.name} ---\n{extract_text(uf)}"
                 variables[qk] = val
-                step_input = val  # input principal pour modules 1a/1b
+                step_input = val
 
-    # Module 2 : construire l'input à partir des variables structurées
+    # Module 2 — assembler l'input structuré
     if not step_input and variables:
         parts = []
         if variables.get("positionnement"):
@@ -505,58 +508,44 @@ button[data-baseweb="tab"] {
 }
 
 /* ── Question cards (style Claude) ── */
-div[data-testid="stVerticalBlockBorderWrapper"].q-card-wrapper {
-    border-radius: 16px !important;
-    border: 1px solid #E2E8F0 !important;
-    padding: 2px 6px 6px 6px !important;
-    margin-bottom: 10px !important;
-    background: #FFFFFF !important;
-}
 .q-card-label {
     font-size: 0.95rem;
     font-weight: 500;
     color: #1A202C;
-    margin: 4px 0 10px 0;
+    margin: 4px 0 12px 0;
     line-height: 1.5;
 }
 .q-optional-badge {
-    font-size: 0.73rem;
+    font-size: 0.72rem;
     font-weight: 400;
     color: #94A3B8;
     margin-left: 8px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
-/* Radio as chips */
-div[data-testid="stVerticalBlockBorderWrapper"].q-card-wrapper div[data-testid="stRadio"] > label {
-    display: none !important;
-}
-div[data-testid="stVerticalBlockBorderWrapper"].q-card-wrapper div[data-testid="stRadio"] > div {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 8px !important;
-    margin-top: 2px !important;
-}
-div[data-testid="stVerticalBlockBorderWrapper"].q-card-wrapper div[data-testid="stRadio"] label[data-baseweb="radio"] {
-    padding: 7px 18px !important;
+/* st.pills → style chips Claude : non-sélectionné = contour, sélectionné = noir plein */
+div[data-testid="stPills"] > label { display: none !important; }
+div[data-testid="stPills"] { gap: 0 !important; }
+button[data-testid="stPillsOptionButton"] {
     border: 1.5px solid #CBD5E0 !important;
     border-radius: 100px !important;
-    margin: 0 !important;
     background: transparent !important;
-    transition: all 0.12s !important;
-    font-size: 0.87rem !important;
     color: #2D3748 !important;
+    font-size: 0.87rem !important;
+    padding: 7px 18px !important;
+    margin: 0 6px 6px 0 !important;
+    font-weight: 400 !important;
+    transition: all 0.12s !important;
+    box-shadow: none !important;
 }
-div[data-testid="stVerticalBlockBorderWrapper"].q-card-wrapper div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
+button[data-testid="stPillsOptionButton"]:hover {
+    border-color: #718096 !important;
+    color: #1A202C !important;
+}
+button[data-testid="stPillsOptionButton"][aria-pressed="true"] {
     background: #1A2744 !important;
     border-color: #1A2744 !important;
     color: #FFFFFF !important;
-}
-div[data-testid="stVerticalBlockBorderWrapper"].q-card-wrapper div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] {
-    display: none !important;
-}
-div[data-testid="stVerticalBlockBorderWrapper"].q-card-wrapper div[data-testid="stRadio"] div[data-baseweb="radio"] > div:first-child {
-    display: none !important;
 }
 </style>
 <script>
