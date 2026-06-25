@@ -589,6 +589,54 @@ BUY_SIDE_STEPS = [
 
 BUY_SIDE_STEPS_BY_KEY = {s["key"]: s for s in BUY_SIDE_STEPS}
 
+# Questions unifiées pour le wizard M&A (tous modules confondus)
+MA_BUY_WIZARD = [
+    {
+        "key":       "company_profile",
+        "label":     "Présentez {company} — collez le profil ou uploadez un document",
+        "type":      "text_or_file",
+        "hint_text": "Secteur, activités, CA, effectifs, implantations, modèle économique…",
+        "required":  True,
+    },
+    {
+        "key":      "positionnement",
+        "label":    "Quel est le positionnement de {company} en une phrase ?",
+        "type":     "text_input",
+        "hint":     "Ex : intégrateur industriel en électricité, automatisme et maintenance",
+        "required": True,
+    },
+    {
+        "key":      "categories",
+        "label":    "Quelles catégories verticales de cibles visez-vous ?",
+        "type":     "textarea",
+        "hint":     "Ex : V4 — Intégrateurs de systèmes et lignes de production\nV7 — Maintenance industrielle",
+        "required": True,
+    },
+    {
+        "key":      "zone_geo",
+        "label":    "Zone géographique cible pour les acquisitions",
+        "type":     "chips_or_custom",
+        "options":  ["France uniquement", "France + Belgique", "France + DACH", "Europe"],
+        "hint":     "Autre zone...",
+        "required": True,
+    },
+    {
+        "key":      "fourchette_ca",
+        "label":    "Fourchette de chiffre d'affaires des cibles",
+        "type":     "chips_or_custom",
+        "options":  ["< 5 M€", "5–20 M€", "20–50 M€", "50–100 M€"],
+        "hint":     "Autre fourchette...",
+        "required": True,
+    },
+    {
+        "key":      "exclusions",
+        "label":    "Entreprises à exclure explicitement",
+        "type":     "textarea",
+        "hint":     "Laissez vide si aucune. Une société par ligne.",
+        "required": False,
+    },
+]
+
 # ── Session state initialization ──────────────────────────────────────────────
 def init_state():
     defaults = {
@@ -726,49 +774,34 @@ if st.session_state.screen == 1:
 
     # ── TAB 2 : Mission M&A ────────────────────────────────────────────────
     with tab_mission:
-        st.markdown("""
-        <div style="background:#111111;
-                    border-radius:14px; padding:20px 24px; margin-bottom:20px;">
-            <div style="color:#FFFFFF; font-size:1.1rem; font-weight:700; margin-bottom:6px;">
-                Missions M&A professionnelles
-            </div>
-            <div style="color:#9CA3AF; font-size:0.85rem; line-height:1.6;">
-                Flux guidé étape par étape. Chaque résultat alimente l'étape suivante.
-                Choisissez votre type de mission ci-dessous.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown("""
-        <div style="background:#F5F5F5; border:2px solid #11111140;
-                    border-left:4px solid #111111; border-radius:12px; padding:18px 20px; margin-bottom:12px;">
-            <div style="font-size:1.5rem;">📈</div>
-            <div style="font-weight:700; color:#111111; font-size:0.97rem; margin:8px 0 4px 0;">
-                Mission Buy-side — Croissance externe
-            </div>
-            <div style="font-size:0.79rem; color:#6B7280; line-height:1.5;">
-                Cartographie du marché, recherche et qualification de cibles, préparation des slides PPT.
-            </div>
-            <div style="font-size:0.76rem; color:#111111; font-weight:600; margin-top:10px;">
-                3 modules · Recherche web incluse
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        buy_company = st.text_input(
-            "Nom de l'acquéreur",
-            placeholder="Ex : Milliris, Acuitis...",
-            key="buy_company_input",
+        st.markdown(
+            '<p style="font-size:0.82rem;color:#9CA3AF;margin-bottom:6px;font-weight:600;'
+            'text-transform:uppercase;letter-spacing:0.06em;">Nom de l\'acquéreur</p>',
+            unsafe_allow_html=True,
         )
-        if st.button("📈 Lancer la mission Buy-side", key="start_buy", use_container_width=True, type="primary"):
+        with st.form("ma_start_form", border=False):
+            buy_company = st.text_input(
+                "Acquéreur",
+                placeholder="Ex : Milliris, Acuitis...",
+                label_visibility="collapsed",
+                key="buy_company_input",
+            )
+            submitted = st.form_submit_button(
+                "Commencer →", type="primary", use_container_width=True
+            )
+        if submitted:
             if not buy_company.strip():
                 st.warning("⚠️ Entrez le nom de l'acquéreur.")
             elif not anthropic_key or not tavily_key:
                 st.error("🔑 Clés API manquantes.")
             else:
+                # Reset wizard state for fresh start
+                for k in list(st.session_state.keys()):
+                    if k.startswith("q_ma_buy_wizard") or k.startswith("q_idx_ma_buy_wizard"):
+                        del st.session_state[k]
                 st.session_state.ma_universe    = "buy"
                 st.session_state.ma_company     = buy_company.strip()
                 st.session_state.ma_sector      = ""
-                st.session_state.ma_step_key    = BUY_SIDE_STEPS[0]["key"]
                 st.session_state.ma_step_result = {}
                 st.session_state.screen         = 4
                 st.rerun()
@@ -1663,315 +1696,155 @@ Règles :
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SCREEN 4 — MISSION M&A (wizard étape par étape)
+# SCREEN 4 — MISSION M&A (wizard unifié + lancement séquentiel)
 # ══════════════════════════════════════════════════════════════════════════════
 elif st.session_state.screen == 4:
     from ma_agent import run_ma_module
     import re as _re4
 
-    universe   = st.session_state.ma_universe
-    ma_company = st.session_state.ma_company
-    ma_sector  = st.session_state.get("ma_sector", "")
-    step_key   = st.session_state.ma_step_key
-    results    = st.session_state.ma_step_result
+    ma_company = st.session_state.get("ma_company", "")
+    results    = st.session_state.setdefault("ma_step_result", {})
 
-    steps_list = BUY_SIDE_STEPS
-    steps_by_k = BUY_SIDE_STEPS_BY_KEY
-    step_keys  = [s["key"] for s in steps_list]
-    step_info  = steps_by_k.get(step_key, steps_list[0])
-    step_idx   = step_keys.index(step_key) if step_key in step_keys else 0
+    MA_MODULES = [
+        ("buy_01_carto_verticale",   "1a", "Cartographie verticale"),
+        ("buy_02_carto_horizontale", "1b", "Cartographie horizontale"),
+        ("buy_03_recherche_cibles",  "2",  "Long-list de cibles"),
+    ]
+    all_done = all(k in results for k, _, _ in MA_MODULES)
+    n_done   = sum(1 for k, _, _ in MA_MODULES if k in results)
+    pct      = int(n_done / len(MA_MODULES) * 100)
 
-    uni_color    = "#111111"
-    uni_bg       = "#F5F5F5"
-    uni_label    = "Mission Buy-side — Croissance externe"
-    uni_icon     = "" if universe == "buy" else ""
-    n_total      = len(steps_list)
-    n_done       = sum(1 for k in step_keys if k in results)
-    already_done = step_key in results
-
-    # ── Animations CSS ────────────────────────────────────────────────────────
-    st.markdown("""
-<style>
-@keyframes blink  { 0%,100%{opacity:1}  50%{opacity:0}   }
-@keyframes popIn  { 0%{transform:scale(.85);opacity:0} 70%{transform:scale(1.04)} 100%{transform:scale(1);opacity:1} }
-.ticker-pill  { animation: popIn 0.25s ease both; }
-.insight-card { animation: popIn 0.35s ease both; }
-.done-banner  { animation: popIn 0.4s ease both;  }
-</style>
-""", unsafe_allow_html=True)
-
-    # ── Header mission ────────────────────────────────────────────────────────
-    hc1, hc2 = st.columns([5, 1])
-    with hc1:
-        pct = int(n_done / n_total * 100)
+    # ── En-tête ────────────────────────────────────────────────────────────
+    hdr_col, quit_col = st.columns([6, 1])
+    with hdr_col:
         st.markdown(
-            f"""<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-  <span style="font-size:1.5rem;">{uni_icon}</span>
-  <div>
-    <div style="font-size:1.05rem;font-weight:800;color:#111111;letter-spacing:-0.3px;">
-      Mission {uni_label} &nbsp;·&nbsp; <span style="color:{uni_color};">{ma_company}</span>
-    </div>
-    <div style="font-size:0.76rem;color:#9CA3AF;margin-top:2px;">
-      {n_done}/{n_total} étapes complétées{"&nbsp;·&nbsp;Mission terminée !" if n_done == n_total else ""}
-    </div>
-  </div>
-</div>
-<div style="background:#E5E5E5;border-radius:99px;height:5px;overflow:hidden;margin-bottom:2px;">
-  <div style="background:{uni_color};width:{pct}%;height:100%;border-radius:99px;transition:width .5s ease;"></div>
-</div>""",
+            f'<div style="font-size:1.05rem;font-weight:700;color:#111111;margin-bottom:2px;">{ma_company}</div>'
+            f'<div style="font-size:0.78rem;color:#9CA3AF;margin-bottom:10px;">Mission Buy-side — Croissance externe</div>'
+            f'<div style="background:#E5E5E5;border-radius:99px;height:3px;overflow:hidden;">' 
+            f'<div style="background:#111111;width:{pct}%;height:100%;border-radius:99px;transition:width .5s;"></div></div>',
             unsafe_allow_html=True,
         )
-    with hc2:
+    with quit_col:
         if st.button("✕ Quitter", use_container_width=True):
+            for k in list(st.session_state.keys()):
+                if k.startswith("q_ma_buy_wizard") or k.startswith("q_idx_ma_buy_wizard") or k.startswith("q_file_ma_buy_wizard"):
+                    del st.session_state[k]
             st.session_state.screen = 1
             st.rerun()
 
-    # ── Pastilles d'étapes (cliquables si faites) ─────────────────────────────
-    step_cols = st.columns(n_total)
-    for col, s in zip(step_cols, steps_list):
-        is_done    = s["key"] in results
-        is_current = s["key"] == step_key
-        with col:
-            if is_done or is_current:
-                lbl = ("✅ " if is_done else "▶ ") + s["num"]
-                if st.button(lbl, key=f"snav_{s['key']}", use_container_width=True, help=s["title"]):
-                    st.session_state.ma_step_key = s["key"]
-                    st.rerun()
-            else:
+    st.markdown('<div style="height:12px"></div>', unsafe_allow_html=True)
+
+    # ── Phase résultats ────────────────────────────────────────────────────
+    if all_done:
+        for mod_key, mod_num, mod_label in MA_MODULES:
+            res_text = results[mod_key]
+            n_rows = len(_re4.findall(r'^\|[^-\|]', res_text, _re4.MULTILINE))
+            n_heads = len(_re4.findall(r'^#{1,3} ', res_text, _re4.MULTILINE))
+            n_src   = len(_re4.findall(r'https?://', res_text))
+            m1 = f"{n_rows} lignes" if n_rows > 1 else f"{n_heads} sections" if n_heads else f"{len(res_text.split())} mots"
+            m2 = f"{n_src} sources" if n_src else "Structuré"
+
+            with st.container(border=True):
                 st.markdown(
-                    f'<div style="text-align:center;background:#F5F5F5;border:1.5px solid #E5E5E5;'
-                    f'border-radius:8px;padding:6px 2px;color:#E5E5E5;font-size:0.78rem;font-weight:700;">'
-                    f'{s["num"]}</div>',
+                    f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' 
+                    f'<span style="font-size:0.7rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;">Étape {mod_num}</span>' 
+                    f'<span style="font-size:0.75rem;color:#9CA3AF;">{m1} · {m2}</span></div>' 
+                    f'<div style="font-size:0.97rem;font-weight:700;color:#111111;">{mod_label}</div>',
                     unsafe_allow_html=True,
                 )
+                _export_button(res_text, ma_company, mod_key, {"num": mod_num, "title": mod_label})
+                with st.expander("Voir le résultat complet"):
+                    st.markdown(res_text)
 
-    # Barre de progression fine
-    st.markdown(
-        f'<div style="background:#E5E5E5;border-radius:4px;height:3px;margin:12px 0 20px 0;overflow:hidden;">'
-        f'<div style="background:{uni_color};width:{pct}%;height:100%;border-radius:4px;transition:width .4s;"></div>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
-
-    # ── Carte étape courante ──────────────────────────────────────────────────
-    web_badge = (
-        '<span style="background:#F5F5F5;border:1px solid #E5E5E5;color:#333333;'
-        'font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">'
-        '🌐 Recherche web · Sonnet</span>'
-        if step_info.get("web_search") else
-        '<span style="background:#F5F5F5;border:1px solid #E5E5E5;color:#64748B;'
-        'font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">'
-        '⚡ Rapide · Haiku</span>'
-    )
-    st.markdown(
-        f'<div style="background:#FFFFFF;border-left:4px solid {uni_color};border-radius:0 12px 12px 0;'
-        f'padding:18px 22px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,0.06);">'
-        f'<div style="font-size:0.7rem;font-weight:700;color:{uni_color};text-transform:uppercase;'
-        f'letter-spacing:0.09em;margin-bottom:5px;">Étape {step_info["num"]} / {n_total}</div>'
-        f'<div style="font-size:1.15rem;font-weight:800;color:#111111;margin-bottom:4px;">'
-        f'{step_info["title"]}</div>'
-        f'<div style="font-size:0.84rem;color:#6B7280;margin-bottom:10px;">{step_info["desc"]}</div>'
-        f'{web_badge}</div>',
-        unsafe_allow_html=True,
-    )
-
-    # ── ÉTAT A : résultat déjà disponible ────────────────────────────────────
-    if already_done:
-        res_text = results[step_key]
-        n_rows   = len(_re4.findall(r'^\|[^-\|]', res_text, _re4.MULTILINE))
-        n_heads  = len(_re4.findall(r'^#{1,3} ', res_text, _re4.MULTILINE))
-        n_src    = len(_re4.findall(r'https?://', res_text))
-        m1 = f"{n_rows} lignes" if n_rows > 1 else f"{n_heads} sections" if n_heads else f"{len(res_text.split())} mots"
-        m2 = f"{n_src} sources" if n_src else "Structuré"
-
-        # Cartes de métriques
-        st.markdown(
-            f'<div style="display:flex;gap:10px;margin-bottom:18px;">'
-            f'<div class="insight-card" style="flex:1;background:#F5F5F5;border:1px solid #E5E5E5;'
-            f'border-radius:10px;padding:12px;text-align:center;">'
-            f'<div style="font-size:1.25rem;font-weight:800;color:#111111;">{m1}</div>'
-            f'<div style="font-size:0.7rem;color:#111111;font-weight:600;margin-top:2px;">Résultat</div></div>'
-            f'<div class="insight-card" style="flex:1;background:#F5F5F5;border:1px solid #E5E5E5;'
-            f'border-radius:10px;padding:12px;text-align:center;animation-delay:.07s;">'
-            f'<div style="font-size:1.25rem;font-weight:800;color:#333333;">{m2}</div>'
-            f'<div style="font-size:0.7rem;color:#333333;font-weight:600;margin-top:2px;">Qualité</div></div>'
-            f'<div class="insight-card" style="flex:1;background:#F5F5F5;border:1px solid #C4B0D8;'
-            f'border-radius:10px;padding:12px;text-align:center;animation-delay:.14s;">'
-            f'<div style="font-size:1.25rem;font-weight:800;color:#5A3F8A;">✅ OK</div>'
-            f'<div style="font-size:0.7rem;color:#555555;font-weight:600;margin-top:2px;">Export dispo</div></div>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-
-        _export_button(res_text, ma_company, step_key, step_info)
-
-        with st.expander("📄 Voir le résultat complet", expanded=False):
-            st.markdown(res_text)
-
-        if st.button("🔄 Relancer cette étape", key=f"rerun_{step_key}"):
-            new_r = {k: v for k, v in results.items() if k != step_key}
-            st.session_state.ma_step_result = new_r
+        st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+        if st.button("🔄 Recommencer la mission", use_container_width=True):
+            for k in list(st.session_state.keys()):
+                if k.startswith("q_ma_buy_wizard") or k.startswith("q_idx_ma_buy_wizard") or k.startswith("q_file_ma_buy_wizard"):
+                    del st.session_state[k]
+            st.session_state.ma_step_result = {}
             st.rerun()
 
-        # Navigation
-        st.markdown("---")
-        nav1, _, nav3 = st.columns([1, 2, 1])
-        with nav1:
-            if step_idx > 0:
-                ps = steps_list[step_idx - 1]
-                if st.button(f"← {ps['num']}. {ps['title']}", key=f"prev_{step_key}", use_container_width=True):
-                    st.session_state.ma_step_key = ps["key"]
-                    st.rerun()
-        with nav3:
-            if step_idx < n_total - 1:
-                ns = steps_list[step_idx + 1]
-                if st.button(f"Étape suivante : {ns['title']} →", key=f"next_{step_key}",
-                             type="primary", use_container_width=True):
-                    nk = f"ma_input_{ns['key']}"
-                    if ns.get("needs_input"):
-                        st.session_state[nk] = results.get(step_key, "")[:4000]
-                    st.session_state.ma_step_key = ns["key"]
-                    st.rerun()
-            else:
-                st.success("🎉 Mission complète — toutes les étapes sont terminées.")
-
-    # ── ÉTAT B : étape à lancer ───────────────────────────────────────────────
+    # ── Phase wizard + lancement ───────────────────────────────────────────
     else:
-        input_key  = f"ma_input_{step_key}"
-        step_input   = ""
-        step_variables = {}
-
-        questions_ready = True
-        if step_info.get("questions"):
-            step_input, step_variables, questions_ready = _render_question_cards(
-                step_key, step_info, ma_company
-            )
-        elif step_info.get("needs_input"):
-            if input_key not in st.session_state and step_idx > 0:
-                pk = step_keys[step_idx - 1]
-                if pk in results:
-                    st.session_state[input_key] = results[pk][:4000]
-            step_input = st.text_area(
-                step_info["input_label"],
-                value=st.session_state.get(input_key, ""),
-                placeholder=step_info.get("input_hint", ""),
-                height=190,
-                key=f"ta_{step_key}",
-            )
-            st.session_state[input_key] = step_input
-
-        run_label = "🔍 Lancer la recherche" if step_info.get("web_search") else "⚡ Lancer l'analyse"
-        launch = (
-            st.button(run_label, key=f"run_{step_key}", type="primary", use_container_width=True)
-            if questions_ready else False
+        WIZARD_INFO = {"questions": MA_BUY_WIZARD}
+        _step_input, variables, wizard_ready = _render_question_cards(
+            "ma_buy_wizard", WIZARD_INFO, ma_company
         )
 
-        if launch:
-            # ── Feedback immédiat dès le clic ────────────────────────────────
-            status_ph = st.empty()
-            status_ph.markdown(
-                f'<div style="background:#111111;color:#CCCCCC;border-radius:10px;'
-                f'padding:14px 20px;font-size:0.88rem;font-weight:600;margin-bottom:10px;">'
-                f'⏳ &nbsp; Étape {step_info["num"]} — {step_info["title"]} en cours...'
-                f'<span style="font-size:0.78rem;font-weight:400;opacity:.7;margin-left:8px;">'
-                f'({"30–90 sec, recherches web" if step_info.get("web_search") else "10–30 sec"})</span></div>',
-                unsafe_allow_html=True,
-            )
+        if wizard_ready:
+            company_profile = variables.get("company_profile", "")
+            parts2 = []
+            if variables.get("positionnement"):
+                parts2.append(f"Positionnement : {variables['positionnement']}")
+            if variables.get("categories"):
+                parts2.append(f"Catégories verticales :\n{variables['categories']}")
+            if variables.get("zone_geo"):
+                parts2.append(f"Zone géographique : {variables['zone_geo']}")
+            if variables.get("fourchette_ca"):
+                parts2.append(f"Fourchette CA : {variables['fourchette_ca']}")
+            if variables.get("exclusions"):
+                parts2.append(f"Entreprises à exclure :\n{variables['exclusions']}")
+            step2_input = "\n".join(parts2)
 
-            os.environ["ANTHROPIC_API_KEY"] = anthropic_key
-            os.environ["TAVILY_API_KEY"]    = tavily_key
+            launch = st.button("🔍 Lancer la mission", type="primary", use_container_width=True)
 
-            output_ph = st.empty()
-            queries   = []
+            if launch:
+                os.environ["ANTHROPIC_API_KEY"] = anthropic_key
+                os.environ["TAVILY_API_KEY"]    = tavily_key
 
-            def _on_tool(name, inp):
-                q = (inp.get("query", inp.get("q", ""))[:75] if isinstance(inp, dict) else str(inp)[:75])
-                if q:
-                    queries.append(q)
-
-            def _on_text(text):
-                cursor = (f'<span style="display:inline-block;width:2px;height:13px;'
-                          f'background:{uni_color};margin-left:2px;vertical-align:middle;'
-                          f'animation:blink 1s step-end infinite;"></span>')
-                output_ph.markdown(
-                    f'<div style="background:#FFFFFF;border:1px solid #E5E5E5;border-radius:10px;'
-                    f'padding:20px 24px;max-height:340px;overflow-y:auto;'
-                    f'font-size:0.87rem;line-height:1.8;color:#1A202C;">'
-                    + text[:5000].replace("\n", "<br>")
-                    + cursor + '</div>',
-                    unsafe_allow_html=True,
-                )
-
-            try:
-                with st.spinner(f"Étape {step_info['num']} — {step_info['title']}…"):
-                    result = run_ma_module(
-                        module_key=step_key,
-                        company=ma_company,
-                        sector=ma_sector,
-                        input_data=step_input,
-                        variables=step_variables,
-                        on_text=_on_text,
-                        on_tool_use=_on_tool,
-                    )
+                modules_to_run = [
+                    ("buy_01_carto_verticale",   company_profile, "1a — Cartographie verticale"),
+                    ("buy_02_carto_horizontale", company_profile, "1b — Cartographie horizontale"),
+                    ("buy_03_recherche_cibles",  step2_input,     "2 — Long-list de cibles"),
+                ]
 
                 new_results = dict(results)
-                new_results[step_key] = result
+
+                for mod_key, mod_input, mod_label in modules_to_run:
+                    ph     = st.empty()
+                    out_ph = st.empty()
+
+                    ph.markdown(
+                        f'<div style="background:#111111;color:#FFFFFF;border-radius:10px;' 
+                        f'padding:14px 20px;font-size:0.88rem;font-weight:600;margin-bottom:8px;">' 
+                        f'⏳ &nbsp;{mod_label} en cours…' 
+                        f'<span style="font-weight:400;opacity:.65;margin-left:8px;font-size:0.8rem;">(30–90 s · recherche web)</span></div>',
+                        unsafe_allow_html=True,
+                    )
+
+                    def _on_text(text, _ph=out_ph):
+                        _ph.markdown(
+                            '<div style="background:#FFFFFF;border:1px solid #E5E5E5;border-radius:10px;' 
+                            'padding:16px 20px;max-height:280px;overflow-y:auto;' 
+                            'font-size:0.87rem;line-height:1.8;color:#111111;">' 
+                            + text[:4000].replace("\n", "<br>") + '</div>',
+                            unsafe_allow_html=True,
+                        )
+
+                    try:
+                        result = run_ma_module(
+                            module_key=mod_key,
+                            company=ma_company,
+                            sector="",
+                            input_data=mod_input,
+                            variables=variables,
+                            on_text=_on_text,
+                        )
+                        new_results[mod_key] = result
+                        ph.empty()
+                        out_ph.empty()
+                        st.markdown(
+                            f'<div style="background:#111111;color:#FFFFFF;border-radius:10px;' 
+                            f'padding:12px 18px;font-size:0.85rem;font-weight:600;margin-bottom:8px;">' 
+                            f' {mod_label} — terminé</div>',
+                            unsafe_allow_html=True,
+                        )
+                    except Exception as e:
+                        import traceback
+                        ph.empty()
+                        out_ph.error(f"❌ Erreur {mod_label}: {e}")
+                        with st.expander("Détail technique"):
+                            st.code(traceback.format_exc())
+
                 st.session_state.ma_step_result = new_results
-
-                status_ph.empty()
-                output_ph.empty()
-
-                # Banner de succès
-                n_rows  = len(_re4.findall(r'^\|[^-\|]', result, _re4.MULTILINE))
-                n_heads = len(_re4.findall(r'^#{1,3} ', result, _re4.MULTILINE))
-                m1 = f"{n_rows} lignes" if n_rows > 1 else f"{n_heads} sections" if n_heads else f"{len(result.split())} mots"
-                src_count = f" · {len(queries)} sources" if queries else ""
-
-                st.markdown(
-                    f'<div class="done-banner" style="background:#111111;'
-                    f'border-radius:14px;padding:18px 24px;margin:12px 0;color:#FFFFFF;'
-                    f'display:flex;align-items:center;gap:16px;">'
-                    f''
-                    f'<div><div style="font-weight:800;font-size:1.05rem;">Étape {step_info["num"]} terminée</div>'
-                    f'<div style="opacity:.85;font-size:0.82rem;margin-top:2px;">'
-                    f'{step_info["title"]} · {m1}{src_count}</div></div></div>',
-                    unsafe_allow_html=True,
-                )
-
-                with st.expander("📄 Voir le résultat", expanded=True):
-                    st.markdown(result)
-
-                _export_button(result, ma_company, step_key, step_info)
-
-                if step_idx < n_total - 1:
-                    ns = steps_list[step_idx + 1]
-                    st.markdown('<div style="margin-top:14px;"></div>', unsafe_allow_html=True)
-                    if st.button(
-                        f"Passer à l'étape {ns['num']} — {ns['title']} →",
-                        key=f"next_after_run_{step_key}",
-                        type="primary",
-                        use_container_width=True,
-                    ):
-                        nk = f"ma_input_{ns['key']}"
-                        if ns.get("needs_input"):
-                            st.session_state[nk] = result[:4000]
-                        st.session_state.ma_step_key = ns["key"]
-                        st.rerun()
-                else:
-                    st.balloons()
-                    st.success("🎉 Mission complète — toutes les étapes sont terminées !")
-
-            except Exception as e:
-                import traceback
-                status_ph.empty()
-                output_ph.empty()
-                st.error(f"❌ Erreur étape {step_info['num']} : {e}")
-                with st.expander("🔍 Détail technique", expanded=False):
-                    st.code(traceback.format_exc())
-
-        elif step_idx > 0:
-            st.markdown("---")
-            ps = steps_list[step_idx - 1]
-            if st.button(f"← {ps['num']}. {ps['title']}", key=f"prev_{step_key}"):
-                st.session_state.ma_step_key = ps["key"]
                 st.rerun()
