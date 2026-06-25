@@ -217,6 +217,51 @@ st.set_page_config(
 )
 
 # ── API key helpers ────────────────────────────────────────────────────────────
+
+def _research_company(company: str, anthropic_key: str, tavily_key: str) -> dict:
+    """
+    Recherche rapide (Haiku + Tavily) pour valider l'entreprise
+    et générer des options QCM contextualisées.
+    """
+    import anthropic as _ant, json, re as _re, os as _os
+    from tools import execute_tool
+
+    _os.environ["ANTHROPIC_API_KEY"] = anthropic_key
+    _os.environ["TAVILY_API_KEY"]    = tavily_key
+
+    try:
+        search_raw = execute_tool("tavily_search", {
+            "query": f"{company} entreprise secteur activité CA effectifs spécialités",
+            "max_results": 5,
+        })
+    except Exception:
+        search_raw = ""
+
+    client = _ant.Anthropic(api_key=anthropic_key)
+    prompt = f"""Tu es un analyste M&A. Analyse les données suivantes sur {company} et retourne UNIQUEMENT un JSON valide (sans commentaire) avec :
+- "description": 1 phrase courte (secteur, localisation, taille)
+- "faits": liste de 3 puces courtes (CA, effectifs, spécialité, zone, date création…)
+- "positionnement_options": 4 formulations du positionnement stratégique (max 9 mots chacune)
+- "categories_options": 5 catégories verticales de cibles M&A pertinentes pour acquérir (format : "Vx — Libellé")
+
+Données :
+{str(search_raw)[:3500]}
+"""
+    resp = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=900,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    text = resp.content[0].text.strip()
+    m = _re.search(r"\{.*\}", text, _re.DOTALL)
+    if m:
+        try:
+            return json.loads(m.group())
+        except Exception:
+            pass
+    return {}
+
+
 def get_key(name):
     """Read API keys from Streamlit Cloud (st.secrets) or local .env file."""
     try:
@@ -244,7 +289,7 @@ html, body, [class*="css"] {
 @keyframes progressSlide { from{width:0%} to{width:100%} }
 
 /* ── Fond général ── */
-[data-testid="stAppViewContainer"] { background: #D0D0D0; }
+
 .main .block-container {
     max-width: 900px;
     padding-top: 2rem;
@@ -404,9 +449,7 @@ button[data-baseweb="tab"] { font-size:0.88rem!important; font-weight:600!import
 div[data-testid="stSpinner"] > div { font-size:0.9rem; color:#6B7280; }
 
 /* ── Header Streamlit ── */
-header[data-testid="stHeader"] {
-    background:#D0D0D0!important; box-shadow:none!important; border-bottom:none!important;
-}
+header[data-testid="stHeader"] { box-shadow:none!important; border-bottom:none!important; }
 footer { visibility:hidden!important; }
 
 /* ── Scrollbar ── */
@@ -421,21 +464,30 @@ footer { visibility:hidden!important; }
 .etype-btn-idle > div > button:hover { border-color:#111111!important; color:#111111!important; }
 
 /* ── Question cards ── */
-.q-card-label { font-size:0.94rem; font-weight:500; color:#111111; margin:4px 0 12px 0; line-height:1.5; }
+
 .q-optional-badge { font-size:0.72rem; font-weight:400; color:#9CA3AF; margin-left:8px; text-transform:uppercase; letter-spacing:0.05em; }
 
-/* ── st.pills → chips B&W ── */
+/* ── Cacher la barre décorative Streamlit (anciennement rouge) ── */
+[data-testid="stDecoration"] { display:none!important; }
+
+/* ── st.pills → chips dark-mode ── */
 div[data-testid="stPills"] > label { display:none!important; }
 button[data-testid="stPillsOptionButton"] {
-    border:1px solid #E5E5E5!important; border-radius:100px!important;
-    background:transparent!important; color:#333333!important;
+    border:1px solid rgba(255,255,255,0.3)!important; border-radius:100px!important;
+    background:transparent!important;
     font-size:0.87rem!important; padding:7px 18px!important;
     margin:0 6px 6px 0!important; font-weight:400!important; box-shadow:none!important;
+    transition:all 0.12s!important;
 }
-button[data-testid="stPillsOptionButton"]:hover { border-color:#333333!important; }
+button[data-testid="stPillsOptionButton"]:hover {
+    border-color:rgba(255,255,255,0.7)!important;
+}
 button[data-testid="stPillsOptionButton"][aria-pressed="true"] {
-    background:#111111!important; border-color:#111111!important; color:#FFFFFF!important;
+    background:#FFFFFF!important; border-color:#FFFFFF!important; color:#111111!important;
 }
+
+/* ── Question card label — hérite du thème dark ── */
+.q-card-label { font-size:0.94rem; font-weight:500; margin:4px 0 12px 0; line-height:1.5; }
 </style>
 <script>
 (function() {
@@ -1688,15 +1740,17 @@ Règles :
     )
 
 
+
 # ══════════════════════════════════════════════════════════════════════════════
-# SCREEN 4 — MISSION M&A (wizard unifié + lancement séquentiel)
+# SCREEN 4 — MISSION M&A
 # ══════════════════════════════════════════════════════════════════════════════
 elif st.session_state.screen == 4:
     from ma_agent import run_ma_module
     import re as _re4
 
-    ma_company = st.session_state.get("ma_company", "")
-    results    = st.session_state.setdefault("ma_step_result", {})
+    ma_company  = st.session_state.get("ma_company", "")
+    results     = st.session_state.setdefault("ma_step_result", {})
+    company_info = st.session_state.get("ma_company_info", None)
 
     MA_MODULES = [
         ("buy_01_carto_verticale",   "1a", "Cartographie verticale"),
@@ -1711,23 +1765,23 @@ elif st.session_state.screen == 4:
     hdr_col, quit_col = st.columns([6, 1])
     with hdr_col:
         st.markdown(
-            f'<div style="font-size:1.05rem;font-weight:700;color:#111111;margin-bottom:2px;">{ma_company}</div>'
-            f'<div style="font-size:0.78rem;color:#9CA3AF;margin-bottom:10px;">Mission Buy-side — Croissance externe</div>'
-            f'<div style="background:#E5E5E5;border-radius:99px;height:3px;overflow:hidden;">' 
-            f'<div style="background:#111111;width:{pct}%;height:100%;border-radius:99px;transition:width .5s;"></div></div>',
+            f'<div style="font-size:1.05rem;font-weight:700;margin-bottom:2px;">{ma_company}</div>'
+            f'<div style="font-size:0.78rem;opacity:.5;margin-bottom:10px;">Mission Buy-side — Croissance externe</div>'
+            f'<div style="background:rgba(255,255,255,0.15);border-radius:99px;height:3px;overflow:hidden;">'
+            f'<div style="background:#FFFFFF;width:{pct}%;height:100%;border-radius:99px;transition:width .5s;"></div></div>',
             unsafe_allow_html=True,
         )
     with quit_col:
         if st.button("✕ Quitter", use_container_width=True):
             for k in list(st.session_state.keys()):
-                if k.startswith("q_ma_buy_wizard") or k.startswith("q_idx_ma_buy_wizard") or k.startswith("q_file_ma_buy_wizard"):
+                if k.startswith("q_ma_buy_wizard") or k == "ma_company_info" or k == "ma_wizard_confirmed":
                     del st.session_state[k]
             st.session_state.screen = 1
             st.rerun()
 
-    st.markdown('<div style="height:12px"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:10px"></div>', unsafe_allow_html=True)
 
-    # ── Phase résultats ────────────────────────────────────────────────────
+    # ── Phase résultats ─────────────────────────────────────────────────────
     if all_done:
         for mod_key, mod_num, mod_label in MA_MODULES:
             res_text = results[mod_key]
@@ -1736,32 +1790,117 @@ elif st.session_state.screen == 4:
             n_src   = len(_re4.findall(r'https?://', res_text))
             m1 = f"{n_rows} lignes" if n_rows > 1 else f"{n_heads} sections" if n_heads else f"{len(res_text.split())} mots"
             m2 = f"{n_src} sources" if n_src else "Structuré"
-
             with st.container(border=True):
                 st.markdown(
-                    f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' 
-                    f'<span style="font-size:0.7rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;">Étape {mod_num}</span>' 
-                    f'<span style="font-size:0.75rem;color:#9CA3AF;">{m1} · {m2}</span></div>' 
-                    f'<div style="font-size:0.97rem;font-weight:700;color:#111111;">{mod_label}</div>',
+                    f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
+                    f'<span style="font-size:0.7rem;font-weight:700;opacity:.5;text-transform:uppercase;letter-spacing:0.08em;">Étape {mod_num}</span>'
+                    f'<span style="font-size:0.75rem;opacity:.5;">{m1} · {m2}</span></div>'
+                    f'<div style="font-size:0.97rem;font-weight:700;">{mod_label}</div>',
                     unsafe_allow_html=True,
                 )
                 _export_button(res_text, ma_company, mod_key, {"num": mod_num, "title": mod_label})
                 with st.expander("Voir le résultat complet"):
                     st.markdown(res_text)
-
         st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
         if st.button("🔄 Recommencer la mission", use_container_width=True):
             for k in list(st.session_state.keys()):
-                if k.startswith("q_ma_buy_wizard") or k.startswith("q_idx_ma_buy_wizard") or k.startswith("q_file_ma_buy_wizard"):
+                if k.startswith("q_ma_buy_wizard") or k in ("ma_company_info", "ma_wizard_confirmed"):
                     del st.session_state[k]
             st.session_state.ma_step_result = {}
             st.rerun()
 
-    # ── Phase wizard + lancement ───────────────────────────────────────────
+    # ── Phase 0 : recherche IA de l'entreprise ──────────────────────────────
+    elif company_info is None:
+        with st.spinner(f"Recherche d'informations sur **{ma_company}**…"):
+            try:
+                info = _research_company(ma_company, anthropic_key, tavily_key)
+                st.session_state.ma_company_info = info if info else {}
+            except Exception:
+                st.session_state.ma_company_info = {}
+        st.rerun()
+
+    # ── Phase 1 : validation de l'entreprise ────────────────────────────────
+    elif not st.session_state.get("ma_wizard_confirmed", False):
+        info = company_info
+        description = info.get("description", f"Entreprise identifiée : {ma_company}")
+        faits = info.get("faits", [])
+        with st.container(border=True):
+            st.markdown(
+                f'<div style="font-size:0.7rem;font-weight:700;opacity:.4;text-transform:uppercase;'
+                f'letter-spacing:0.09em;margin-bottom:6px;">Entreprise identifiée</div>'
+                f'<div style="font-size:1.05rem;font-weight:700;margin-bottom:6px;">{ma_company}</div>'
+                f'<div style="font-size:0.88rem;opacity:.75;margin-bottom:12px;">{description}</div>',
+                unsafe_allow_html=True,
+            )
+            if faits:
+                for f_ in faits[:3]:
+                    st.markdown(f'— {f_}')
+            st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("✓  C'est la bonne société", type="primary", use_container_width=True):
+                    st.session_state.ma_wizard_confirmed = True
+                    st.rerun()
+            with c2:
+                if st.button("✗  Ce n'est pas la bonne", use_container_width=True):
+                    for k in list(st.session_state.keys()):
+                        if k in ("ma_company_info", "ma_wizard_confirmed"):
+                            del st.session_state[k]
+                    st.session_state.screen = 1
+                    st.rerun()
+
+    # ── Phase 2 : wizard QCM ────────────────────────────────────────────────
     else:
-        WIZARD_INFO = {"questions": MA_BUY_WIZARD}
+        info = company_info or {}
+        pos_opts  = info.get("positionnement_options",
+                             ["Intégrateur industriel", "Bureau d'études", "Sous-traitant", "Fabricant d'équipements"])
+        cat_opts  = info.get("categories_options",
+                             ["Intégration systèmes", "Maintenance industrielle", "Automatisme", "Mécanique", "Électricité industrielle"])
+
+        WIZARD_DYNAMIC = [
+            {
+                "key":      "positionnement",
+                "label":    f"Quel est le positionnement de {ma_company} ?",
+                "type":     "chips_or_custom",
+                "options":  pos_opts,
+                "hint":     "Décrivez le positionnement…",
+                "required": True,
+            },
+            {
+                "key":      "categories",
+                "label":    "Quelles catégories verticales de cibles visez-vous ?",
+                "type":     "chips_or_custom",
+                "options":  cat_opts,
+                "hint":     "Décrivez les catégories…",
+                "required": True,
+            },
+            {
+                "key":      "zone_geo",
+                "label":    "Zone géographique cible",
+                "type":     "chips_or_custom",
+                "options":  ["France uniquement", "France + Belgique", "France + DACH", "Europe"],
+                "hint":     "Autre zone…",
+                "required": True,
+            },
+            {
+                "key":      "fourchette_ca",
+                "label":    "Fourchette de CA des cibles",
+                "type":     "chips_or_custom",
+                "options":  ["< 5 M€", "5–20 M€", "20–50 M€", "50–100 M€"],
+                "hint":     "Autre fourchette…",
+                "required": True,
+            },
+            {
+                "key":      "exclusions",
+                "label":    "Entreprises à exclure explicitement",
+                "type":     "textarea",
+                "hint":     "Laissez vide si aucune. Une société par ligne.",
+                "required": False,
+            },
+        ]
+
         _step_input, variables, wizard_ready = _render_question_cards(
-            "ma_buy_wizard", WIZARD_INFO, ma_company
+            "ma_buy_wizard", {"questions": WIZARD_DYNAMIC}, ma_company
         )
 
         if wizard_ready:
@@ -1787,32 +1926,27 @@ elif st.session_state.screen == 4:
                 modules_to_run = [
                     ("buy_01_carto_verticale",   "", "1a — Cartographie verticale"),
                     ("buy_02_carto_horizontale", "", "1b — Cartographie horizontale"),
-                    ("buy_03_recherche_cibles",  step2_input,     "2 — Long-list de cibles"),
+                    ("buy_03_recherche_cibles",  step2_input, "2 — Long-list de cibles"),
                 ]
-
                 new_results = dict(results)
-
                 for mod_key, mod_input, mod_label in modules_to_run:
                     ph     = st.empty()
                     out_ph = st.empty()
-
                     ph.markdown(
-                        f'<div style="background:#111111;color:#FFFFFF;border-radius:10px;' 
-                        f'padding:14px 20px;font-size:0.88rem;font-weight:600;margin-bottom:8px;">' 
-                        f'⏳ &nbsp;{mod_label} en cours…' 
-                        f'<span style="font-weight:400;opacity:.65;margin-left:8px;font-size:0.8rem;">(30–90 s · recherche web)</span></div>',
+                        f'<div style="border:1px solid rgba(255,255,255,0.2);border-radius:10px;'
+                        f'padding:14px 20px;font-size:0.88rem;font-weight:600;margin-bottom:8px;">'
+                        f'⏳ &nbsp;{mod_label} en cours…'
+                        f'<span style="font-weight:400;opacity:.55;margin-left:8px;font-size:0.8rem;">(30–90 s · web)</span></div>',
                         unsafe_allow_html=True,
                     )
-
                     def _on_text(text, _ph=out_ph):
                         _ph.markdown(
-                            '<div style="background:#FFFFFF;border:1px solid #E5E5E5;border-radius:10px;' 
-                            'padding:16px 20px;max-height:280px;overflow-y:auto;' 
-                            'font-size:0.87rem;line-height:1.8;color:#111111;">' 
+                            '<div style="border:1px solid rgba(255,255,255,0.15);border-radius:10px;'
+                            'padding:16px 20px;max-height:260px;overflow-y:auto;'
+                            'font-size:0.87rem;line-height:1.8;opacity:.85;">'
                             + text[:4000].replace("\n", "<br>") + '</div>',
                             unsafe_allow_html=True,
                         )
-
                     try:
                         result = run_ma_module(
                             module_key=mod_key,
@@ -1826,17 +1960,16 @@ elif st.session_state.screen == 4:
                         ph.empty()
                         out_ph.empty()
                         st.markdown(
-                            f'<div style="background:#111111;color:#FFFFFF;border-radius:10px;' 
-                            f'padding:12px 18px;font-size:0.85rem;font-weight:600;margin-bottom:8px;">' 
-                            f' {mod_label} — terminé</div>',
+                            f'<div style="border:1px solid rgba(255,255,255,0.2);border-radius:10px;'
+                            f'padding:12px 18px;font-size:0.85rem;font-weight:600;margin-bottom:6px;">'
+                            f'✓ &nbsp;{mod_label} — terminé</div>',
                             unsafe_allow_html=True,
                         )
                     except Exception as e:
                         import traceback
                         ph.empty()
                         out_ph.error(f"❌ Erreur {mod_label}: {e}")
-                        with st.expander("Détail technique"):
+                        with st.expander("Détail"):
                             st.code(traceback.format_exc())
-
                 st.session_state.ma_step_result = new_results
                 st.rerun()
