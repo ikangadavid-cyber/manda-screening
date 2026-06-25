@@ -806,9 +806,9 @@ with st.sidebar:
         mailto = f"mailto:{invite_email}?subject={urllib.parse.quote(subject)}&body={urllib.parse.quote(body)}"
         st.markdown(
             f'<a href="{mailto}" target="_blank" style="'
-            'display:block; text-align:center; background:rgba(255,255,255,0.12); '
-            'border:1px solid rgba(255,255,255,0.25); border-radius:8px; '
-            'color:#CCCCCC !important; font-size:0.85rem; font-weight:600; '
+            'display:block; text-align:center; background:#F5F5F5; '
+            'border:1px solid #CCCCCC; border-radius:8px; '
+            'color:#333333 !important; font-size:0.85rem; font-weight:600; '
             'padding:8px 0; margin-top:6px; text-decoration:none; cursor:pointer;">'
             'Envoyer l\'invitation</a>',
             unsafe_allow_html=True,
@@ -1805,9 +1805,9 @@ elif st.session_state.screen == 4:
     with hdr_col:
         st.markdown(
             f'<div style="font-size:1.05rem;font-weight:700;margin-bottom:2px;">{ma_company}</div>'
-            f'<div style="font-size:0.78rem;opacity:.5;margin-bottom:10px;">Mission Buy-side — Croissance externe</div>'
-            f'<div style="background:rgba(255,255,255,0.15);border-radius:99px;height:3px;overflow:hidden;">'
-            f'<div style="background:#FFFFFF;width:{pct}%;height:100%;border-radius:99px;transition:width .5s;"></div></div>',
+            f'<div style="font-size:0.78rem;color:#777777;margin-bottom:10px;">Mission Buy-side — Croissance externe</div>'
+            f'<div style="background:#BBBBBB;border-radius:99px;height:3px;overflow:hidden;">'
+            f'<div style="background:#111111;width:{pct}%;height:100%;border-radius:99px;transition:width .5s;"></div></div>',
             unsafe_allow_html=True,
         )
     with quit_col:
@@ -1979,17 +1979,17 @@ elif st.session_state.screen == 4:
                     ph     = st.empty()
                     out_ph = st.empty()
                     ph.markdown(
-                        f'<div style="border:1px solid rgba(255,255,255,0.2);border-radius:10px;'
-                        f'padding:14px 20px;font-size:0.88rem;font-weight:600;margin-bottom:8px;">'
+                        f'<div style="border:1px solid #CCCCCC;border-radius:10px;'
+                        f'background:#FFFFFF;padding:14px 20px;font-size:0.88rem;font-weight:600;color:#111111;margin-bottom:8px;">'
                         f'⏳ &nbsp;{mod_label} en cours…'
                         f'<span style="font-weight:400;opacity:.55;margin-left:8px;font-size:0.8rem;">(30–90 s · web)</span></div>',
                         unsafe_allow_html=True,
                     )
                     def _on_text(text, _ph=out_ph):
                         _ph.markdown(
-                            '<div style="border:1px solid rgba(255,255,255,0.15);border-radius:10px;'
-                            'padding:16px 20px;max-height:260px;overflow-y:auto;'
-                            'font-size:0.87rem;line-height:1.8;opacity:.85;">'
+                            '<div style="border:1px solid #E0E0E0;border-radius:10px;'
+                            'background:#FAFAFA;padding:16px 20px;max-height:260px;overflow-y:auto;'
+                            'font-size:0.87rem;line-height:1.8;color:#333333;">'
                             + text[:4000].replace("\n", "<br>") + '</div>',
                             unsafe_allow_html=True,
                         )
@@ -2006,8 +2006,8 @@ elif st.session_state.screen == 4:
                         ph.empty()
                         out_ph.empty()
                         st.markdown(
-                            f'<div style="border:1px solid rgba(255,255,255,0.2);border-radius:10px;'
-                            f'padding:12px 18px;font-size:0.85rem;font-weight:600;margin-bottom:6px;">'
+                            f'<div style="border:1px solid #D1FAE5;border-radius:10px;'
+                            f'background:#F0FDF4;padding:12px 18px;font-size:0.85rem;font-weight:600;color:#065F46;margin-bottom:6px;">'
                             f'✓ &nbsp;{mod_label} — terminé</div>',
                             unsafe_allow_html=True,
                         )
