@@ -4,7 +4,6 @@ import streamlit as st
 from dotenv import load_dotenv
 
 # Modules qui produisent du PPT ou de l'Excel (pas du Word)
-_PPT_MODULES_SELL = {"sell_03_redaction_slides"}
 _PPT_MODULES_BUY  = {
     "buy_06_slide_bandeau", "buy_07_slide_vert_pos",
     "buy_08_slide_horiz_rationnel", "buy_09_slide_horiz_pos",
@@ -17,17 +16,7 @@ def _export_button(result: str, company: str, step_key: str, step_info: dict):
     """Affiche le bon bouton de téléchargement selon le type de module."""
     fname_base = f"{company.replace(' ', '_').lower()}_{step_info['num']}_{step_info['title'].replace(' ', '_')}"
     try:
-        if step_key in _PPT_MODULES_SELL:
-            from export_pptx import generate_sell_pptx, try_exec_pptx_code
-            # Priorité : exécuter le code python-pptx généré par l'IA
-            data = try_exec_pptx_code(result) or generate_sell_pptx(result, company)
-            st.download_button(
-                "📊 Télécharger en PowerPoint",
-                data=data,
-                file_name=f"{fname_base}.pptx",
-                mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            )
-        elif step_key in _PPT_MODULES_BUY:
+        if step_key in _PPT_MODULES_BUY:
             from export_pptx import generate_buy_pptx, try_exec_pptx_code
             data = try_exec_pptx_code(result) or generate_buy_pptx(result, company, step_info.get("title", "Cibles"))
             st.download_button(
@@ -81,25 +70,6 @@ st.markdown("""
 /* ── Fonts ── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* ── Boutons Buy-side (vert) et Sell-side (violet) ── */
-[data-testid="column"]:first-child [data-testid="stButton"] > button[kind="primary"] {
-    background-color: #2E7D55 !important;
-    border-color: #2E7D55 !important;
-    color: #FFFFFF !important;
-}
-[data-testid="column"]:first-child [data-testid="stButton"] > button[kind="primary"]:hover {
-    background-color: #235f41 !important;
-    border-color: #235f41 !important;
-}
-[data-testid="column"]:last-child [data-testid="stButton"] > button[kind="primary"] {
-    background-color: #7A5FA5 !important;
-    border-color: #7A5FA5 !important;
-    color: #FFFFFF !important;
-}
-[data-testid="column"]:last-child [data-testid="stButton"] > button[kind="primary"]:hover {
-    background-color: #5e4880 !important;
-    border-color: #5e4880 !important;
-}
 
 html, body, [class*="css"] {
     font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
@@ -598,57 +568,7 @@ BUY_SIDE_STEPS = [
     },
 ]
 
-SELL_SIDE_STEPS = [
-    {
-        "key":         "sell_01_rapport_entretien",
-        "num":         "1",
-        "title":       "Rapport d'entretien",
-        "desc":        "Retranscription structurée de l'entretien dirigeant en rapport thématique factuel",
-        "web_search":  False,
-        "needs_input": True,
-        "input_label": "Transcription de l'entretien",
-        "input_hint":  "Collez ici la transcription complète de l'entretien (verbatim ou reformulé).",
-    },
-    {
-        "key":         "sell_02_plan_im",
-        "num":         "2",
-        "title":       "Plan de l'IM",
-        "desc":        "Architecture détaillée de l'Information Memorandum — ~50 slides en 6 sections",
-        "web_search":  False,
-        "needs_input": True,
-        "input_label": "Contexte de la société",
-        "input_hint":  (
-            "Activité, positionnement, KPIs clés, actionnariat, contexte de la cession.\n"
-            "Ajoutez le rapport d'entretien (étape 1) si disponible."
-        ),
-    },
-    {
-        "key":         "sell_03_redaction_slides",
-        "num":         "3",
-        "title":       "Rédaction des slides",
-        "desc":        "Contenu rédactionnel complet de chaque slide — standalone, orienté investisseur",
-        "web_search":  False,
-        "needs_input": True,
-        "input_label": "Plan IM + slides à rédiger + données source",
-        "input_hint":  (
-            "Précisez les numéros et titres des slides à produire. "
-            "Collez le plan IM (étape 2) et toutes les données disponibles."
-        ),
-    },
-    {
-        "key":         "sell_04_reformulation",
-        "num":         "4",
-        "title":       "Reformulation & sourcing",
-        "desc":        "Amélioration et sourcing du contenu d'une slide existante — original / reformulé / justification",
-        "web_search":  False,
-        "needs_input": True,
-        "input_label": "Slide à reformuler",
-        "input_hint":  "Collez le contenu brut de la slide (texte, bullet points ou markdown).",
-    },
-]
-
-BUY_SIDE_STEPS_BY_KEY  = {s["key"]: s for s in BUY_SIDE_STEPS}
-SELL_SIDE_STEPS_BY_KEY = {s["key"]: s for s in SELL_SIDE_STEPS}
+BUY_SIDE_STEPS_BY_KEY = {s["key"]: s for s in BUY_SIDE_STEPS}
 
 # ── Session state initialization ──────────────────────────────────────────────
 def init_state():
@@ -800,76 +720,39 @@ if st.session_state.screen == 1:
         </div>
         """, unsafe_allow_html=True)
 
-        col_buy, col_sell = st.columns(2)
-        with col_buy:
-            st.markdown("""
-            <div style="background:#E8F5EE; border:2px solid #2E7D5540;
-                        border-left:4px solid #2E7D55; border-radius:12px; padding:18px 20px;">
-                <div style="font-size:1.5rem;">📈</div>
-                <div style="font-weight:700; color:#1A2744; font-size:0.97rem; margin:8px 0 4px 0;">
-                    Buy-side — Acquisition
-                </div>
-                <div style="font-size:0.79rem; color:#5A6A7A; line-height:1.5;">
-                    Cartographie du marché, recherche et qualification de cibles, préparation des slides PPT.
-                </div>
-                <div style="font-size:0.76rem; color:#2E7D55; font-weight:600; margin-top:10px;">
-                    9 modules · Recherche web incluse
-                </div>
+        st.markdown("""
+        <div style="background:#E8F5EE; border:2px solid #2E7D5540;
+                    border-left:4px solid #2E7D55; border-radius:12px; padding:18px 20px; margin-bottom:12px;">
+            <div style="font-size:1.5rem;">📈</div>
+            <div style="font-weight:700; color:#1A2744; font-size:0.97rem; margin:8px 0 4px 0;">
+                Mission Buy-side — Croissance externe
             </div>
-            """, unsafe_allow_html=True)
-            buy_company = st.text_input(
-                "Nom de l'acquéreur",
-                placeholder="Ex : Milliris, Acuitis...",
-                key="buy_company_input",
-            )
-            if st.button("📈 Lancer la mission Buy-side", key="start_buy", use_container_width=True, type="primary"):
-                if not buy_company.strip():
-                    st.warning("⚠️ Entrez le nom de l'acquéreur.")
-                elif not anthropic_key or not tavily_key:
-                    st.error("🔑 Clés API manquantes.")
-                else:
-                    st.session_state.ma_universe    = "buy"
-                    st.session_state.ma_company     = buy_company.strip()
-                    st.session_state.ma_sector      = ""
-                    st.session_state.ma_step_key    = BUY_SIDE_STEPS[0]["key"]
-                    st.session_state.ma_step_result = {}
-                    st.session_state.screen         = 4
-                    st.rerun()
-
-        with col_sell:
-            st.markdown("""
-            <div style="background:#F0EBF8; border:2px solid #7A5FA540;
-                        border-left:4px solid #7A5FA5; border-radius:12px; padding:18px 20px;">
-                <div style="font-size:1.5rem;">📋</div>
-                <div style="font-weight:700; color:#1A2744; font-size:0.97rem; margin:8px 0 4px 0;">
-                    Sell-side — Cession / IM
-                </div>
-                <div style="font-size:0.79rem; color:#5A6A7A; line-height:1.5;">
-                    Rapport d'entretien, plan de l'Information Memorandum, rédaction et reformulation des slides.
-                </div>
-                <div style="font-size:0.76rem; color:#7A5FA5; font-weight:600; margin-top:10px;">
-                    4 modules · Sans recherche web
-                </div>
+            <div style="font-size:0.79rem; color:#5A6A7A; line-height:1.5;">
+                Cartographie du marché, recherche et qualification de cibles, préparation des slides PPT.
             </div>
-            """, unsafe_allow_html=True)
-            sell_company = st.text_input(
-                "Nom de la société cédée",
-                placeholder="Ex : Koki Software...",
-                key="sell_company_input",
-            )
-            if st.button("📋 Lancer la mission Sell-side", key="start_sell", use_container_width=True, type="primary"):
-                if not sell_company.strip():
-                    st.warning("⚠️ Entrez le nom de la société.")
-                elif not anthropic_key:
-                    st.error("🔑 Clé API Anthropic manquante.")
-                else:
-                    st.session_state.ma_universe    = "sell"
-                    st.session_state.ma_company     = sell_company.strip()
-                    st.session_state.ma_sector      = ""
-                    st.session_state.ma_step_key    = SELL_SIDE_STEPS[0]["key"]
-                    st.session_state.ma_step_result = {}
-                    st.session_state.screen         = 4
-                    st.rerun()
+            <div style="font-size:0.76rem; color:#2E7D55; font-weight:600; margin-top:10px;">
+                9 modules · Recherche web incluse
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        buy_company = st.text_input(
+            "Nom de l'acquéreur",
+            placeholder="Ex : Milliris, Acuitis...",
+            key="buy_company_input",
+        )
+        if st.button("📈 Lancer la mission Buy-side", key="start_buy", use_container_width=True, type="primary"):
+            if not buy_company.strip():
+                st.warning("⚠️ Entrez le nom de l'acquéreur.")
+            elif not anthropic_key or not tavily_key:
+                st.error("🔑 Clés API manquantes.")
+            else:
+                st.session_state.ma_universe    = "buy"
+                st.session_state.ma_company     = buy_company.strip()
+                st.session_state.ma_sector      = ""
+                st.session_state.ma_step_key    = BUY_SIDE_STEPS[0]["key"]
+                st.session_state.ma_step_result = {}
+                st.session_state.screen         = 4
+                st.rerun()
 
     # ── TAB 1 : Analyses rapides ───────────────────────────────────────────
     with tab_standard:
@@ -1773,15 +1656,15 @@ elif st.session_state.screen == 4:
     step_key   = st.session_state.ma_step_key
     results    = st.session_state.ma_step_result
 
-    steps_list = BUY_SIDE_STEPS if universe == "buy" else SELL_SIDE_STEPS
-    steps_by_k = BUY_SIDE_STEPS_BY_KEY if universe == "buy" else SELL_SIDE_STEPS_BY_KEY
+    steps_list = BUY_SIDE_STEPS
+    steps_by_k = BUY_SIDE_STEPS_BY_KEY
     step_keys  = [s["key"] for s in steps_list]
     step_info  = steps_by_k.get(step_key, steps_list[0])
     step_idx   = step_keys.index(step_key) if step_key in step_keys else 0
 
     uni_color    = "#2E7D55" if universe == "buy" else "#7A5FA5"
     uni_bg       = "#E8F5EE" if universe == "buy" else "#F0EBF8"
-    uni_label    = "Buy-side — Acquisition" if universe == "buy" else "Sell-side — Cession / IM"
+    uni_label    = "Mission Buy-side — Croissance externe"
     uni_icon     = "" if universe == "buy" else ""
     n_total      = len(steps_list)
     n_done       = sum(1 for k in step_keys if k in results)
