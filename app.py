@@ -459,9 +459,9 @@ BUY_SIDE_STEPS = [
         "title":       "Chaîne de valeur",
         "desc":        "Cartographie verticale — acteurs amont / aval et position de l'acquéreur",
         "web_search":  True,
-        "needs_input": False,
-        "input_label": None,
-        "input_hint":  None,
+        "needs_input": True,
+        "input_label": "Présentation de la société",
+        "input_hint":  "Activité cœur, offres / technologies, segments clients, canaux de vente, zones géographiques, modèle économique (marque propre, OEM, MDD…), effectifs, CA approximatif.",
     },
     {
         "key":         "buy_02_carto_horizontale",
@@ -469,9 +469,9 @@ BUY_SIDE_STEPS = [
         "title":       "Segments concurrentiels",
         "desc":        "Cartographie horizontale — 2 à 5 segments de marché et rivalité",
         "web_search":  True,
-        "needs_input": False,
-        "input_label": None,
-        "input_hint":  None,
+        "needs_input": True,
+        "input_label": "Présentation de la société",
+        "input_hint":  "Activité cœur, offres / technologies, segments clients, canaux de vente, zones géographiques, modèle économique (marque propre, OEM, MDD…), effectifs, CA approximatif.",
     },
     {
         "key":         "buy_03_recherche_cibles",
@@ -1748,25 +1748,36 @@ elif st.session_state.screen == 4:
                 if pk in results:
                     st.session_state[input_key] = results[pk][:4000]
 
-            step_input = st.text_area(
-                step_info["input_label"],
-                value=st.session_state.get(input_key, ""),
-                placeholder=step_info["input_hint"],
-                height=190,
-                key=f"ta_{step_key}",
+            input_mode_key = f"input_mode_{step_key}"
+            input_mode = st.radio(
+                "Comment souhaitez-vous fournir les informations ?",
+                options=["✏️  Saisir / coller du texte", "📎  Uploader un fichier"],
+                horizontal=True,
+                key=input_mode_key,
+                label_visibility="visible",
             )
-            st.session_state[input_key] = step_input
 
-            up_files = st.file_uploader(
-                "Joindre un document (optionnel)",
-                type=["pdf", "docx", "txt", "md", "xlsx"],
-                accept_multiple_files=True,
-                key=f"up_{step_key}",
-            )
-            if up_files:
-                from document_extractor import extract_text
-                for uf in up_files[:3]:
-                    step_input += f"\n\n--- {uf.name} ---\n{extract_text(uf)}"
+            if input_mode == "✏️  Saisir / coller du texte":
+                step_input = st.text_area(
+                    step_info["input_label"],
+                    value=st.session_state.get(input_key, ""),
+                    placeholder=step_info["input_hint"],
+                    height=190,
+                    key=f"ta_{step_key}",
+                )
+                st.session_state[input_key] = step_input
+            else:
+                up_files = st.file_uploader(
+                    step_info["input_label"],
+                    type=["pdf", "docx", "txt", "md"],
+                    accept_multiple_files=True,
+                    key=f"up_{step_key}",
+                    help="Formats acceptés : .docx, .pdf, .txt, .md — max 3 fichiers",
+                )
+                if up_files:
+                    from document_extractor import extract_text
+                    for uf in up_files[:3]:
+                        step_input += f"\n\n--- {uf.name} ---\n{extract_text(uf)}"
 
         run_label = "🔍 Lancer la recherche" if step_info.get("web_search") else "⚡ Lancer l'analyse"
         launch = st.button(run_label, key=f"run_{step_key}", type="primary", use_container_width=True)
