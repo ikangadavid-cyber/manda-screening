@@ -220,40 +220,71 @@ st.set_page_config(
 
 def _research_company(company: str, anthropic_key: str, tavily_key: str) -> dict:
     """
-    Recherche rapide (Haiku + Tavily) pour valider l'entreprise
-    et générer des options QCM contextualisées.
+    Recherche agentique (Sonnet + Tavily tool-use loop) — même moteur que les analyses rapides.
+    Retourne un dict avec description, faits, positionnement_options, categories_options.
     """
-    import anthropic as _ant, json, re as _re, os as _os
-    from tools import execute_tool
+    import anthropic as _ant, json, re as _re, os as _os, time as _time
+    from tools import TOOL_DEFINITIONS, execute_tool
 
     _os.environ["ANTHROPIC_API_KEY"] = anthropic_key
     _os.environ["TAVILY_API_KEY"]    = tavily_key
 
-    try:
-        search_raw = execute_tool("tavily_search", {
-            "query": f"{company} entreprise secteur activité CA effectifs spécialités",
-            "max_results": 5,
-        })
-    except Exception:
-        search_raw = ""
-
     client = _ant.Anthropic(api_key=anthropic_key)
-    prompt = f"""Tu es un analyste M&A. Analyse les données suivantes sur {company} et retourne UNIQUEMENT un JSON valide (sans commentaire) avec :
-- "description": 1 phrase courte (secteur, localisation, taille)
-- "faits": liste de 3 puces courtes (CA, effectifs, spécialité, zone, date création…)
-- "positionnement_options": 4 formulations du positionnement stratégique (max 9 mots chacune)
-- "categories_options": 5 catégories verticales de cibles M&A pertinentes pour acquérir (format : "Vx — Libellé")
 
-Données :
-{str(search_raw)[:3500]}
-"""
-    resp = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=900,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    text = resp.content[0].text.strip()
-    m = _re.search(r"\{.*\}", text, _re.DOTALL)
+    system = f"""Tu es un analyste M&A senior. Fais 3 à 5 recherches web ciblées sur l'entreprise "{company}" pour collecter :
+- Secteur précis, positionnement marché
+- Chiffre d'affaires et effectifs (les plus récents)
+- Implantations géographiques
+- Spécialités, offres, clients types
+- Date de création, actionnariat si disponible
+
+Une fois les recherches faites, réponds UNIQUEMENT avec un JSON valide (aucun autre texte) structuré ainsi :
+{{
+  "description": "1 phrase précise : secteur, positionnement, localisation, taille",
+  "faits": ["fait 1", "fait 2", "fait 3", "fait 4", "fait 5"],
+  "positionnement_options": ["formulation 1 (max 9 mots)", "formulation 2", "formulation 3", "formulation 4"],
+  "categories_options": ["V1 — Libellé", "V2 — Libellé", "V3 — Libellé", "V4 — Libellé", "V5 — Libellé"]
+}}"""
+
+    messages = [{"role": "user", "content": f"Recherche complète sur l'entreprise : {company}"}]
+    full_text = ""
+
+    for _ in range(12):  # max 12 tours (≈ 5-6 appels web + rédaction)
+        for attempt in range(3):
+            try:
+                response = client.messages.create(
+                    model="claude-sonnet-4-6",
+                    max_tokens=2000,
+                    system=system,
+                    messages=messages,
+                    tools=TOOL_DEFINITIONS,
+                )
+                break
+            except Exception:
+                if attempt == 2:
+                    raise
+                _time.sleep(5)
+
+        tool_uses = []
+        for block in response.content:
+            if hasattr(block, "text"):
+                full_text = block.text
+            elif getattr(block, "type", None) == "tool_use":
+                tool_uses.append(block)
+
+        if response.stop_reason == "end_turn" or not tool_uses:
+            break
+
+        tool_results = [
+            {"type": "tool_result", "tool_use_id": tu.id, "content": execute_tool(tu.name, tu.input)}
+            for tu in tool_uses
+        ]
+        messages.append({"role": "assistant", "content": response.content})
+        messages.append({"role": "user", "content": tool_results})
+
+    m = _re.search(r"\{[^{}]*\{.*?\}[^{}]*\}", full_text, _re.DOTALL)
+    if not m:
+        m = _re.search(r"\{.*\}", full_text, _re.DOTALL)
     if m:
         try:
             return json.loads(m.group())
@@ -1834,16 +1865,23 @@ elif st.session_state.screen == 4:
         faits = info.get("faits", [])
         with st.container(border=True):
             st.markdown(
-                f'<div style="font-size:0.7rem;font-weight:700;opacity:.4;text-transform:uppercase;'
-                f'letter-spacing:0.09em;margin-bottom:6px;">Entreprise identifiée</div>'
-                f'<div style="font-size:1.05rem;font-weight:700;margin-bottom:6px;">{ma_company}</div>'
-                f'<div style="font-size:0.88rem;opacity:.75;margin-bottom:12px;">{description}</div>',
+                f'<div style="font-size:0.7rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;'
+                f'letter-spacing:0.09em;margin-bottom:10px;">Entreprise identifi&#233;e par l&#39;IA</div>'
+                f'<div style="font-size:1.2rem;font-weight:700;color:#111111;margin-bottom:6px;">{ma_company}</div>'
+                f'<div style="font-size:0.9rem;color:#444444;margin-bottom:16px;line-height:1.6;">{description}</div>',
                 unsafe_allow_html=True,
             )
             if faits:
-                for f_ in faits[:3]:
-                    st.markdown(f'— {f_}')
-            st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+                bullets = "".join(
+                    f'<div style="display:flex;gap:8px;margin-bottom:7px;">'
+                    f'<span style="color:#9CA3AF;flex-shrink:0;">—</span>'
+                    f'<span style="font-size:0.87rem;color:#333333;">{f_}</span></div>'
+                    for f_ in faits[:5]
+                )
+                st.markdown(
+                    f'<div style="background:#F5F5F5;border-radius:8px;padding:14px 16px;margin-bottom:16px;">{bullets}</div>',
+                    unsafe_allow_html=True,
+                )
             c1, c2 = st.columns(2)
             with c1:
                 if st.button("✓  C'est la bonne société", type="primary", use_container_width=True):
