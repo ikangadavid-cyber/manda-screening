@@ -1,6 +1,6 @@
 """
-Agent pour les missions M&A buy-side et sell-side.
-Utilise les prompts confidentiels stockés dans prompts/buy_side/ et prompts/sell_side/.
+Agent pour les missions M&A buy-side.
+Utilise les prompts confidentiels stockés dans prompts/buy_side/.
 """
 import os
 import re
@@ -17,57 +17,22 @@ WEB_SEARCH_MODULES = {
     "buy_01_carto_verticale",
     "buy_02_carto_horizontale",
     "buy_03_recherche_cibles",
-    "buy_04_profil_entreprise",
-    "buy_05_qualification_cibles",
 }
 
 # Modèle par module : Sonnet pour web-search, Haiku pour les slides (3x plus rapide, 4x moins cher)
 MODEL_BY_MODULE = {
-    "buy_01_carto_verticale":       "claude-sonnet-4-6",
-    "buy_02_carto_horizontale":     "claude-sonnet-4-6",
-    "buy_03_recherche_cibles":      "claude-sonnet-4-6",
-    "buy_04_profil_entreprise":     "claude-sonnet-4-6",
-    "buy_05_qualification_cibles":  "claude-sonnet-4-6",
-    "buy_06_slide_bandeau":         "claude-haiku-4-5-20251001",
-    "buy_07_slide_vert_pos":        "claude-haiku-4-5-20251001",
-    "buy_08_slide_horiz_rationnel": "claude-haiku-4-5-20251001",
-    "buy_09_slide_horiz_pos":       "claude-haiku-4-5-20251001",
-    "buy_10_slide_vert_rationnel":  "claude-haiku-4-5-20251001",
-    "sell_01_rapport_entretien":    "claude-haiku-4-5-20251001",
-    "sell_02_plan_im":              "claude-sonnet-4-6",
-    "sell_03_redaction_slides":     "claude-sonnet-4-6",
-    "sell_04_reformulation":        "claude-haiku-4-5-20251001",
+    "buy_01_carto_verticale":   "claude-sonnet-4-6",
+    "buy_02_carto_horizontale": "claude-sonnet-4-6",
+    "buy_03_recherche_cibles":  "claude-sonnet-4-6",
 }
 
-# Tokens max par module (slides n'ont pas besoin de 8096)
-MAX_TOKENS_BY_MODULE = {
-    "buy_06_slide_bandeau":         4096,
-    "buy_07_slide_vert_pos":        2048,
-    "buy_08_slide_horiz_rationnel": 2048,
-    "buy_09_slide_horiz_pos":       2048,
-    "buy_10_slide_vert_rationnel":  2048,
-    "sell_01_rapport_entretien":    6000,
-    "sell_04_reformulation":        4096,
-}
+MAX_TOKENS_BY_MODULE = {}
 DEFAULT_MAX_TOKENS = 8096
 
 PROMPT_FILES = {
-    # Buy-side
-    "buy_01_carto_verticale":       "prompts/buy_side/01_cartographie_verticale.txt",
-    "buy_02_carto_horizontale":     "prompts/buy_side/02_cartographie_horizontale.txt",
-    "buy_03_recherche_cibles":      "prompts/buy_side/03_recherche_cibles.txt",
-    "buy_04_profil_entreprise":     "prompts/buy_side/04_profil_entreprise.txt",
-    "buy_05_qualification_cibles":  "prompts/buy_side/05_qualification_cibles.txt",
-    "buy_06_slide_bandeau":         "prompts/buy_side/06_slide_bandeau.txt",
-    "buy_07_slide_vert_pos":        "prompts/buy_side/07_slide_vertical_positionnement.txt",
-    "buy_08_slide_horiz_rationnel": "prompts/buy_side/08_slide_horizontal_rationnel.txt",
-    "buy_09_slide_horiz_pos":       "prompts/buy_side/09_slide_horizontal_positionnement.txt",
-    "buy_10_slide_vert_rationnel":  "prompts/buy_side/10_slide_vertical_rationnel.txt",
-    # Sell-side
-    "sell_01_rapport_entretien":    "prompts/sell_side/01_rapport_entretien.txt",
-    "sell_02_plan_im":              "prompts/sell_side/02_plan_im.txt",
-    "sell_03_redaction_slides":     "prompts/sell_side/03_redaction_slides.txt",
-    "sell_04_reformulation":        "prompts/sell_side/04_reformulation.txt",
+    "buy_01_carto_verticale":   "prompts/buy_side/01_cartographie_verticale.txt",
+    "buy_02_carto_horizontale": "prompts/buy_side/02_cartographie_horizontale.txt",
+    "buy_03_recherche_cibles":  "prompts/buy_side/03_recherche_cibles.txt",
 }
 
 

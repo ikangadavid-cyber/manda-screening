@@ -4,12 +4,8 @@ import streamlit as st
 from dotenv import load_dotenv
 
 # Modules qui produisent du PPT ou de l'Excel (pas du Word)
-_PPT_MODULES_BUY  = {
-    "buy_06_slide_bandeau", "buy_07_slide_vert_pos",
-    "buy_08_slide_horiz_rationnel", "buy_09_slide_horiz_pos",
-    "buy_10_slide_vert_rationnel",
-}
-_EXCEL_MODULES = {"buy_04_profil_entreprise", "buy_05_qualification_cibles"}
+_PPT_MODULES_BUY  = set()
+_EXCEL_MODULES    = set()
 
 
 def _export_button(result: str, company: str, step_key: str, step_info: dict):
@@ -490,82 +486,6 @@ BUY_SIDE_STEPS = [
             "Ex : intégrateur industriel électricité / automatisme, CA ~15M€, cibles France 3-15M€."
         ),
     },
-    {
-        "key":         "buy_04_profil_entreprise",
-        "num":         "3",
-        "title":       "Fiches cibles",
-        "desc":        "Analyse approfondie de chaque société sélectionnée (offre, clients, finances, actionnariat)",
-        "web_search":  True,
-        "needs_input": True,
-        "input_label": "Sociétés à analyser",
-        "input_hint":  (
-            "Noms des sociétés à profiler (une par ligne). "
-            "Ou collez directement les résultats de l'étape Long-list."
-        ),
-    },
-    {
-        "key":         "buy_05_qualification_cibles",
-        "num":         "4",
-        "title":       "Sélection & verdict M&A",
-        "desc":        "Classement Liste 1 / 2 / 3 avec rationnel d'acquisition pour chaque cible",
-        "web_search":  True,
-        "needs_input": True,
-        "input_label": "Fiches cibles + contexte acquéreur",
-        "input_hint":  (
-            "Collez les fiches de l'étape précédente et, si nécessaire, "
-            "ajoutez une description de l'acquéreur en tête."
-        ),
-    },
-    {
-        "key":         "buy_06_slide_bandeau",
-        "num":         "5a",
-        "title":       "Slide — Fiche cible",
-        "desc":        "Contenu PPT prêt à intégrer — format bandeau (1 ligne / cible)",
-        "web_search":  False,
-        "needs_input": True,
-        "input_label": "Cibles retenues (max 3)",
-        "input_hint":  "Collez les fiches des cibles sélectionnées (liste 1 uniquement).",
-    },
-    {
-        "key":         "buy_07_slide_vert_pos",
-        "num":         "5b",
-        "title":       "Slide — Positionnement vertical",
-        "desc":        "Tableau PPT : catégories de la chaîne de valeur + note de positionnement acquéreur (0-3)",
-        "web_search":  False,
-        "needs_input": True,
-        "input_label": "Résultats étape 1a",
-        "input_hint":  "Collez le tableau de cartographie verticale (étape 1a).",
-    },
-    {
-        "key":         "buy_08_slide_horiz_rationnel",
-        "num":         "5c",
-        "title":       "Slide — Rationnel M&A horizontal",
-        "desc":        "Tableau PPT : segments concurrentiels + rationnel de rachat + note d'appétit M&A (0-3)",
-        "web_search":  False,
-        "needs_input": True,
-        "input_label": "Résultats étape 1b",
-        "input_hint":  "Collez le tableau de cartographie horizontale (étape 1b).",
-    },
-    {
-        "key":         "buy_09_slide_horiz_pos",
-        "num":         "5d",
-        "title":       "Slide — Positionnement horizontal",
-        "desc":        "Tableau PPT : segments concurrentiels + note de présence de l'acquéreur (0-3)",
-        "web_search":  False,
-        "needs_input": True,
-        "input_label": "Résultats étape 1b",
-        "input_hint":  "Collez le tableau de cartographie horizontale (étape 1b).",
-    },
-    {
-        "key":         "buy_10_slide_vert_rationnel",
-        "num":         "5e",
-        "title":       "Slide — Rationnel M&A vertical",
-        "desc":        "Tableau PPT : catégories de la chaîne de valeur + rationnel de rachat + note d'appétit (0-3)",
-        "web_search":  False,
-        "needs_input": True,
-        "input_label": "Résultats étape 1a",
-        "input_hint":  "Collez le tableau de cartographie verticale (étape 1a).",
-    },
 ]
 
 BUY_SIDE_STEPS_BY_KEY = {s["key"]: s for s in BUY_SIDE_STEPS}
@@ -731,7 +651,7 @@ if st.session_state.screen == 1:
                 Cartographie du marché, recherche et qualification de cibles, préparation des slides PPT.
             </div>
             <div style="font-size:0.76rem; color:#2E7D55; font-weight:600; margin-top:10px;">
-                9 modules · Recherche web incluse
+                3 modules · Recherche web incluse
             </div>
         </div>
         """, unsafe_allow_html=True)
