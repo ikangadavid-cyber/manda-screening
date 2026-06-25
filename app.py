@@ -592,13 +592,6 @@ BUY_SIDE_STEPS_BY_KEY = {s["key"]: s for s in BUY_SIDE_STEPS}
 # Questions unifiées pour le wizard M&A (tous modules confondus)
 MA_BUY_WIZARD = [
     {
-        "key":       "company_profile",
-        "label":     "Présentez {company} — collez le profil ou uploadez un document",
-        "type":      "text_or_file",
-        "hint_text": "Secteur, activités, CA, effectifs, implantations, modèle économique…",
-        "required":  True,
-    },
-    {
         "key":      "positionnement",
         "label":    "Quel est le positionnement de {company} en une phrase ?",
         "type":     "text_input",
@@ -1772,7 +1765,6 @@ elif st.session_state.screen == 4:
         )
 
         if wizard_ready:
-            company_profile = variables.get("company_profile", "")
             parts2 = []
             if variables.get("positionnement"):
                 parts2.append(f"Positionnement : {variables['positionnement']}")
@@ -1793,8 +1785,8 @@ elif st.session_state.screen == 4:
                 os.environ["TAVILY_API_KEY"]    = tavily_key
 
                 modules_to_run = [
-                    ("buy_01_carto_verticale",   company_profile, "1a — Cartographie verticale"),
-                    ("buy_02_carto_horizontale", company_profile, "1b — Cartographie horizontale"),
+                    ("buy_01_carto_verticale",   "", "1a — Cartographie verticale"),
+                    ("buy_02_carto_horizontale", "", "1b — Cartographie horizontale"),
                     ("buy_03_recherche_cibles",  step2_input,     "2 — Long-list de cibles"),
                 ]
 
