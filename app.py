@@ -8,6 +8,78 @@ _PPT_MODULES_BUY  = set()
 _EXCEL_MODULES    = set()
 
 
+def _generate_single_xlsx(mod_key: str, mod_label: str, text: str, company: str) -> bytes:
+    """Génère un Excel simple (sans IA) depuis le markdown d'un module."""
+    import io, re as _re2
+    from openpyxl import Workbook as _WB
+    from openpyxl.styles import Font as _Font, PatternFill as _Fill, Alignment as _Align, Border as _Bdr, Side as _Side
+
+    wb = _WB()
+    ws = wb.active
+    ws.title = mod_label[:31]
+    ws.sheet_view.showGridLines = False
+
+    thin = _Side(style="thin", color="DDDDDD")
+    bdr  = _Bdr(left=thin, right=thin, top=thin, bottom=thin)
+
+    def _hcell(r, c, v):
+        x = ws.cell(r, c, v)
+        x.font  = _Font(name="Arial", bold=True, color="FFFFFF", size=9)
+        x.fill  = _Fill("solid", fgColor="1F3864")
+        x.alignment = _Align(horizontal="center", vertical="center", wrap_text=True)
+        x.border = bdr
+    def _dcell(r, c, v, even=True):
+        x = ws.cell(r, c, v)
+        x.font  = _Font(name="Arial", size=8, color="111111")
+        x.fill  = _Fill("solid", fgColor="F2F4F8" if even else "FFFFFF")
+        x.alignment = _Align(horizontal="left", vertical="center", wrap_text=True)
+        x.border = bdr
+
+    # En-tête classeur
+    ws.merge_cells("A1:Z1")
+    h = ws.cell(1, 1, f"{company} — {mod_label}")
+    h.font = _Font(name="Arial", bold=True, size=12, color="FFFFFF")
+    h.fill = _Fill("solid", fgColor="1F3864")
+    h.alignment = _Align(horizontal="left", vertical="center", indent=1)
+    ws.row_dimensions[1].height = 24
+
+    # Parser le tableau Markdown
+    lines = [l.strip() for l in text.split("\n")]
+    table_lines = [l for l in lines if l.startswith("|")]
+    
+    if table_lines:
+        row_idx = 3
+        for i, line in enumerate(table_lines):
+            if _re2.match(r"^[|][-| :]+[|]$", line):
+                continue
+            cells = [c.strip() for c in line.strip("|").split("|")]
+            if i == 0:
+                for ci, val in enumerate(cells, start=1):
+                    _hcell(row_idx, ci, val)
+                    ws.column_dimensions[chr(64+ci)].width = max(12, min(40, len(val)+4))
+                ws.row_dimensions[row_idx].height = 22
+            else:
+                for ci, val in enumerate(cells, start=1):
+                    _dcell(row_idx, ci, val, even=row_idx % 2 == 0)
+                ws.row_dimensions[row_idx].height = 32
+            row_idx += 1
+    else:
+        # Pas de tableau — écrire le texte brut ligne par ligne
+        row_idx = 3
+        for line in lines:
+            if line:
+                ws.merge_cells(start_row=row_idx, start_column=1, end_row=row_idx, end_column=6)
+                x = ws.cell(row_idx, 1, line)
+                x.font = _Font(name="Arial", size=8)
+                x.alignment = _Align(wrap_text=True)
+                ws.row_dimensions[row_idx].height = 18
+                row_idx += 1
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
 def _render_question_cards(step_key: str, step_info: dict, company: str):
     """
     Affiche les questions UNE PAR UNE (wizard) avec navigation Précédent / Suivant.
@@ -586,7 +658,7 @@ ESTIMATED_SECONDS = {
     "geo":       180,   # ~3 min
 }
 
-# ── Mission M&A — définitions ─────────────────────────────────────────────────
+# ── Screening Buy Side — définitions ─────────────────────────────────────────────────
 
 BUY_SIDE_STEPS = [
     {
@@ -735,7 +807,7 @@ def init_state():
         "generated_email":  "",
         "found_executives": [],
         "email_type":       "rachat",
-        # Mission M&A
+        # Screening Buy Side
         "ma_universe":      "",   # "buy" or "sell"
         "ma_step_key":      "",   # current module key
         "ma_company":       "",
@@ -854,9 +926,9 @@ if st.session_state.screen == 1:
         unsafe_allow_html=True,
     )
 
-    tab_standard, tab_mission = st.tabs(["🔍 Analyses rapides", "💼 Mission M&A"])
+    tab_standard, tab_mission = st.tabs(["🔍 Analyses rapides", "💼 Screening Buy Side"])
 
-    # ── TAB 2 : Mission M&A ────────────────────────────────────────────────
+    # ── TAB 2 : Screening Buy Side ────────────────────────────────────────────────
     with tab_mission:
         st.markdown(
             '<p style="font-size:0.82rem;color:#9CA3AF;margin-bottom:6px;font-weight:600;'
@@ -1829,7 +1901,7 @@ elif st.session_state.screen == 4:
     with hdr_col:
         st.markdown(
             f'<div style="font-size:1.05rem;font-weight:700;margin-bottom:2px;">{ma_company}</div>'
-            f'<div style="font-size:0.78rem;color:#777777;margin-bottom:10px;">Mission Buy-side — Croissance externe</div>'
+            f'<div style="font-size:0.78rem;color:#777777;margin-bottom:10px;">Screening Buy Side — Croissance externe</div>'
             f'<div style="background:#BBBBBB;border-radius:99px;height:3px;overflow:hidden;">'
             f'<div style="background:#111111;width:{pct}%;height:100%;border-radius:99px;transition:width .5s;"></div></div>',
             unsafe_allow_html=True,
@@ -2030,57 +2102,84 @@ elif st.session_state.screen == 4:
             else:
                 launch = True
 
-            if st.session_state.get("ma_mission_running", False) and launch:
-                os.environ["ANTHROPIC_API_KEY"] = anthropic_key
-                os.environ["TAVILY_API_KEY"]    = tavily_key
-
-                modules_to_run = [
+            ALL_MODULES_DEF = [
                     ("buy_01_carto_verticale",   context_docs, "1a — Cartographie verticale"),
                     ("buy_02_carto_horizontale", context_docs, "1b — Cartographie horizontale"),
                     ("buy_03_recherche_cibles",  step2_input,  "2 — Long-list de cibles"),
                 ]
+
+            if st.session_state.get("ma_mission_running", False) and launch:
+                # Initialiser la file si premier démarrage
+                if "ma_run_queue" not in st.session_state:
+                    st.session_state.ma_run_queue = [m[0] for m in ALL_MODULES_DEF]
+
+                os.environ["ANTHROPIC_API_KEY"] = anthropic_key
+                os.environ["TAVILY_API_KEY"]    = tavily_key
+
+                # Afficher les résultats déjà obtenus avec bouton Excel immédiat
                 new_results = dict(results)
-                for mod_key, mod_input, mod_label in modules_to_run:
-                    ph     = st.empty()
-                    out_ph = st.empty()
-                    ph.markdown(
-                        f'<div style="border:1px solid #CCCCCC;border-radius:10px;'
-                        f'background:#FFFFFF;padding:14px 20px;font-size:0.88rem;font-weight:600;color:#111111;margin-bottom:8px;">'
-                        f'⏳ &nbsp;{mod_label} en cours…</div>',
-                        unsafe_allow_html=True,
-                    )
-                    def _on_text(text, _ph=out_ph):
-                        _ph.markdown(
-                            '<div style="border:1px solid #E0E0E0;border-radius:10px;'
-                            'background:#FAFAFA;padding:16px 20px;max-height:260px;overflow-y:auto;'
-                            'font-size:0.87rem;line-height:1.8;color:#333333;">'
-                            + text[:4000].replace("\n", "<br>") + '</div>',
+                for mod_key, mod_input, mod_label in ALL_MODULES_DEF:
+                    if mod_key in new_results:
+                        with st.container(border=True):
+                            st.markdown(
+                                f'<div style="font-size:0.85rem;font-weight:600;color:#065F46;">'
+                                f'✓ {mod_label}</div>',
+                                unsafe_allow_html=True,
+                            )
+                            xlsx_bytes = _generate_single_xlsx(mod_key, mod_label, new_results[mod_key], ma_company)
+                            st.download_button(
+                                "📥 Excel",
+                                data=xlsx_bytes,
+                                file_name=f"{ma_company.replace(' ''_')}_{mod_key}.xlsx",
+                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                key=f"dl_partial_{mod_key}",
+                            )
+
+                # Lancer le prochain module en attente
+                queue = st.session_state.get("ma_run_queue", [])
+                if queue:
+                    next_key = queue[0]
+                    next_def = next((m for m in ALL_MODULES_DEF if m[0] == next_key), None)
+                    if next_def:
+                        mod_key, mod_input, mod_label = next_def
+                        ph     = st.empty()
+                        out_ph = st.empty()
+                        ph.markdown(
+                            f'<div style="border:1px solid #CCCCCC;border-radius:10px;'
+                            f'background:#FFFFFF;padding:14px 20px;font-size:0.88rem;font-weight:600;color:#111111;margin-bottom:8px;">'
+                            f'⏳ &nbsp;{mod_label} en cours…</div>',
                             unsafe_allow_html=True,
                         )
-                    try:
-                        result = run_ma_module(
-                            module_key=mod_key,
-                            company=ma_company,
-                            sector="",
-                            input_data=mod_input,
-                            variables=variables,
-                            on_text=_on_text,
-                        )
-                        new_results[mod_key] = result
-                        ph.empty()
-                        out_ph.empty()
-                        st.markdown(
-                            f'<div style="border:1px solid #D1FAE5;border-radius:10px;'
-                            f'background:#F0FDF4;padding:12px 18px;font-size:0.85rem;font-weight:600;color:#065F46;margin-bottom:6px;">'
-                            f'✓ &nbsp;{mod_label} — terminé</div>',
-                            unsafe_allow_html=True,
-                        )
-                    except Exception as e:
-                        import traceback
-                        ph.empty()
-                        out_ph.error(f"❌ Erreur {mod_label}: {e}")
-                        with st.expander("Détail"):
-                            st.code(traceback.format_exc())
-                st.session_state.ma_step_result = new_results
-                st.session_state.ma_mission_running = False
-                st.rerun()
+                        def _on_text(text, _ph=out_ph):
+                            _ph.markdown(
+                                '<div style="border:1px solid #E0E0E0;border-radius:10px;'
+                                'background:#FAFAFA;padding:16px 20px;max-height:260px;overflow-y:auto;'
+                                'font-size:0.87rem;line-height:1.8;color:#333333;">'
+                                + text[:4000].replace("\n", "<br>") + '</div>',
+                                unsafe_allow_html=True,
+                            )
+                        try:
+                            result = run_ma_module(
+                                module_key=mod_key,
+                                company=ma_company,
+                                sector="",
+                                input_data=mod_input,
+                                variables=variables,
+                                on_text=_on_text,
+                            )
+                            new_results[mod_key] = result
+                            st.session_state.ma_step_result = new_results
+                            st.session_state.ma_run_queue = queue[1:]
+                            ph.empty(); out_ph.empty()
+                        except Exception as e:
+                            import traceback
+                            ph.empty()
+                            out_ph.error(f"❌ Erreur {mod_label}: {e}")
+                            with st.expander("Détail"):
+                                st.code(traceback.format_exc())
+                            st.session_state.ma_run_queue = queue[1:]
+                    st.rerun()
+                else:
+                    st.session_state.ma_mission_running = False
+                    st.session_state.pop("ma_run_queue", None)
+                    st.rerun()
