@@ -1883,98 +1883,122 @@ elif st.session_state.screen == 4:
     from ma_agent import run_ma_module
     import re as _re4
 
-    ma_company  = st.session_state.get("ma_company", "")
-    results     = st.session_state.setdefault("ma_step_result", {})
+    ma_company   = st.session_state.get("ma_company", "")
     company_info = st.session_state.get("ma_company_info", None)
+    ma_phase     = st.session_state.get("ma_phase", "research")
 
-    MA_MODULES = [
-        ("buy_01_carto_verticale",   "1a", "Cartographie verticale"),
-        ("buy_02_carto_horizontale", "1b", "Cartographie horizontale"),
-        ("buy_03_recherche_cibles",  "2",  "Long-list de cibles"),
-    ]
-    all_done = all(k in results for k, _, _ in MA_MODULES)
-    n_done   = sum(1 for k, _, _ in MA_MODULES if k in results)
-    pct      = int(n_done / len(MA_MODULES) * 100)
+    _KNOWN_PHASES = {"wizard_pos", "run_v", "check_v", "run_h", "check_h",
+                     "wizard_cats", "run_cibles", "check_cibles", "done"}
+    if st.session_state.get("ma_wizard_confirmed") and ma_phase not in _KNOWN_PHASES:
+        st.session_state.ma_phase = "wizard_pos"
+        ma_phase = "wizard_pos"
+
+    os.environ["ANTHROPIC_API_KEY"] = anthropic_key
+    os.environ["TAVILY_API_KEY"]    = tavily_key
+
+    def _s4_quit():
+        prefix_keys = ("q_ma_wiz", "q_idx_ma_wiz", "wc_",
+                       "ma_company", "ma_wizard", "ma_phase",
+                       "ma_result", "ma_cibles", "ma_variables", "ma_mission",
+                       "ma_categories", "ma_current", "ma_context", "ma_step",
+                       "ma_wc_")
+        for k in list(st.session_state.keys()):
+            if any(k.startswith(p) for p in prefix_keys):
+                del st.session_state[k]
+        st.session_state.screen = 1
 
     # ── En-tête ────────────────────────────────────────────────────────────
-    hdr_col, quit_col = st.columns([6, 1])
+    hdr_col, quit_col = st.columns([7, 1])
     with hdr_col:
         st.markdown(
             f'<div style="font-size:1.05rem;font-weight:700;margin-bottom:2px;">{ma_company}</div>'
-            f'<div style="font-size:0.78rem;color:#777777;margin-bottom:10px;">Screening Buy Side — Croissance externe</div>'
-            f'<div style="background:#BBBBBB;border-radius:99px;height:3px;overflow:hidden;">'
-            f'<div style="background:#111111;width:{pct}%;height:100%;border-radius:99px;transition:width .5s;"></div></div>',
+            f'<div style="font-size:0.78rem;color:#777777;margin-bottom:6px;">Screening Buy Side</div>',
             unsafe_allow_html=True,
         )
     with quit_col:
         if st.button("✕ Quitter", use_container_width=True):
-            for k in list(st.session_state.keys()):
-                if k.startswith("q_ma_buy_wizard") or k == "ma_company_info" or k == "ma_wizard_confirmed":
-                    del st.session_state[k]
-            st.session_state.screen = 1
+            _s4_quit()
             st.rerun()
 
-    st.markdown('<div style="height:10px"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
 
-    # ── Phase résultats ─────────────────────────────────────────────────────
-    if all_done:
-        for mod_key, mod_num, mod_label in MA_MODULES:
-            res_text = results[mod_key]
-            n_rows = len(_re4.findall(r'^\|[^-\|]', res_text, _re4.MULTILINE))
-            n_heads = len(_re4.findall(r'^#{1,3} ', res_text, _re4.MULTILINE))
-            n_src   = len(_re4.findall(r'https?://', res_text))
-            m1 = f"{n_rows} lignes" if n_rows > 1 else f"{n_heads} sections" if n_heads else f"{len(res_text.split())} mots"
-            m2 = f"{n_src} sources" if n_src else "Structuré"
-            with st.container(border=True):
-                st.markdown(
-                    f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
-                    f'<span style="font-size:0.7rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;">Étape {mod_num}</span>'
-                    f'<span style="font-size:0.75rem;color:#9CA3AF;">{m1} · {m2}</span></div>'
-                    f'<div style="font-size:0.97rem;font-weight:700;color:#111111;">{mod_label}</div>',
-                    unsafe_allow_html=True,
-                )
-                with st.expander("Voir le résultat complet"):
-                    st.markdown(res_text)
-
-        # ── Export Excel groupé ──
-        st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
-        with st.container(border=True):
-            st.markdown(
-                '<div style="font-size:0.95rem;font-weight:700;color:#111111;margin-bottom:4px;">📥 Exporter le rapport complet</div>'
-                '<div style="font-size:0.82rem;color:#6B7280;margin-bottom:12px;">Mapping vertical, Mapping horizontal et Long-list dans un seul fichier Excel</div>',
+    # ── Helpers ────────────────────────────────────────────────────────────
+    def _run_module_s4(mod_key, mod_input, mod_label, next_phase, variables):
+        """Lance un module, sauvegarde le résultat, bascule la phase."""
+        out_ph = st.empty()
+        st.markdown(
+            f'<div style="border:1px solid #CCCCCC;border-radius:10px;background:#FFFFFF;'
+            f'padding:14px 20px;font-size:0.88rem;font-weight:600;color:#111111;">'
+            f'⏳ &nbsp;{mod_label} en cours…</div>',
+            unsafe_allow_html=True,
+        )
+        def _on_text(text, _ph=out_ph):
+            _ph.markdown(
+                '<div style="border:1px solid #E0E0E0;border-radius:10px;background:#FAFAFA;'
+                'padding:16px 20px;max-height:260px;overflow-y:auto;'
+                'font-size:0.87rem;line-height:1.8;color:#333333;">'
+                + text[:4000].replace("\n", "<br>") + '</div>',
                 unsafe_allow_html=True,
             )
-            try:
-                from export_ma_xlsx import generate_ma_xlsx
-                os.environ["ANTHROPIC_API_KEY"] = anthropic_key
-                xlsx_bytes = generate_ma_xlsx(
-                    company   = ma_company,
-                    text_v    = results.get("buy_01_carto_verticale", ""),
-                    text_h    = results.get("buy_02_carto_horizontale", ""),
-                    text_cibles = results.get("buy_03_recherche_cibles", ""),
-                )
-                fname = f"screening_{ma_company.replace(' ', '_').lower()}.xlsx"
-                st.download_button(
-                    "📥 Télécharger en Excel",
-                    data=xlsx_bytes,
-                    file_name=fname,
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True,
-                    type="primary",
-                )
-            except Exception as _xe:
-                st.warning(f"Export Excel indisponible : {_xe}")
-
-        st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
-        if st.button("🔄 Recommencer la mission", use_container_width=True):
-            for k in list(st.session_state.keys()):
-                if k.startswith("q_ma_buy_wizard") or k in ("ma_company_info", "ma_wizard_confirmed", "ma_mission_running"):
-                    del st.session_state[k]
-            st.session_state.ma_step_result = {}
+        try:
+            result = run_ma_module(
+                module_key=mod_key, company=ma_company, sector="",
+                input_data=mod_input, variables=variables, on_text=_on_text,
+            )
+            st.session_state[f"ma_result_{mod_key}"] = result
+            st.session_state.ma_phase = next_phase
+            out_ph.empty()
             st.rerun()
+        except Exception as _e:
+            import traceback
+            out_ph.empty()
+            st.error(f"❌ Erreur : {_e}")
+            with st.expander("Détail"):
+                st.code(traceback.format_exc())
 
-    # ── Phase 0 : recherche IA de l'entreprise ──────────────────────────────
-    elif company_info is None:
+    def _satisfaction_buttons(label, yes_phase, no_phase, no_clears=None):
+        """Affiche les deux boutons satisfaction — renvoie True si on a cliqué (pour stopper le rendu)."""
+        st.markdown(f'<div style="font-size:0.88rem;font-weight:600;margin:12px 0 6px;">Es-tu satisfait du résultat ?</div>', unsafe_allow_html=True)
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button(f"✓ Oui — continuer", type="primary", use_container_width=True, key=f"sat_yes_{yes_phase}"):
+                st.session_state.ma_phase = yes_phase
+                st.rerun()
+        with c2:
+            if st.button(f"↺ Non — relancer", use_container_width=True, key=f"sat_no_{no_phase}"):
+                if no_clears:
+                    for _k in no_clears:
+                        st.session_state.pop(_k, None)
+                st.session_state.ma_phase = no_phase
+                st.rerun()
+
+    def _result_card(mod_key, mod_label, result_text):
+        """Carte de résultat avec métadonnées + Excel + expandeur."""
+        n_rows = len(_re4.findall(r'^\|[^-\|]', result_text, _re4.MULTILINE))
+        n_src  = len(_re4.findall(r'https?://', result_text))
+        meta   = f"{n_rows} lignes" if n_rows > 1 else f"{len(result_text.split())} mots"
+        if n_src:
+            meta += f" · {n_src} sources"
+        with st.container(border=True):
+            st.markdown(
+                f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">'
+                f'<span style="font-size:0.7rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;">{mod_label}</span>'
+                f'<span style="font-size:0.72rem;color:#9CA3AF;">{meta}</span></div>',
+                unsafe_allow_html=True,
+            )
+            xlsx = _generate_single_xlsx(mod_key, mod_label, result_text, ma_company)
+            st.download_button(
+                "📥 Excel",
+                data=xlsx,
+                file_name=f"{ma_company.replace(' ', '_')}_{mod_key}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                key=f"dl_{mod_key}_{ma_phase}",
+            )
+            with st.expander("Voir le résultat"):
+                st.markdown(result_text)
+
+    # ── Phase : Research ────────────────────────────────────────────────────
+    if company_info is None:
         with st.spinner(f"Recherche d'informations sur **{ma_company}**…"):
             try:
                 info = _research_company(ma_company, anthropic_key, tavily_key)
@@ -1983,7 +2007,7 @@ elif st.session_state.screen == 4:
                 st.session_state.ma_company_info = {}
         st.rerun()
 
-    # ── Phase 1 : validation de l'entreprise ────────────────────────────────
+    # ── Phase : Validation entreprise ──────────────────────────────────────
     elif not st.session_state.get("ma_wizard_confirmed", False):
         info = company_info
         description = info.get("description", f"Entreprise identifiée : {ma_company}")
@@ -2011,6 +2035,7 @@ elif st.session_state.screen == 4:
             with c1:
                 if st.button("✓  C'est la bonne société", type="primary", use_container_width=True):
                     st.session_state.ma_wizard_confirmed = True
+                    st.session_state.ma_phase = "wizard_pos"
                     st.rerun()
             with c2:
                 if st.button("✗  Ce n'est pas la bonne", use_container_width=True):
@@ -2020,166 +2045,336 @@ elif st.session_state.screen == 4:
                     st.session_state.screen = 1
                     st.rerun()
 
-    # ── Phase 2 : wizard QCM ────────────────────────────────────────────────
-    else:
+    # ── Phase : Wizard positionnement ──────────────────────────────────────
+    elif ma_phase == "wizard_pos":
         info = company_info or {}
-        pos_opts  = info.get("positionnement_options",
-                             ["Intégrateur industriel", "Bureau d'études", "Sous-traitant", "Fabricant d'équipements"])
-        cat_opts  = info.get("categories_options",
-                             ["Intégration systèmes", "Maintenance industrielle", "Automatisme", "Mécanique", "Électricité industrielle"])
+        pos_opts = info.get("positionnement_options",
+                            ["Intégrateur industriel", "Bureau d'études", "Sous-traitant", "Fabricant d'équipements"])
+        _wiz_pos = [{"key": "positionnement",
+                     "label": f"Quel est le positionnement de {ma_company} ?",
+                     "type": "chips_or_custom", "options": pos_opts,
+                     "hint": "Décrivez le positionnement…", "required": True}]
+        _, _vars_pos, _ready_pos = _render_question_cards("ma_wiz_pos", {"questions": _wiz_pos}, ma_company)
+        if _ready_pos:
+            st.session_state["ma_variables"] = {"positionnement": _vars_pos.get("positionnement", "")}
+            st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+            if st.button("Lancer les mappings →", type="primary", use_container_width=True):
+                st.session_state.ma_phase = "run_v"
+                st.rerun()
 
-        WIZARD_DYNAMIC = [
-            {
-                "key":      "positionnement",
-                "label":    f"Quel est le positionnement de {ma_company} ?",
-                "type":     "chips_or_custom",
-                "options":  pos_opts,
-                "hint":     "Décrivez le positionnement…",
-                "required": True,
-            },
-            {
-                "key":      "categories",
-                "label":    "Quelles catégories verticales de cibles visez-vous ?",
-                "type":     "chips_or_custom",
-                "options":  cat_opts,
-                "hint":     "Décrivez les catégories…",
-                "required": True,
-            },
-            {
-                "key":      "zone_geo",
-                "label":    "Zone géographique cible",
-                "type":     "chips_or_custom",
-                "options":  ["France uniquement", "France + Belgique", "France + DACH", "Europe"],
-                "hint":     "Autre zone…",
-                "required": True,
-            },
-            {
-                "key":      "fourchette_ca",
-                "label":    "Fourchette de CA des cibles",
-                "type":     "chips_or_custom",
-                "options":  ["< 5 M€", "5–20 M€", "20–50 M€", "50–100 M€"],
-                "hint":     "Autre fourchette…",
-                "required": True,
-            },
-            {
-                "key":      "exclusions",
-                "label":    "Entreprises à exclure explicitement",
-                "type":     "textarea",
-                "hint":     "Laissez vide si aucune. Une société par ligne.",
-                "required": False,
-            },
+    # ── Phase : Mapping vertical ────────────────────────────────────────────
+    elif ma_phase == "run_v":
+        context_docs = st.session_state.get("ma_context_docs", "")
+        variables    = st.session_state.get("ma_variables", {})
+        _run_module_s4("buy_01_carto_verticale", context_docs, "Cartographie verticale", "check_v", variables)
+
+    elif ma_phase == "check_v":
+        result_v = st.session_state.get("ma_result_buy_01_carto_verticale", "")
+        _result_card("buy_01_carto_verticale", "Cartographie verticale", result_v)
+        _satisfaction_buttons("v", "run_h", "run_v", ["ma_result_buy_01_carto_verticale"])
+
+    # ── Phase : Mapping horizontal ──────────────────────────────────────────
+    elif ma_phase == "run_h":
+        context_docs = st.session_state.get("ma_context_docs", "")
+        variables    = st.session_state.get("ma_variables", {})
+        _run_module_s4("buy_02_carto_horizontale", context_docs, "Cartographie horizontale", "check_h", variables)
+
+    elif ma_phase == "check_h":
+        result_h = st.session_state.get("ma_result_buy_02_carto_horizontale", "")
+        _result_card("buy_02_carto_horizontale", "Cartographie horizontale", result_h)
+        _satisfaction_buttons("h", "wizard_cats", "run_h", ["ma_result_buy_02_carto_horizontale"])
+
+    # ── Phase : Wizard catégories + paramètres ─────────────────────────────
+    elif ma_phase == "wizard_cats":
+        info = company_info or {}
+        cat_opts = info.get("categories_options",
+                            ["Intégration systèmes", "Maintenance industrielle", "Automatisme", "Mécanique", "Électricité industrielle"])
+        context_docs = st.session_state.get("ma_context_docs", "")
+
+        # Récap mappings déjà produits
+        col_v, col_h = st.columns(2)
+        with col_v:
+            rv = st.session_state.get("ma_result_buy_01_carto_verticale", "")
+            if rv:
+                with st.container(border=True):
+                    st.markdown('<div style="font-size:0.78rem;font-weight:600;color:#065F46;">✓ Mapping vertical</div>', unsafe_allow_html=True)
+                    _xv = _generate_single_xlsx("buy_01_carto_verticale", "Mapping vertical", rv, ma_company)
+                    st.download_button("📥 Excel", data=_xv,
+                                       file_name=f"{ma_company.replace(' ', '_')}_mapping_v.xlsx",
+                                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                       key="dl_v_recap")
+        with col_h:
+            rh = st.session_state.get("ma_result_buy_02_carto_horizontale", "")
+            if rh:
+                with st.container(border=True):
+                    st.markdown('<div style="font-size:0.78rem;font-weight:600;color:#065F46;">✓ Mapping horizontal</div>', unsafe_allow_html=True)
+                    _xh = _generate_single_xlsx("buy_02_carto_horizontale", "Mapping horizontal", rh, ma_company)
+                    st.download_button("📥 Excel", data=_xh,
+                                       file_name=f"{ma_company.replace(' ', '_')}_mapping_h.xlsx",
+                                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                       key="dl_h_recap")
+
+        st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
+
+        _wc_idx = st.session_state.get("ma_wc_idx", 0)
+        _wc_vars = st.session_state.get("ma_wc_vars", {})
+
+        _wc_questions = [
+            {"key": "categories", "label": "Quelles catégories de cibles visez-vous ?",
+             "type": "chips_multi", "options": cat_opts},
+            {"key": "zone_geo", "label": "Zone géographique cible",
+             "type": "chips_single", "options": ["France uniquement", "France + Belgique", "France + DACH", "Europe"],
+             "hint": "Autre zone…"},
+            {"key": "fourchette_ca", "label": "Fourchette de CA des cibles",
+             "type": "chips_single", "options": ["< 5 M€", "5–20 M€", "20–50 M€", "50–100 M€"],
+             "hint": "Autre fourchette…"},
+            {"key": "exclusions", "label": "Entreprises à exclure (optionnel)",
+             "type": "textarea", "hint": "Laissez vide si aucune. Une société par ligne."},
         ]
+        _wc_n = len(_wc_questions)
 
-        _step_input, variables, wizard_ready = _render_question_cards(
-            "ma_buy_wizard", {"questions": WIZARD_DYNAMIC}, ma_company
+        # Indicateur de progression
+        _wc_dots = ""
+        for _i in range(_wc_n):
+            if _i < _wc_idx:
+                _wc_dots += '<div style="width:8px;height:8px;border-radius:50%;background:#111111;flex-shrink:0;"></div>'
+            elif _i == _wc_idx:
+                _wc_dots += '<div style="width:10px;height:10px;border-radius:50%;background:#111111;flex-shrink:0;"></div>'
+            else:
+                _wc_dots += '<div style="width:8px;height:8px;border-radius:50%;background:#D5D5D5;flex-shrink:0;"></div>'
+        st.markdown(
+            f'<div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">'
+            f'{_wc_dots}'
+            f'<span style="font-size:0.76rem;color:#9CA3AF;margin-left:3px;">{_wc_idx + 1} / {_wc_n}</span>'
+            f'</div>', unsafe_allow_html=True,
         )
 
-        if wizard_ready:
-            parts2 = []
-            if variables.get("positionnement"):
-                parts2.append(f"Positionnement : {variables['positionnement']}")
-            if variables.get("categories"):
-                parts2.append(f"Catégories verticales :\n{variables['categories']}")
-            if variables.get("zone_geo"):
-                parts2.append(f"Zone géographique : {variables['zone_geo']}")
-            if variables.get("fourchette_ca"):
-                parts2.append(f"Fourchette CA : {variables['fourchette_ca']}")
-            if variables.get("exclusions"):
-                parts2.append(f"Entreprises à exclure :\n{variables['exclusions']}")
-            step2_input = "\n".join(parts2)
+        if _wc_idx < _wc_n:
+            _wc_q = _wc_questions[_wc_idx]
+            _wc_qk = _wc_q["key"]
+            _wc_type = _wc_q["type"]
 
-            # Injecter les docs dans l'input
-            context_docs = st.session_state.get("ma_context_docs", "")
-            if context_docs:
-                step2_input = step2_input + "\n\n" + context_docs
+            with st.container(border=True):
+                st.markdown(f'<p class="q-card-label">{_wc_q["label"]}</p>', unsafe_allow_html=True)
 
-            st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
-            if not st.session_state.get("ma_mission_running", False):
-                launch = st.button("🔍 Lancer la mission", type="primary", use_container_width=True)
-                if launch:
-                    st.session_state.ma_mission_running = True
-                    st.rerun()
-            else:
-                launch = True
+                _wc_value = None
+                _wc_ready = False
 
-            ALL_MODULES_DEF = [
-                    ("buy_01_carto_verticale",   context_docs, "1a — Cartographie verticale"),
-                    ("buy_02_carto_horizontale", context_docs, "1b — Cartographie horizontale"),
-                    ("buy_03_recherche_cibles",  step2_input,  "2 — Long-list de cibles"),
-                ]
-
-            if st.session_state.get("ma_mission_running", False) and launch:
-                # Initialiser la file si premier démarrage
-                if "ma_run_queue" not in st.session_state:
-                    st.session_state.ma_run_queue = [m[0] for m in ALL_MODULES_DEF]
-
-                os.environ["ANTHROPIC_API_KEY"] = anthropic_key
-                os.environ["TAVILY_API_KEY"]    = tavily_key
-
-                # Afficher les résultats déjà obtenus avec bouton Excel immédiat
-                new_results = dict(results)
-                for mod_key, mod_input, mod_label in ALL_MODULES_DEF:
-                    if mod_key in new_results:
-                        with st.container(border=True):
-                            st.markdown(
-                                f'<div style="font-size:0.85rem;font-weight:600;color:#065F46;">'
-                                f'✓ {mod_label}</div>',
-                                unsafe_allow_html=True,
-                            )
-                            xlsx_bytes = _generate_single_xlsx(mod_key, mod_label, new_results[mod_key], ma_company)
-                            st.download_button(
-                                "📥 Excel",
-                                data=xlsx_bytes,
-                                file_name=f"{ma_company.replace(' ''_')}_{mod_key}.xlsx",
-                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                key=f"dl_partial_{mod_key}",
-                            )
-
-                # Lancer le prochain module en attente
-                queue = st.session_state.get("ma_run_queue", [])
-                if queue:
-                    next_key = queue[0]
-                    next_def = next((m for m in ALL_MODULES_DEF if m[0] == next_key), None)
-                    if next_def:
-                        mod_key, mod_input, mod_label = next_def
-                        ph     = st.empty()
-                        out_ph = st.empty()
-                        ph.markdown(
-                            f'<div style="border:1px solid #CCCCCC;border-radius:10px;'
-                            f'background:#FFFFFF;padding:14px 20px;font-size:0.88rem;font-weight:600;color:#111111;margin-bottom:8px;">'
-                            f'⏳ &nbsp;{mod_label} en cours…</div>',
-                            unsafe_allow_html=True,
+                if _wc_type == "chips_multi":
+                    _wc_chosen = st.pills(
+                        "opts", _wc_q["options"] + ["Autre..."],
+                        selection_mode="multi", label_visibility="collapsed",
+                        key=f"wc_{_wc_qk}_pill",
+                    )
+                    _wc_has_autre = "Autre..." in (_wc_chosen or [])
+                    _wc_real = [c for c in (_wc_chosen or []) if c != "Autre..."]
+                    if _wc_has_autre:
+                        _wc_custom = st.text_area(
+                            "Précisez", placeholder="Une catégorie par ligne…",
+                            key=f"wc_{_wc_qk}_custom", label_visibility="collapsed",
                         )
-                        def _on_text(text, _ph=out_ph):
-                            _ph.markdown(
-                                '<div style="border:1px solid #E0E0E0;border-radius:10px;'
-                                'background:#FAFAFA;padding:16px 20px;max-height:260px;overflow-y:auto;'
-                                'font-size:0.87rem;line-height:1.8;color:#333333;">'
-                                + text[:4000].replace("\n", "<br>") + '</div>',
-                                unsafe_allow_html=True,
-                            )
-                        try:
-                            result = run_ma_module(
-                                module_key=mod_key,
-                                company=ma_company,
-                                sector="",
-                                input_data=mod_input,
-                                variables=variables,
-                                on_text=_on_text,
-                            )
-                            new_results[mod_key] = result
-                            st.session_state.ma_step_result = new_results
-                            st.session_state.ma_run_queue = queue[1:]
-                            ph.empty(); out_ph.empty()
-                        except Exception as e:
-                            import traceback
-                            ph.empty()
-                            out_ph.error(f"❌ Erreur {mod_label}: {e}")
-                            with st.expander("Détail"):
-                                st.code(traceback.format_exc())
-                            st.session_state.ma_run_queue = queue[1:]
+                        if _wc_custom.strip():
+                            _wc_real = _wc_real + [l.strip() for l in _wc_custom.strip().split("\n") if l.strip()]
+                    _wc_value = _wc_real
+                    _wc_ready = bool(_wc_real)
+
+                elif _wc_type == "chips_single":
+                    _wc_chosen = st.pills(
+                        "opts", _wc_q["options"] + ["Autre..."],
+                        selection_mode="single", label_visibility="collapsed",
+                        key=f"wc_{_wc_qk}_pill",
+                    )
+                    _wc_has_autre = _wc_chosen == "Autre..."
+                    if _wc_has_autre:
+                        _wc_value = st.text_input(
+                            "Précisez", placeholder=_wc_q.get("hint", ""),
+                            key=f"wc_{_wc_qk}_custom", label_visibility="collapsed",
+                        )
+                    else:
+                        _wc_value = _wc_chosen or ""
+                    _wc_ready = bool(_wc_value)
+
+                elif _wc_type == "textarea":
+                    _wc_value = st.text_area(
+                        "Précisez", placeholder=_wc_q.get("hint", ""), height=100,
+                        key=f"wc_{_wc_qk}_text", label_visibility="collapsed",
+                    )
+                    _wc_ready = True  # optionnel
+
+                st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+                _prev_col, _next_col = st.columns([1, 2])
+                with _prev_col:
+                    if _wc_idx > 0 and st.button("← Retour", key=f"wc_prev_{_wc_idx}", use_container_width=True):
+                        st.session_state.ma_wc_idx = _wc_idx - 1
+                        st.rerun()
+                with _next_col:
+                    _is_last = (_wc_idx == _wc_n - 1)
+                    _btn_lbl = "🔍 Lancer la recherche de cibles" if _is_last else "Suivant →"
+                    if _wc_ready and st.button(_btn_lbl, type="primary", key=f"wc_next_{_wc_idx}", use_container_width=True):
+                        _new_wc_vars = {**_wc_vars, _wc_qk: _wc_value}
+                        st.session_state.ma_wc_vars = _new_wc_vars
+                        if not _is_last:
+                            st.session_state.ma_wc_idx = _wc_idx + 1
+                        else:
+                            # Fusionner avec les variables positionnement
+                            _all_vars = {**st.session_state.get("ma_variables", {}), **_new_wc_vars}
+                            _cats_raw = _all_vars.get("categories", [])
+                            if isinstance(_cats_raw, str):
+                                _cat_list = [c.strip() for c in _cats_raw.split("\n") if c.strip()]
+                            else:
+                                _cat_list = [c for c in _cats_raw if c]
+                            st.session_state["ma_variables"] = _all_vars
+                            st.session_state["ma_cibles_results"] = {}
+                            if _cat_list:
+                                st.session_state["ma_current_category"] = _cat_list[0]
+                                st.session_state["ma_categories_queue"] = _cat_list[1:]
+                                st.session_state.ma_phase = "run_cibles"
+                            else:
+                                st.session_state.ma_phase = "done"
+                            # Réinitialiser le wizard pour la prochaine fois
+                            st.session_state.pop("ma_wc_idx", None)
+                            st.session_state.pop("ma_wc_vars", None)
+                        st.rerun()
+
+    # ── Phase : Recherche cibles ────────────────────────────────────────────
+    elif ma_phase == "run_cibles":
+        variables    = st.session_state.get("ma_variables", {})
+        current_cat  = st.session_state.get("ma_current_category", "")
+        context_docs = st.session_state.get("ma_context_docs", "")
+
+        _cibles_parts = []
+        if variables.get("positionnement"):
+            _cibles_parts.append(f"Positionnement : {variables['positionnement']}")
+        _cibles_parts.append(f"Catégorie cible : {current_cat}")
+        if variables.get("zone_geo"):
+            _cibles_parts.append(f"Zone géographique : {variables['zone_geo']}")
+        if variables.get("fourchette_ca"):
+            _cibles_parts.append(f"Fourchette CA : {variables['fourchette_ca']}")
+        if variables.get("exclusions"):
+            _cibles_parts.append(f"Entreprises à exclure :\n{variables['exclusions']}")
+        if context_docs:
+            _cibles_parts.append(context_docs)
+        _cibles_input = "\n".join(_cibles_parts)
+
+        _vars_with_cat = {**variables, "categories": current_cat}
+        _run_module_s4(
+            "buy_03_recherche_cibles", _cibles_input,
+            f"Recherche de cibles — {current_cat}",
+            "check_cibles", _vars_with_cat,
+        )
+
+    # ── Phase : Satisfaction cibles ─────────────────────────────────────────
+    elif ma_phase == "check_cibles":
+        current_cat    = st.session_state.get("ma_current_category", "")
+        cibles_results = st.session_state.get("ma_cibles_results", {})
+        _raw_cibles    = st.session_state.get("ma_result_buy_03_recherche_cibles", "")
+
+        # Sauvegarder dans le dict par catégorie
+        if current_cat and current_cat not in cibles_results and _raw_cibles:
+            cibles_results[current_cat] = _raw_cibles
+            st.session_state["ma_cibles_results"] = cibles_results
+
+        _cibles_text = cibles_results.get(current_cat, _raw_cibles)
+        _cat_key = f"cibles_{current_cat.replace(' ', '_')[:24]}"
+
+        _result_card(_cat_key, f"Cibles — {current_cat}", _cibles_text)
+
+        _queue = st.session_state.get("ma_categories_queue", [])
+        st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+
+        if _queue:
+            _next_cat = _queue[0]
+            with st.container(border=True):
+                st.markdown(
+                    f'<div style="font-size:0.88rem;font-weight:600;margin-bottom:6px;">Continuer sur la catégorie suivante ?</div>'
+                    f'<div style="font-size:0.83rem;color:#444444;margin-bottom:10px;">→ {_next_cat}</div>',
+                    unsafe_allow_html=True,
+                )
+                _c1, _c2, _c3 = st.columns(3)
+                with _c1:
+                    if st.button(f"→ Lancer {_next_cat[:20]}", type="primary", use_container_width=True, key="cibles_next_yes"):
+                        st.session_state["ma_current_category"] = _next_cat
+                        st.session_state["ma_categories_queue"] = _queue[1:]
+                        st.session_state.pop("ma_result_buy_03_recherche_cibles", None)
+                        st.session_state.ma_phase = "run_cibles"
+                        st.rerun()
+                with _c2:
+                    if st.button("↺ Relancer cette catégorie", use_container_width=True, key="cibles_rerun"):
+                        st.session_state.pop("ma_result_buy_03_recherche_cibles", None)
+                        cibles_results.pop(current_cat, None)
+                        st.session_state["ma_cibles_results"] = cibles_results
+                        st.session_state.ma_phase = "run_cibles"
+                        st.rerun()
+                with _c3:
+                    if st.button("✓ Terminer la mission", use_container_width=True, key="cibles_done"):
+                        st.session_state.ma_phase = "done"
+                        st.rerun()
+        else:
+            _c1, _c2 = st.columns(2)
+            with _c1:
+                if st.button("↺ Relancer cette catégorie", use_container_width=True, key="cibles_rerun_last"):
+                    st.session_state.pop("ma_result_buy_03_recherche_cibles", None)
+                    cibles_results.pop(current_cat, None)
+                    st.session_state["ma_cibles_results"] = cibles_results
+                    st.session_state.ma_phase = "run_cibles"
                     st.rerun()
-                else:
-                    st.session_state.ma_mission_running = False
-                    st.session_state.pop("ma_run_queue", None)
+            with _c2:
+                if st.button("✓ Terminer la mission", type="primary", use_container_width=True, key="cibles_done_last"):
+                    st.session_state.ma_phase = "done"
                     st.rerun()
+
+    # ── Phase : Done — résumé complet ──────────────────────────────────────
+    elif ma_phase == "done":
+        cibles_results = st.session_state.get("ma_cibles_results", {})
+        result_v = st.session_state.get("ma_result_buy_01_carto_verticale", "")
+        result_h = st.session_state.get("ma_result_buy_02_carto_horizontale", "")
+
+        st.markdown('<div style="font-size:0.88rem;font-weight:700;color:#065F46;margin-bottom:12px;">✓ Mission terminée</div>', unsafe_allow_html=True)
+
+        if result_v:
+            _result_card("buy_01_carto_verticale", "Cartographie verticale", result_v)
+            st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+        if result_h:
+            _result_card("buy_02_carto_horizontale", "Cartographie horizontale", result_h)
+            st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+        for _cat, _txt in cibles_results.items():
+            _ck = f"cibles_{_cat.replace(' ', '_')[:24]}_done"
+            _result_card(_ck, f"Cibles — {_cat}", _txt)
+            st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+
+        # Export global
+        if result_v or result_h or cibles_results:
+            st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown(
+                    '<div style="font-size:0.95rem;font-weight:700;color:#111111;margin-bottom:4px;">📥 Rapport complet</div>'
+                    '<div style="font-size:0.82rem;color:#6B7280;margin-bottom:12px;">Tous les résultats dans un seul fichier Excel</div>',
+                    unsafe_allow_html=True,
+                )
+                try:
+                    from export_ma_xlsx import generate_ma_xlsx
+                    _all_cibles = "\n\n".join(
+                        f"## {_c}\n{_t}" for _c, _t in cibles_results.items()
+                    ) if cibles_results else ""
+                    _xlsx_global = generate_ma_xlsx(
+                        company=ma_company,
+                        text_v=result_v,
+                        text_h=result_h,
+                        text_cibles=_all_cibles,
+                    )
+                    _fname_g = f"screening_{ma_company.replace(' ', '_').lower()}.xlsx"
+                    st.download_button(
+                        "📥 Télécharger en Excel",
+                        data=_xlsx_global,
+                        file_name=_fname_g,
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        use_container_width=True,
+                        type="primary",
+                    )
+                except Exception as _xe:
+                    st.warning(f"Export Excel indisponible : {_xe}")
+
+        st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+        if st.button("🔄 Recommencer la mission", use_container_width=True):
+            _s4_quit()
+            st.rerun()
