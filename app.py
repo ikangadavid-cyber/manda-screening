@@ -107,8 +107,16 @@ def _render_question_cards(step_key: str, step_info: dict, company: str):
             qtype = q["type"]
             if qtype == "chips_or_custom":
                 chip = st.session_state.get(f"q_{step_key}_{qk}_pill")
-                val  = (st.session_state.get(f"q_{step_key}_{qk}_custom", "")
-                        if chip == "Autre..." else chip or "")
+                if q.get("multi"):
+                    _sel = chip if isinstance(chip, list) else ([chip] if chip else [])
+                    _real = [c for c in _sel if c != "Autre..."]
+                    if "Autre..." in _sel:
+                        _custom = st.session_state.get(f"q_{step_key}_{qk}_custom", "")
+                        _real += [l.strip() for l in _custom.split("\n") if l.strip()]
+                    val = " + ".join(_real) if _real else ""
+                else:
+                    val  = (st.session_state.get(f"q_{step_key}_{qk}_custom", "")
+                            if chip == "Autre..." else chip or "")
             elif qtype == "text_or_file":
                 mode = st.session_state.get(f"q_{step_key}_{qk}_mode", "✏️  Coller du texte")
                 if mode == "📎  Uploader un fichier":
@@ -187,12 +195,15 @@ def _render_question_cards(step_key: str, step_info: dict, company: str):
 
         # ── Chips + "Autre" ──────────────────────────────────────────────────
         elif qtype == "chips_or_custom":
+            _q_multi = q.get("multi", False)
             options = q.get("options", []) + ["Autre..."]
             chip = st.pills(
-                label, options=options, selection_mode="single",
+                label, options=options,
+                selection_mode="multi" if _q_multi else "single",
                 key=f"q_{step_key}_{qk}_pill", label_visibility="collapsed",
             )
-            if chip == "Autre...":
+            _has_autre = ("Autre..." in (chip or [])) if _q_multi else (chip == "Autre...")
+            if _has_autre:
                 st.text_input(
                     "Précisez", placeholder=q.get("hint", ""),
                     key=f"q_{step_key}_{qk}_custom",
@@ -2053,7 +2064,8 @@ elif st.session_state.screen == 4:
         _wiz_pos = [{"key": "positionnement",
                      "label": f"Quel est le positionnement de {ma_company} ?",
                      "type": "chips_or_custom", "options": pos_opts,
-                     "hint": "Décrivez le positionnement…", "required": True}]
+                     "hint": "Décrivez le positionnement…", "required": True,
+                     "multi": True}]
         _, _vars_pos, _ready_pos = _render_question_cards("ma_wiz_pos", {"questions": _wiz_pos}, ma_company)
         if _ready_pos:
             st.session_state["ma_variables"] = {"positionnement": _vars_pos.get("positionnement", "")}
