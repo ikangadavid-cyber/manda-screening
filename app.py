@@ -2071,19 +2071,8 @@ elif st.session_state.screen == 4:
             st.session_state["ma_variables"] = {"positionnement": _vars_pos.get("positionnement", "")}
             st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
             if st.button("Lancer les mappings →", type="primary", use_container_width=True):
-                st.session_state.ma_phase = "run_v"
+                st.session_state.ma_phase = "run_h"
                 st.rerun()
-
-    # ── Phase : Mapping vertical ────────────────────────────────────────────
-    elif ma_phase == "run_v":
-        context_docs = st.session_state.get("ma_context_docs", "")
-        variables    = st.session_state.get("ma_variables", {})
-        _run_module_s4("buy_01_carto_verticale", context_docs, "Cartographie verticale", "check_v", variables)
-
-    elif ma_phase == "check_v":
-        result_v = st.session_state.get("ma_result_buy_01_carto_verticale", "")
-        _result_card("buy_01_carto_verticale", "Cartographie verticale", result_v)
-        _satisfaction_buttons("v", "run_h", "run_v", ["ma_result_buy_01_carto_verticale"])
 
     # ── Phase : Mapping horizontal ──────────────────────────────────────────
     elif ma_phase == "run_h":
@@ -2094,7 +2083,18 @@ elif st.session_state.screen == 4:
     elif ma_phase == "check_h":
         result_h = st.session_state.get("ma_result_buy_02_carto_horizontale", "")
         _result_card("buy_02_carto_horizontale", "Cartographie horizontale", result_h)
-        _satisfaction_buttons("h", "wizard_cats", "run_h", ["ma_result_buy_02_carto_horizontale"])
+        _satisfaction_buttons("h", "run_v", "run_h", ["ma_result_buy_02_carto_horizontale"])
+
+    # ── Phase : Mapping vertical ────────────────────────────────────────────
+    elif ma_phase == "run_v":
+        context_docs = st.session_state.get("ma_context_docs", "")
+        variables    = st.session_state.get("ma_variables", {})
+        _run_module_s4("buy_01_carto_verticale", context_docs, "Cartographie verticale", "check_v", variables)
+
+    elif ma_phase == "check_v":
+        result_v = st.session_state.get("ma_result_buy_01_carto_verticale", "")
+        _result_card("buy_01_carto_verticale", "Cartographie verticale", result_v)
+        _satisfaction_buttons("v", "wizard_cats", "run_v", ["ma_result_buy_01_carto_verticale"])
 
     # ── Phase : Wizard catégories + paramètres ─────────────────────────────
     elif ma_phase == "wizard_cats":
@@ -2104,17 +2104,7 @@ elif st.session_state.screen == 4:
         context_docs = st.session_state.get("ma_context_docs", "")
 
         # Récap mappings déjà produits
-        col_v, col_h = st.columns(2)
-        with col_v:
-            rv = st.session_state.get("ma_result_buy_01_carto_verticale", "")
-            if rv:
-                with st.container(border=True):
-                    st.markdown('<div style="font-size:0.78rem;font-weight:600;color:#065F46;">✓ Mapping vertical</div>', unsafe_allow_html=True)
-                    _xv = _generate_single_xlsx("buy_01_carto_verticale", "Mapping vertical", rv, ma_company)
-                    st.download_button("📥 Excel", data=_xv,
-                                       file_name=f"{ma_company.replace(' ', '_')}_mapping_v.xlsx",
-                                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                       key="dl_v_recap")
+        col_h, col_v = st.columns(2)
         with col_h:
             rh = st.session_state.get("ma_result_buy_02_carto_horizontale", "")
             if rh:
@@ -2125,6 +2115,16 @@ elif st.session_state.screen == 4:
                                        file_name=f"{ma_company.replace(' ', '_')}_mapping_h.xlsx",
                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                                        key="dl_h_recap")
+        with col_v:
+            rv = st.session_state.get("ma_result_buy_01_carto_verticale", "")
+            if rv:
+                with st.container(border=True):
+                    st.markdown('<div style="font-size:0.78rem;font-weight:600;color:#065F46;">✓ Mapping vertical</div>', unsafe_allow_html=True)
+                    _xv = _generate_single_xlsx("buy_01_carto_verticale", "Mapping vertical", rv, ma_company)
+                    st.download_button("📥 Excel", data=_xv,
+                                       file_name=f"{ma_company.replace(' ', '_')}_mapping_v.xlsx",
+                                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                       key="dl_v_recap")
 
         st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
 
