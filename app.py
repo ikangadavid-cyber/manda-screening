@@ -1898,7 +1898,7 @@ elif st.session_state.screen == 4:
     company_info = st.session_state.get("ma_company_info", None)
     ma_phase     = st.session_state.get("ma_phase", "research")
 
-    _KNOWN_PHASES = {"wizard_pos", "run_v", "check_v", "run_h", "check_h",
+    _KNOWN_PHASES = {"wizard_pos", "run_v", "check_v", "run_h", "check_h", "ask_v",
                      "wizard_cats", "run_cibles", "check_cibles", "done"}
     if st.session_state.get("ma_wizard_confirmed") and ma_phase not in _KNOWN_PHASES:
         st.session_state.ma_phase = "wizard_pos"
@@ -2083,7 +2083,27 @@ elif st.session_state.screen == 4:
     elif ma_phase == "check_h":
         result_h = st.session_state.get("ma_result_buy_02_carto_horizontale", "")
         _result_card("buy_02_carto_horizontale", "Cartographie horizontale", result_h)
-        _satisfaction_buttons("h", "run_v", "run_h", ["ma_result_buy_02_carto_horizontale"])
+        _satisfaction_buttons("h", "ask_v", "run_h", ["ma_result_buy_02_carto_horizontale"])
+
+    # ── Phase : Proposition mapping vertical ───────────────────────────────
+    elif ma_phase == "ask_v":
+        with st.container(border=True):
+            st.markdown(
+                '<div style="font-size:0.92rem;font-weight:600;color:#111111;margin-bottom:6px;">'
+                'Souhaitez-vous également lancer le mapping vertical ?</div>'
+                '<div style="font-size:0.83rem;color:#555555;">Optionnel — cartographie de la chaîne de valeur de l\'acquéreur.</div>',
+                unsafe_allow_html=True,
+            )
+            st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+            _c1, _c2 = st.columns(2)
+            with _c1:
+                if st.button("Oui, le lancer", type="primary", use_container_width=True, key="ask_v_yes"):
+                    st.session_state.ma_phase = "run_v"
+                    st.rerun()
+            with _c2:
+                if st.button("Non, passer aux catégories →", use_container_width=True, key="ask_v_no"):
+                    st.session_state.ma_phase = "wizard_cats"
+                    st.rerun()
 
     # ── Phase : Mapping vertical ────────────────────────────────────────────
     elif ma_phase == "run_v":
