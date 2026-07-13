@@ -293,6 +293,26 @@ def _export_button(result: str, company: str, step_key: str, step_info: dict):
 
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"), override=True)
 
+def _log_screening(company: str, phase: str, detail: str = ""):
+    """Log silencieux vers Supabase — ne bloque jamais l'app en cas d'erreur."""
+    try:
+        import streamlit as _st
+        _url = _st.secrets.get("SUPABASE_URL", "")
+        _key = _st.secrets.get("SUPABASE_KEY", "")
+        if not _url or not _key:
+            return
+        from supabase import create_client
+        import datetime
+        _db = create_client(_url, _key)
+        _db.table("screening_logs").insert({
+            "company": company,
+            "phase": phase,
+            "detail": detail,
+            "timestamp": datetime.datetime.utcnow().isoformat(),
+        }).execute()
+    except Exception:
+        pass
+
 st.set_page_config(
     page_title="Screening M&A",
     page_icon="🔍",
@@ -2047,6 +2067,7 @@ elif st.session_state.screen == 4:
                 if st.button("✓  C'est la bonne société", type="primary", use_container_width=True):
                     st.session_state.ma_wizard_confirmed = True
                     st.session_state.ma_phase = "wizard_pos"
+                    _log_screening(ma_company, "validation", "entreprise validée")
                     st.rerun()
             with c2:
                 if st.button("✗  Ce n'est pas la bonne", use_container_width=True):
@@ -2078,6 +2099,7 @@ elif st.session_state.screen == 4:
     elif ma_phase == "run_h":
         context_docs = st.session_state.get("ma_context_docs", "")
         variables    = st.session_state.get("ma_variables", {})
+        _log_screening(ma_company, "run_h", "lancement mapping horizontal")
         _run_module_s4("buy_02_carto_horizontale", context_docs, "Cartographie horizontale", "check_h", variables)
 
     elif ma_phase == "check_h":
@@ -2109,9 +2131,11 @@ elif st.session_state.screen == 4:
     elif ma_phase == "run_v":
         context_docs = st.session_state.get("ma_context_docs", "")
         variables    = st.session_state.get("ma_variables", {})
+        _log_screening(ma_company, "run_v", "lancement mapping vertical")
         _run_module_s4("buy_01_carto_verticale", context_docs, "Cartographie verticale", "check_v", variables)
 
     elif ma_phase == "check_v":
+        _log_screening(ma_company, "check_v", "résultat mapping vertical affiché")
         result_v = st.session_state.get("ma_result_buy_01_carto_verticale", "")
         _result_card("buy_01_carto_verticale", "Cartographie verticale", result_v)
         _satisfaction_buttons("v", "wizard_cats", "run_v", ["ma_result_buy_01_carto_verticale"])
@@ -2289,6 +2313,7 @@ elif st.session_state.screen == 4:
         _cibles_input = "\n".join(_cibles_parts)
 
         _vars_with_cat = {**variables, "categories": current_cat}
+        _log_screening(ma_company, "run_cibles", f"categorie : {current_cat}")
         _run_module_s4(
             "buy_03_recherche_cibles", _cibles_input,
             f"Recherche de cibles — {current_cat}",
@@ -2308,7 +2333,7 @@ elif st.session_state.screen == 4:
 
         _cibles_text = cibles_results.get(current_cat, _raw_cibles)
         _cat_key = f"cibles_{current_cat.replace(' ', '_')[:24]}"
-
+        _log_screening(ma_company, "check_cibles", f"categorie : {current_cat}")
         _result_card(_cat_key, f"Cibles — {current_cat}", _cibles_text)
 
         _queue = st.session_state.get("ma_categories_queue", [])
@@ -2360,7 +2385,7 @@ elif st.session_state.screen == 4:
         cibles_results = st.session_state.get("ma_cibles_results", {})
         result_v = st.session_state.get("ma_result_buy_01_carto_verticale", "")
         result_h = st.session_state.get("ma_result_buy_02_carto_horizontale", "")
-
+        _log_screening(ma_company, "done", f"mission terminee - {len(cibles_results)} categorie(s)")
         st.markdown('<div style="font-size:0.88rem;font-weight:700;color:#065F46;margin-bottom:12px;">✓ Mission terminée</div>', unsafe_allow_html=True)
 
         if result_v:
