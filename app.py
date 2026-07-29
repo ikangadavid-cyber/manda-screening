@@ -49,15 +49,17 @@ def _generate_single_xlsx(mod_key: str, mod_label: str, text: str, company: str)
     
     if table_lines:
         row_idx = 3
-        for i, line in enumerate(table_lines):
+        is_header = True
+        for line in table_lines:
             if _re2.match(r"^[|][-| :]+[|]$", line):
                 continue
             cells = [c.strip() for c in line.strip("|").split("|")]
-            if i == 0:
+            if is_header:
                 for ci, val in enumerate(cells, start=1):
                     _hcell(row_idx, ci, val)
                     ws.column_dimensions[chr(64+ci)].width = max(12, min(40, len(val)+4))
                 ws.row_dimensions[row_idx].height = 22
+                is_header = False
             else:
                 for ci, val in enumerate(cells, start=1):
                     _dcell(row_idx, ci, val, even=row_idx % 2 == 0)
@@ -1317,6 +1319,7 @@ elif st.session_state.screen == 2:
         elapsed = time.time() - start_time
         render_progress(step_name, st.session_state.steps_done, elapsed=elapsed)
 
+    _log_screening(company, "run_analyse", deliv_key)
     try:
         result = run_screening(
             company_name=company,
@@ -1335,6 +1338,7 @@ elif st.session_state.screen == 2:
         st.session_state.result_text = result
         st.session_state.steps_done  = final_steps_done
         st.session_state.screen      = 3
+        _log_screening(company, "resultat_analyse", deliv_key)
         st.rerun()
     except Exception as e:
         st.error(f"Erreur lors de l'analyse : {e}")
