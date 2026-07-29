@@ -322,8 +322,9 @@ def _log_screening(company: str, phase: str, detail: str = ""):
             method="POST",
         )
         urllib.request.urlopen(_req, timeout=3)
-    except Exception:
-        pass
+    except Exception as _e:
+        import streamlit as _st2
+        _st2.sidebar.error(f"[LOG ERR] {_e}")
 
 st.set_page_config(
     page_title="Screening M&A",
