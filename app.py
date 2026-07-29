@@ -303,6 +303,7 @@ def _log_screening(company: str, phase: str, detail: str = ""):
         _url = _st.secrets.get("SUPABASE_URL", "").rstrip("/")
         _key = _st.secrets.get("SUPABASE_KEY", "")
         if not _url or not _key:
+            _st.sidebar.warning(f"[LOG] clés manquantes — URL={bool(_url)} KEY={bool(_key)}")
             return
         _payload = _json.dumps({
             "company": company,
