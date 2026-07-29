@@ -296,22 +296,32 @@ def _export_button(result: str, company: str, step_key: str, step_info: dict):
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"), override=True)
 
 def _log_screening(company: str, phase: str, detail: str = ""):
-    """Log silencieux vers Supabase — ne bloque jamais l'app en cas d'erreur."""
+    """Log silencieux vers Supabase via REST — ne bloque jamais l'app."""
     try:
         import streamlit as _st
-        _url = _st.secrets.get("SUPABASE_URL", "")
+        import datetime, urllib.request, json as _json
+        _url = _st.secrets.get("SUPABASE_URL", "").rstrip("/")
         _key = _st.secrets.get("SUPABASE_KEY", "")
         if not _url or not _key:
             return
-        from supabase import create_client
-        import datetime
-        _db = create_client(_url, _key)
-        _db.table("screening_logs").insert({
+        _payload = _json.dumps({
             "company": company,
             "phase": phase,
             "detail": detail,
             "timestamp": datetime.datetime.utcnow().isoformat(),
-        }).execute()
+        }).encode()
+        _req = urllib.request.Request(
+            f"{_url}/rest/v1/screening_logs",
+            data=_payload,
+            headers={
+                "apikey": _key,
+                "Authorization": f"Bearer {_key}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal",
+            },
+            method="POST",
+        )
+        urllib.request.urlopen(_req, timeout=3)
     except Exception:
         pass
 
