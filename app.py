@@ -9,77 +9,123 @@ _EXCEL_MODULES    = set()
 
 
 def _generate_single_xlsx(mod_key: str, mod_label: str, text: str, company: str) -> bytes:
-    """Génère un Excel simple (sans IA) depuis le markdown d'un module."""
+    """Génère un Excel lisible depuis le markdown d'un module."""
     import io, re as _re2
     from openpyxl import Workbook as _WB
     from openpyxl.styles import Font as _Font, PatternFill as _Fill, Alignment as _Align, Border as _Bdr, Side as _Side
+    from openpyxl.utils import get_column_letter as _gcl
 
     wb = _WB()
     ws = wb.active
     ws.title = mod_label[:31]
     ws.sheet_view.showGridLines = False
 
-    thin = _Side(style="thin", color="DDDDDD")
+    thin = _Side(style="thin", color="CCCCCC")
     bdr  = _Bdr(left=thin, right=thin, top=thin, bottom=thin)
 
     def _hcell(r, c, v):
         x = ws.cell(r, c, v)
-        x.font  = _Font(name="Arial", bold=True, color="FFFFFF", size=9)
-        x.fill  = _Fill("solid", fgColor="1F3864")
+        x.font      = _Font(name="Arial", bold=True, color="FFFFFF", size=9)
+        x.fill      = _Fill("solid", fgColor="1F3864")
         x.alignment = _Align(horizontal="center", vertical="center", wrap_text=True)
-        x.border = bdr
+        x.border    = bdr
     def _dcell(r, c, v, even=True):
         x = ws.cell(r, c, v)
-        x.font  = _Font(name="Arial", size=8, color="111111")
-        x.fill  = _Fill("solid", fgColor="F2F4F8" if even else "FFFFFF")
-        x.alignment = _Align(horizontal="left", vertical="center", wrap_text=True)
-        x.border = bdr
+        x.font      = _Font(name="Arial", size=9, color="111111")
+        x.fill      = _Fill("solid", fgColor="EEF2F8" if even else "FFFFFF")
+        x.alignment = _Align(horizontal="left", vertical="top", wrap_text=True)
+        x.border    = bdr
 
-    # En-tête classeur
+    # Titre classeur
     ws.merge_cells("A1:Z1")
     h = ws.cell(1, 1, f"{company} — {mod_label}")
-    h.font = _Font(name="Arial", bold=True, size=12, color="FFFFFF")
-    h.fill = _Fill("solid", fgColor="1F3864")
+    h.font      = _Font(name="Arial", bold=True, size=12, color="FFFFFF")
+    h.fill      = _Fill("solid", fgColor="1F3864")
     h.alignment = _Align(horizontal="left", vertical="center", indent=1)
-    ws.row_dimensions[1].height = 24
+    ws.row_dimensions[1].height = 28
 
-    # Parser le tableau Markdown
+    # Découper le texte en blocs de tableau Markdown séparés
     lines = [l.strip() for l in text.split("\n")]
-    table_lines = [l for l in lines if l.startswith("|")]
-    
-    if table_lines:
+    tables = []
+    buf_t = []
+    for line in lines:
+        if line.startswith("|"):
+            buf_t.append(line)
+        else:
+            if buf_t:
+                tables.append(buf_t)
+                buf_t = []
+    if buf_t:
+        tables.append(buf_t)
+
+    if tables:
         row_idx = 3
-        is_header = True
-        for line in table_lines:
-            if _re2.match(r"^[|][-| :]+[|]$", line):
+        for t_idx, tlines in enumerate(tables):
+            # Séparer header et lignes de données
+            header = None
+            data   = []
+            for line in tlines:
+                if _re2.match(r"^\|[-| :]+\|$", line):
+                    continue
+                cells = [c.strip() for c in line.strip("|").split("|")]
+                if header is None:
+                    header = cells
+                else:
+                    data.append(cells)
+            if not header:
                 continue
-            cells = [c.strip() for c in line.strip("|").split("|")]
-            if is_header:
-                for ci, val in enumerate(cells, start=1):
-                    _hcell(row_idx, ci, val)
-                    ws.column_dimensions[chr(64+ci)].width = max(12, min(40, len(val)+4))
-                ws.row_dimensions[row_idx].height = 22
-                is_header = False
-            else:
-                for ci, val in enumerate(cells, start=1):
-                    _dcell(row_idx, ci, val, even=row_idx % 2 == 0)
-                ws.row_dimensions[row_idx].height = 32
+
+            # Calcul des largeurs : max(header_len, contenu réel), borné 20–65
+            col_w = {ci: len(v) + 2 for ci, v in enumerate(header, 1)}
+            for row in data:
+                for ci, v in enumerate(row, 1):
+                    col_w[ci] = max(col_w.get(ci, 10), min(len(v), 65))
+            for ci in col_w:
+                col_w[ci] = max(20, min(65, col_w[ci]))
+
+            # Espace entre tableaux
+            if t_idx > 0:
+                row_idx += 2
+
+            # Ligne header
+            for ci, v in enumerate(header, 1):
+                _hcell(row_idx, ci, v)
+                ws.column_dimensions[_gcl(ci)].width = col_w[ci]
+            ws.row_dimensions[row_idx].height = 28
             row_idx += 1
+
+            # Lignes de données avec hauteur dynamique
+            for dr, row in enumerate(data):
+                max_lines = 1
+                for ci, v in enumerate(row, 1):
+                    w = col_w.get(ci, 20)
+                    chars_per_line = max(10, int(w * 1.6))
+                    est = max(1, (len(v) + chars_per_line - 1) // chars_per_line)
+                    max_lines = max(max_lines, est)
+                row_h = max(22, min(160, max_lines * 16 + 6))
+
+                for ci, v in enumerate(row, 1):
+                    _dcell(row_idx, ci, v, even=dr % 2 == 0)
+                ws.row_dimensions[row_idx].height = row_h
+                row_idx += 1
     else:
-        # Pas de tableau — écrire le texte brut ligne par ligne
+        # Pas de tableau — texte brut ligne par ligne
+        ws.column_dimensions["A"].width = 90
         row_idx = 3
         for line in lines:
-            if line:
-                ws.merge_cells(start_row=row_idx, start_column=1, end_row=row_idx, end_column=6)
-                x = ws.cell(row_idx, 1, line)
-                x.font = _Font(name="Arial", size=8)
-                x.alignment = _Align(wrap_text=True)
-                ws.row_dimensions[row_idx].height = 18
-                row_idx += 1
+            if not line:
+                continue
+            ws.merge_cells(start_row=row_idx, start_column=1, end_row=row_idx, end_column=8)
+            x = ws.cell(row_idx, 1, line)
+            x.font      = _Font(name="Arial", size=9)
+            x.alignment = _Align(wrap_text=True, vertical="top")
+            est_lines = max(1, len(line) // 110)
+            ws.row_dimensions[row_idx].height = max(18, est_lines * 16 + 6)
+            row_idx += 1
 
-    buf = io.BytesIO()
-    wb.save(buf)
-    return buf.getvalue()
+    out = io.BytesIO()
+    wb.save(out)
+    return out.getvalue()
 
 
 def _render_question_cards(step_key: str, step_info: dict, company: str):
