@@ -303,7 +303,6 @@ def _log_screening(company: str, phase: str, detail: str = ""):
         _url = _st.secrets.get("SUPABASE_URL", "").rstrip("/")
         _key = _st.secrets.get("SUPABASE_KEY", "")
         if not _url or not _key:
-            _st.sidebar.warning(f"[LOG] clés manquantes — URL={bool(_url)} KEY={bool(_key)}")
             return
         _payload = _json.dumps({
             "company": company,
@@ -323,9 +322,8 @@ def _log_screening(company: str, phase: str, detail: str = ""):
             method="POST",
         )
         urllib.request.urlopen(_req, timeout=3)
-    except Exception as _e:
-        import streamlit as _st2
-        _st2.sidebar.error(f"[LOG ERR] {_e}")
+    except Exception:
+        pass
 
 st.set_page_config(
     page_title="Screening M&A",
@@ -972,7 +970,7 @@ if st.session_state.screen == 1:
         unsafe_allow_html=True,
     )
 
-    tab_standard, tab_mission = st.tabs(["🔍 Analyses rapides", "💼 Screening Buy Side"])
+    tab_standard, tab_mission, tab_sell = st.tabs(["🔍 Analyses rapides", "💼 Screening Buy Side", "📋 Sell Side"])
 
     # ── TAB 2 : Screening Buy Side ────────────────────────────────────────────────
     with tab_mission:
@@ -1172,6 +1170,51 @@ if st.session_state.screen == 1:
             if doc_texts:
                 combined_context = combined_context + "".join(doc_texts)
             st.session_state.context = combined_context
+
+    # ── TAB 3 : Sell Side ─────────────────────────────────────────────────
+    with tab_sell:
+        st.markdown(
+            '<p style="font-size:0.82rem;color:#9CA3AF;margin-bottom:6px;font-weight:600;'
+            'text-transform:uppercase;letter-spacing:0.06em;">Société à céder</p>',
+            unsafe_allow_html=True,
+        )
+        with st.form("ss_start_form", border=False):
+            ss_company_input = st.text_input(
+                "Société",
+                placeholder="Ex : Koki, MedSoft...",
+                label_visibility="collapsed",
+                key="ss_company_input",
+            )
+            st.markdown(
+                '<p style="font-size:0.82rem;color:#9CA3AF;margin-top:10px;margin-bottom:4px;'
+                'font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">'
+                'Filiale / entité secondaire <span style="font-weight:400;text-transform:none;'
+                'letter-spacing:0;font-size:0.75rem;">— facultatif</span></p>',
+                unsafe_allow_html=True,
+            )
+            ss_subsidiary_input = st.text_input(
+                "Filiale",
+                placeholder="Ex : Koki Diagnostics...",
+                label_visibility="collapsed",
+                key="ss_subsidiary_input",
+            )
+            ss_submitted = st.form_submit_button(
+                "Commencer la mission →", type="primary", use_container_width=True
+            )
+        if ss_submitted:
+            if not ss_company_input.strip():
+                st.warning("⚠️ Entrez le nom de la société à céder.")
+            elif not anthropic_key:
+                st.error("🔑 Clé API manquante.")
+            else:
+                for k in list(st.session_state.keys()):
+                    if k.startswith("ss_"):
+                        del st.session_state[k]
+                st.session_state.ss_company    = ss_company_input.strip()
+                st.session_state.ss_subsidiary = ss_subsidiary_input.strip()
+                st.session_state.ss_phase      = "upload_entretien"
+                st.session_state.screen        = 5
+                st.rerun()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2451,4 +2494,476 @@ elif st.session_state.screen == 4:
         st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
         if st.button("🔄 Recommencer la mission", use_container_width=True):
             _s4_quit()
+            st.rerun()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SCREEN 5 — MISSION SELL SIDE
+# ══════════════════════════════════════════════════════════════════════════════
+elif st.session_state.screen == 5:
+    import time as _time5
+    from sell_side_agent import run_sell_side_module, MODULE_LABELS, MODULE_ESTIMATED_SECONDS
+
+    ss_company    = st.session_state.get("ss_company", "")
+    ss_subsidiary = st.session_state.get("ss_subsidiary", "")
+    ss_phase      = st.session_state.get("ss_phase", "upload_entretien")
+
+    os.environ["ANTHROPIC_API_KEY"] = anthropic_key
+
+    def _s5_quit():
+        for k in list(st.session_state.keys()):
+            if k.startswith("ss_"):
+                del st.session_state[k]
+        st.session_state.screen = 1
+
+    # ── En-tête ─────────────────────────────────────────────────────────────
+    hdr_col5, quit_col5 = st.columns([7, 1])
+    with hdr_col5:
+        sub_label = f" · {ss_subsidiary}" if ss_subsidiary else ""
+        st.markdown(
+            f'<div style="font-size:1.05rem;font-weight:700;margin-bottom:2px;">{ss_company}{sub_label}</div>'
+            f'<div style="font-size:0.78rem;color:#777777;margin-bottom:6px;">Mission Sell Side</div>',
+            unsafe_allow_html=True,
+        )
+    with quit_col5:
+        if st.button("✕ Quitter", use_container_width=True, key="s5_quit"):
+            _s5_quit()
+            st.rerun()
+
+    st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+
+    # ── Helper : widget de progression ──────────────────────────────────────
+    def _s5_progress_widget(ph, mod_key: str, elapsed: float, text_preview: str = ""):
+        estimated = MODULE_ESTIMATED_SECONDS.get(mod_key, 120)
+        m_el, s_el = divmod(int(elapsed), 60)
+        elapsed_str = f"{m_el}:{s_el:02d}"
+        remaining = max(0, estimated - elapsed)
+        m_re, s_re = divmod(int(remaining), 60)
+        if remaining <= 0:
+            rem_str   = "Finalisation..."
+            rem_color = "#333333"
+        else:
+            rem_str   = f"{m_re}:{s_re:02d}"
+            rem_color = "#333333" if remaining > 60 else "#E67E22"
+        pct_bar = min(97, int(elapsed / estimated * 100)) if estimated else 50
+
+        preview_html = ""
+        if text_preview:
+            preview_html = (
+                '<div style="margin-top:12px;background:#FAFAFA;border:1px solid #E0E0E0;'
+                'border-radius:8px;padding:12px 16px;max-height:160px;overflow-y:auto;'
+                'font-size:0.82rem;line-height:1.7;color:#333333;">'
+                + text_preview[-800:].replace("\n", "<br>") +
+                '</div>'
+            )
+
+        ph.markdown(
+            f"""
+            <div class="progress-container">
+                <div class="progress-header">
+                    <div>
+                        <div class="progress-title">Progression de l'analyse</div>
+                        <div class="progress-company">{ss_company} &nbsp;·&nbsp; {MODULE_LABELS.get(mod_key, mod_key)}</div>
+                    </div>
+                </div>
+                <div style="background:#F5F5F5;border-radius:8px;padding:12px 18px;margin-bottom:12px;font-size:0.85rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="color:#555555;">⏱ Temps écoulé</span>
+                        <span style="color:#555555;">Temps restant</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <strong style="color:#111111;font-size:1.3rem;font-family:monospace;letter-spacing:1px;">{elapsed_str}</strong>
+                        <strong style="color:{rem_color};font-size:1.3rem;font-family:monospace;letter-spacing:1px;">{rem_str}</strong>
+                    </div>
+                </div>
+                <div style="background:#E5E5E5;border-radius:4px;height:6px;margin-bottom:18px;overflow:hidden;">
+                    <div style="background:#111111;width:{pct_bar}%;height:100%;border-radius:4px;transition:width 0.5s;"></div>
+                </div>
+                <div class="searching-label">
+                    <span class="pulse-dot"></span>
+                    L'agent rédige en temps réel...
+                </div>
+                {preview_html}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # ── Helper : lancer un module ────────────────────────────────────────────
+    def _run_s5_module(mod_key: str, input_data: str, next_phase: str, result_key: str):
+        ph5 = st.empty()
+        _s5_progress_widget(ph5, mod_key, 0)
+        start5 = _time5.time()
+        accumulated = [""]
+
+        def _on_text5(text):
+            accumulated[0] = text
+            _s5_progress_widget(ph5, mod_key, _time5.time() - start5, text)
+
+        try:
+            _log_screening(ss_company, f"run_{mod_key}", "")
+            result = run_sell_side_module(
+                module_key=mod_key,
+                company=ss_company,
+                subsidiary=ss_subsidiary,
+                input_data=input_data,
+                on_text=_on_text5,
+            )
+            st.session_state[result_key] = result
+            _log_screening(ss_company, f"done_{mod_key}", "")
+            st.session_state.ss_phase = next_phase
+            ph5.empty()
+            st.rerun()
+        except Exception as _e5:
+            import traceback
+            ph5.empty()
+            st.error(f"❌ Erreur : {_e5}")
+            with st.expander("Détail"):
+                st.code(traceback.format_exc())
+
+    # ── Helper : carte de résultat ───────────────────────────────────────────
+    def _s5_result_card(label: str, text: str, card_key: str):
+        n_words = len(text.split())
+        with st.container(border=True):
+            st.markdown(
+                f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+                f'<span style="font-size:0.7rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;">{label}</span>'
+                f'<span style="font-size:0.72rem;color:#9CA3AF;">{n_words} mots</span></div>',
+                unsafe_allow_html=True,
+            )
+            _xlsx5 = _generate_single_xlsx(card_key, label, text, ss_company)
+            st.download_button(
+                "📥 Excel",
+                data=_xlsx5,
+                file_name=f"{ss_company.replace(' ', '_')}_{card_key}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                key=f"dl_s5_{card_key}",
+            )
+            with st.expander("Voir le résultat"):
+                st.markdown(text)
+
+    # ── Helper : extraction texte haute limite ───────────────────────────────
+    def _extract_raw(uf, max_chars: int = 50_000) -> str:
+        import io as _io5
+        fname = uf.name.lower()
+        raw = uf.read()
+        try:
+            if fname.endswith(".pdf"):
+                import pdfplumber as _pp
+                parts = []
+                with _pp.open(_io5.BytesIO(raw)) as _pdf:
+                    for _page in _pdf.pages:
+                        _t = _page.extract_text()
+                        if _t:
+                            parts.append(_t)
+                        if sum(len(p) for p in parts) >= max_chars:
+                            break
+                text = "\n\n".join(parts)
+            elif fname.endswith(".docx"):
+                from docx import Document as _Docx
+                _doc = _Docx(_io5.BytesIO(raw))
+                text = "\n\n".join(p.text for p in _doc.paragraphs if p.text.strip())
+            elif fname.endswith((".txt", ".md", ".csv")):
+                text = raw.decode("utf-8", errors="replace")
+            elif fname.endswith((".xlsx", ".xls")):
+                import openpyxl as _opx
+                _wb = _opx.load_workbook(_io5.BytesIO(raw), read_only=True, data_only=True)
+                rows = []
+                for _sh in _wb.worksheets:
+                    rows.append(f"[{_sh.title}]")
+                    for _row in _sh.iter_rows(values_only=True):
+                        _cells = [str(c) for c in _row if c is not None]
+                        if any(c.strip() for c in _cells):
+                            rows.append("\t".join(_cells))
+                text = "\n".join(rows)
+            else:
+                return f"[Format non supporté : {uf.name}]"
+            if len(text) > max_chars:
+                text = text[:max_chars] + f"\n\n[... tronqué à {max_chars} caractères]"
+            return text
+        except Exception as _ex5:
+            return f"[Erreur lecture {uf.name} : {_ex5}]"
+
+    # ── Helper : boutons satisfaction ────────────────────────────────────────
+    def _s5_satisfaction(yes_phase: str, no_phase: str, no_clears: list,
+                         yes_label: str = "✓ Oui — continuer",
+                         extra_buttons: list = None):
+        st.markdown(
+            '<div style="font-size:0.88rem;font-weight:600;margin:12px 0 6px;">Es-tu satisfait du résultat ?</div>',
+            unsafe_allow_html=True,
+        )
+        n_extra = len(extra_buttons) if extra_buttons else 0
+        cols = st.columns(2 + n_extra)
+        with cols[0]:
+            if st.button(yes_label, type="primary", use_container_width=True, key=f"s5_yes_{yes_phase}"):
+                st.session_state.ss_phase = yes_phase
+                st.rerun()
+        with cols[1]:
+            if st.button("↺ Non — relancer", use_container_width=True, key=f"s5_no_{no_phase}"):
+                for _k in no_clears:
+                    st.session_state.pop(_k, None)
+                st.session_state.ss_phase = no_phase
+                st.rerun()
+        if extra_buttons:
+            for i, (btn_label, btn_phase, btn_clears, btn_type) in enumerate(extra_buttons):
+                with cols[2 + i]:
+                    if st.button(btn_label, use_container_width=True,
+                                 key=f"s5_extra_{btn_phase}_{i}",
+                                 type=btn_type if btn_type else "secondary"):
+                        for _k in (btn_clears or []):
+                            st.session_state.pop(_k, None)
+                        st.session_state.ss_phase = btn_phase
+                        st.rerun()
+
+    # ────────────────────────────────────────────────────────────────────────
+    # PHASES
+    # ────────────────────────────────────────────────────────────────────────
+
+    # ── Phase : Upload transcription entretien ───────────────────────────────
+    if ss_phase == "upload_entretien":
+        _log_screening(ss_company, "sell_upload_entretien", "")
+        with st.container(border=True):
+            st.markdown(
+                '<div style="font-size:0.88rem;font-weight:700;color:#111111;margin-bottom:4px;">'
+                '① Transcription de l\'entretien de management</div>'
+                '<div style="font-size:0.82rem;color:#6B7280;margin-bottom:14px;">'
+                'Importez la retranscription de l\'entretien avec les dirigeants (PDF, DOCX ou TXT).</div>',
+                unsafe_allow_html=True,
+            )
+            entretien_files = st.file_uploader(
+                "Transcription",
+                type=["pdf", "docx", "txt", "md"],
+                accept_multiple_files=True,
+                label_visibility="collapsed",
+                key="s5_entretien_upload",
+            )
+            st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+            if st.button("Lancer le rapport d'entretien →", type="primary",
+                         use_container_width=True, disabled=not entretien_files,
+                         key="s5_entretien_go"):
+                texts = []
+                for uf in entretien_files:
+                    texts.append(f"--- {uf.name} ---\n{_extract_raw(uf)}")
+                st.session_state["ss_entretien_docs_text"] = "\n\n".join(texts)
+                st.session_state.ss_phase = "run_entretien"
+                st.rerun()
+
+    # ── Phase : Lancer module 01 ─────────────────────────────────────────────
+    elif ss_phase == "run_entretien":
+        _run_s5_module(
+            "sell_01_rapport_entretien",
+            input_data=st.session_state.get("ss_entretien_docs_text", ""),
+            next_phase="check_entretien",
+            result_key="ss_result_entretien",
+        )
+
+    # ── Phase : Satisfaction module 01 ───────────────────────────────────────
+    elif ss_phase == "check_entretien":
+        _log_screening(ss_company, "sell_check_entretien", "")
+        _s5_result_card("Rapport d'entretien", st.session_state.get("ss_result_entretien", ""), "entretien")
+        st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+        _s5_satisfaction(
+            yes_phase="run_plan",
+            no_phase="run_entretien",
+            no_clears=["ss_result_entretien"],
+            yes_label="✓ Oui — rédiger le Plan IM →",
+        )
+
+    # ── Phase : Lancer module 02 ─────────────────────────────────────────────
+    elif ss_phase == "run_plan":
+        entretien_result = st.session_state.get("ss_result_entretien", "")
+        _run_s5_module(
+            "sell_02_plan_im",
+            input_data=f"**Rapport d'entretien :**\n{entretien_result}",
+            next_phase="check_plan",
+            result_key="ss_result_plan",
+        )
+
+    # ── Phase : Satisfaction module 02 ───────────────────────────────────────
+    elif ss_phase == "check_plan":
+        _log_screening(ss_company, "sell_check_plan", "")
+        _s5_result_card("Plan de l'Information Memorandum", st.session_state.get("ss_result_plan", ""), "plan_im")
+        st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+        _s5_satisfaction(
+            yes_phase="upload_slides",
+            no_phase="run_plan",
+            no_clears=["ss_result_plan"],
+            yes_label="✓ Oui — rédiger les slides →",
+            extra_buttons=[
+                ("✓ Terminer sans slides", "done", [], None),
+            ],
+        )
+
+    # ── Phase : Upload docs pour slides ─────────────────────────────────────
+    elif ss_phase == "upload_slides":
+        _log_screening(ss_company, "sell_upload_slides", "")
+        with st.container(border=True):
+            st.markdown(
+                '<div style="font-size:0.88rem;font-weight:700;color:#111111;margin-bottom:4px;">'
+                '③ Rédaction des slides</div>'
+                '<div style="font-size:0.82rem;color:#6B7280;margin-bottom:14px;">'
+                'Importez les documents source (rapports, annexes…) et précisez les slides à rédiger.</div>',
+                unsafe_allow_html=True,
+            )
+            slides_files = st.file_uploader(
+                "Documents source",
+                type=["pdf", "docx", "txt", "md", "xlsx", "csv"],
+                accept_multiple_files=True,
+                label_visibility="collapsed",
+                key="s5_slides_upload",
+                help="Rapport annuel, annexes financières, pitch existant…",
+            )
+            st.markdown(
+                '<p style="font-size:0.82rem;color:#9CA3AF;margin:10px 0 4px;font-weight:600;'
+                'text-transform:uppercase;letter-spacing:0.06em;">Slides à rédiger</p>',
+                unsafe_allow_html=True,
+            )
+            slides_selection = st.text_area(
+                "Slides",
+                placeholder="Ex : Section 1 — Présentation du groupe (slides 1-8)\nSection 2 — Marché et positionnement (slides 9-16)",
+                label_visibility="collapsed",
+                height=120,
+                key="s5_slides_selection",
+            )
+            st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+            if st.button("Lancer la rédaction →", type="primary",
+                         use_container_width=True,
+                         key="s5_slides_go"):
+                docs_parts = []
+                if slides_files:
+                    for uf in slides_files:
+                        docs_parts.append(f"--- {uf.name} ---\n{_extract_raw(uf)}")
+                st.session_state["ss_slides_docs_text"] = "\n\n".join(docs_parts)
+                st.session_state["ss_slides_selection"] = slides_selection
+                st.session_state.ss_phase = "run_slides"
+                st.rerun()
+
+    # ── Phase : Lancer module 03 ─────────────────────────────────────────────
+    elif ss_phase == "run_slides":
+        plan_result = st.session_state.get("ss_result_plan", "")
+        docs_text   = st.session_state.get("ss_slides_docs_text", "")
+        selection   = st.session_state.get("ss_slides_selection", "")
+        input_parts = []
+        if plan_result:
+            input_parts.append(f"**Plan IM validé :**\n{plan_result}")
+        if selection:
+            input_parts.append(f"**Slides à rédiger :**\n{selection}")
+        if docs_text:
+            input_parts.append(f"**Documents source :**\n{docs_text}")
+        _run_s5_module(
+            "sell_03_redaction_slides",
+            input_data="\n\n".join(input_parts),
+            next_phase="check_slides",
+            result_key="ss_result_slides",
+        )
+
+    # ── Phase : Satisfaction module 03 ───────────────────────────────────────
+    elif ss_phase == "check_slides":
+        _log_screening(ss_company, "sell_check_slides", "")
+        _s5_result_card("Rédaction des slides", st.session_state.get("ss_result_slides", ""), "slides")
+        st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+        _s5_satisfaction(
+            yes_phase="done",
+            no_phase="run_slides",
+            no_clears=["ss_result_slides"],
+            yes_label="✓ Terminer la mission",
+            extra_buttons=[
+                ("✎ Reformuler un passage", "upload_reformulation", [], None),
+            ],
+        )
+
+    # ── Phase : Reformulation — saisie du passage ───────────────────────────
+    elif ss_phase == "upload_reformulation":
+        _log_screening(ss_company, "sell_upload_reformulation", "")
+        with st.container(border=True):
+            st.markdown(
+                '<div style="font-size:0.88rem;font-weight:700;color:#111111;margin-bottom:4px;">'
+                '④ Reformulation</div>'
+                '<div style="font-size:0.82rem;color:#6B7280;margin-bottom:14px;">'
+                'Collez le passage à reformuler et précisez vos instructions.</div>',
+                unsafe_allow_html=True,
+            )
+            refo_text = st.text_area(
+                "Passage à reformuler",
+                placeholder="Collez ici le texte à reformuler…",
+                label_visibility="collapsed",
+                height=160,
+                key="s5_refo_text",
+            )
+            refo_instructions = st.text_input(
+                "Instructions",
+                placeholder="Ex : Rendre plus commercial, moins technique, plus concis…",
+                label_visibility="collapsed",
+                key="s5_refo_instructions",
+            )
+            refo_files = st.file_uploader(
+                "Documents complémentaires",
+                type=["pdf", "docx", "txt", "md"],
+                accept_multiple_files=True,
+                label_visibility="collapsed",
+                key="s5_refo_upload",
+                help="Facultatif — pour enrichir le contexte.",
+            )
+            st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+            if st.button("Lancer la reformulation →", type="primary",
+                         use_container_width=True, disabled=not refo_text.strip(),
+                         key="s5_refo_go"):
+                docs_parts = []
+                if refo_files:
+                    for uf in refo_files:
+                        docs_parts.append(f"--- {uf.name} ---\n{_extract_raw(uf)}")
+                input_parts = [f"**Passage à reformuler :**\n{refo_text}"]
+                if refo_instructions:
+                    input_parts.append(f"**Instructions :** {refo_instructions}")
+                if docs_parts:
+                    input_parts.append("**Documents :**\n" + "\n\n".join(docs_parts))
+                st.session_state["ss_refo_input"] = "\n\n".join(input_parts)
+                st.session_state.ss_phase = "run_reformulation"
+                st.rerun()
+
+    # ── Phase : Lancer module 04 ─────────────────────────────────────────────
+    elif ss_phase == "run_reformulation":
+        _run_s5_module(
+            "sell_04_reformulation",
+            input_data=st.session_state.get("ss_refo_input", ""),
+            next_phase="check_reformulation",
+            result_key="ss_result_reformulation",
+        )
+
+    # ── Phase : Satisfaction module 04 ───────────────────────────────────────
+    elif ss_phase == "check_reformulation":
+        _log_screening(ss_company, "sell_check_reformulation", "")
+        _s5_result_card("Reformulation", st.session_state.get("ss_result_reformulation", ""), "reformulation")
+        st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+        _s5_satisfaction(
+            yes_phase="done",
+            no_phase="run_reformulation",
+            no_clears=["ss_result_reformulation"],
+            yes_label="✓ Terminer la mission",
+            extra_buttons=[
+                ("↺ Nouveau passage", "upload_reformulation", ["ss_result_reformulation", "ss_refo_input"], None),
+            ],
+        )
+
+    # ── Phase : Done ─────────────────────────────────────────────────────────
+    elif ss_phase == "done":
+        _log_screening(ss_company, "sell_done", "mission terminee")
+        st.markdown(
+            '<div style="font-size:0.88rem;font-weight:700;color:#065F46;margin-bottom:12px;">✓ Mission Sell Side terminée</div>',
+            unsafe_allow_html=True,
+        )
+        for _res_key, _res_label, _card_key in [
+            ("ss_result_entretien",    "Rapport d'entretien",             "entretien_done"),
+            ("ss_result_plan",         "Plan de l'Information Memorandum", "plan_im_done"),
+            ("ss_result_slides",       "Rédaction des slides",             "slides_done"),
+            ("ss_result_reformulation","Reformulation",                    "reformulation_done"),
+        ]:
+            _txt = st.session_state.get(_res_key, "")
+            if _txt:
+                _s5_result_card(_res_label, _txt, _card_key)
+                st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+
+        st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+        if st.button("🔄 Recommencer la mission", use_container_width=True, key="s5_restart"):
+            _s5_quit()
             st.rerun()
