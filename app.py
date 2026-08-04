@@ -2906,12 +2906,74 @@ elif st.session_state.screen == 5:
     # ── Phase : Satisfaction module 03 ───────────────────────────────────────
     elif ss_phase == "check_slides":
         _log_screening(ss_company, "sell_check_slides", "")
-        _s5_result_card("Rédaction des slides", st.session_state.get("ss_result_slides", ""), "slides")
+        slides_result = st.session_state.get("ss_result_slides", "")
+
+        # ── Générer le PPTX depuis le code produit par l'IA ─────────────────
+        def _build_pptx(code_response: str) -> bytes:
+            import re as _re_pptx, tempfile as _tmp, subprocess as _sub, os as _os5
+            m = _re_pptx.search(r"```python\s*(.*?)\s*```", code_response, _re_pptx.DOTALL)
+            code = m.group(1) if m else code_response
+            with _tmp.TemporaryDirectory() as _td:
+                _out = _os5.path.join(_td, "result.pptx")
+                # Forcer le chemin de sauvegarde
+                code = _re_pptx.sub(
+                    r'prs\.save\(["\'][^"\']*["\']\)',
+                    f'prs.save(r"{_out}")',
+                    code,
+                )
+                _script = _os5.path.join(_td, "gen.py")
+                with open(_script, "w", encoding="utf-8") as _f:
+                    _f.write(code)
+                _proc = _sub.run(
+                    ["python3", _script],
+                    capture_output=True, text=True, timeout=120, cwd=_td,
+                )
+                if _proc.returncode != 0:
+                    raise RuntimeError(_proc.stderr or "Erreur inconnue")
+                if not _os5.path.exists(_out):
+                    raise FileNotFoundError("Fichier PPTX non généré")
+                with open(_out, "rb") as _f:
+                    return _f.read()
+
+        with st.container(border=True):
+            st.markdown(
+                '<div style="font-size:0.7rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;'
+                'letter-spacing:0.08em;margin-bottom:10px;">Présentation PowerPoint</div>',
+                unsafe_allow_html=True,
+            )
+            if "ss_pptx_bytes" not in st.session_state:
+                with st.spinner("Génération du fichier PowerPoint…"):
+                    try:
+                        st.session_state["ss_pptx_bytes"] = _build_pptx(slides_result)
+                        st.session_state["ss_pptx_error"] = None
+                    except Exception as _ep:
+                        st.session_state["ss_pptx_bytes"] = None
+                        st.session_state["ss_pptx_error"] = str(_ep)
+
+            _pptx_bytes = st.session_state.get("ss_pptx_bytes")
+            _pptx_error = st.session_state.get("ss_pptx_error")
+
+            if _pptx_bytes:
+                _fname_pptx = f"{ss_company.replace(' ', '_')}_IM.pptx"
+                st.download_button(
+                    "📥 Télécharger la présentation PowerPoint",
+                    data=_pptx_bytes,
+                    file_name=_fname_pptx,
+                    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                    type="primary",
+                    use_container_width=True,
+                    key="dl_s5_pptx",
+                )
+            elif _pptx_error:
+                st.error(f"❌ Génération PPTX échouée : {_pptx_error}")
+                with st.expander("Voir la réponse brute"):
+                    st.code(slides_result[:3000])
+
         st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
         _s5_satisfaction(
             yes_phase="done",
             no_phase="run_slides",
-            no_clears=["ss_result_slides"],
+            no_clears=["ss_result_slides", "ss_pptx_bytes", "ss_pptx_error"],
             yes_label="✓ Terminer la mission",
             extra_buttons=[
                 ("✎ Reformuler un passage", "upload_reformulation", [], None),
@@ -3001,13 +3063,35 @@ elif st.session_state.screen == 5:
         for _res_key, _res_label, _card_key in [
             ("ss_result_entretien",    "Rapport d'entretien",             "entretien_done"),
             ("ss_result_plan",         "Plan de l'Information Memorandum", "plan_im_done"),
-            ("ss_result_slides",       "Rédaction des slides",             "slides_done"),
             ("ss_result_reformulation","Reformulation",                    "reformulation_done"),
         ]:
             _txt = st.session_state.get(_res_key, "")
             if _txt:
                 _s5_result_card(_res_label, _txt, _card_key)
                 st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+
+        # Slides → PPTX si disponible
+        _pptx_done = st.session_state.get("ss_pptx_bytes")
+        if _pptx_done:
+            with st.container(border=True):
+                st.markdown(
+                    '<div style="font-size:0.7rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;'
+                    'letter-spacing:0.08em;margin-bottom:10px;">Présentation PowerPoint</div>',
+                    unsafe_allow_html=True,
+                )
+                st.download_button(
+                    "📥 Télécharger la présentation PowerPoint",
+                    data=_pptx_done,
+                    file_name=f"{ss_company.replace(' ', '_')}_IM.pptx",
+                    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                    type="primary",
+                    use_container_width=True,
+                    key="dl_s5_pptx_done",
+                )
+            st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+        elif st.session_state.get("ss_result_slides"):
+            _s5_result_card("Rédaction des slides", st.session_state["ss_result_slides"], "slides_done")
+            st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
 
         st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
         if st.button("🔄 Recommencer la mission", use_container_width=True, key="s5_restart"):
