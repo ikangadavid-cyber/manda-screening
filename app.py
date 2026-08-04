@@ -961,6 +961,7 @@ with st.sidebar:
 # SCREEN 1 — INPUT
 # ══════════════════════════════════════════════════════════════════════════════
 if st.session_state.screen == 1:
+    _log_screening("__app__", "page_view", "ouverture app")
 
     st.markdown(
         '<div class="main-title">Screening <span>M&A</span></div>',
