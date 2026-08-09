@@ -2555,37 +2555,136 @@ elif st.session_state.screen == 4:
             _result_card(_ck, f"Cibles — {_cat}", _txt)
             st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
 
-        # Export global
-        if result_v or result_h or cibles_results:
+        # ── Export global — classeur multi-onglets ──────────────────────────
+        _sheets = []
+        if result_v:
+            _sheets.append(("Mapping V", result_v))
+        if result_h:
+            _sheets.append(("Mapping H", result_h))
+        for _cat, _txt in cibles_results.items():
+            _sheets.append((f"Cibles {_cat[:20]}", _txt))
+
+        if _sheets:
             st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
             with st.container(border=True):
                 st.markdown(
                     '<div style="font-size:0.95rem;font-weight:700;color:#111111;margin-bottom:4px;">📥 Rapport complet</div>'
-                    '<div style="font-size:0.82rem;color:#6B7280;margin-bottom:12px;">Tous les résultats dans un seul fichier Excel</div>',
+                    '<div style="font-size:0.82rem;color:#6B7280;margin-bottom:12px;">'
+                    f'Tous les résultats en un seul fichier Excel ({len(_sheets)} onglet{"s" if len(_sheets)>1 else ""})</div>',
                     unsafe_allow_html=True,
                 )
-                try:
-                    from export_ma_xlsx import generate_ma_xlsx
-                    _all_cibles = "\n\n".join(
-                        f"## {_c}\n{_t}" for _c, _t in cibles_results.items()
-                    ) if cibles_results else ""
-                    _xlsx_global = generate_ma_xlsx(
-                        company=ma_company,
-                        text_v=result_v,
-                        text_h=result_h,
-                        text_cibles=_all_cibles,
-                    )
-                    _fname_g = f"screening_{ma_company.replace(' ', '_').lower()}.xlsx"
-                    st.download_button(
-                        "📥 Télécharger en Excel",
-                        data=_xlsx_global,
-                        file_name=_fname_g,
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        use_container_width=True,
-                        type="primary",
-                    )
-                except Exception as _xe:
-                    st.warning(f"Export Excel indisponible : {_xe}")
+                import io as _io4, re as _re4b
+                from openpyxl import Workbook as _WB4
+                from openpyxl.styles import (Font as _F4, PatternFill as _P4,
+                                              Alignment as _A4, Border as _B4, Side as _S4)
+                from openpyxl.utils import get_column_letter as _gcl4
+
+                _wb4 = _WB4()
+                _wb4.remove(_wb4.active)
+
+                _thin4 = _S4(style="thin", color="CCCCCC")
+                _bdr4  = _B4(left=_thin4, right=_thin4, top=_thin4, bottom=_thin4)
+
+                def _add_sheet(title, text):
+                    _ws = _wb4.create_sheet(title[:31])
+                    _ws.sheet_view.showGridLines = False
+
+                    def _hc(r, c, v):
+                        x = _ws.cell(r, c, v)
+                        x.font      = _F4(name="Arial", bold=True, color="FFFFFF", size=10)
+                        x.fill      = _P4("solid", fgColor="1F3864")
+                        x.alignment = _A4(horizontal="center", vertical="center", wrap_text=True)
+                        x.border    = _bdr4
+                    def _dc(r, c, v, even=True):
+                        x = _ws.cell(r, c, v)
+                        x.font      = _F4(name="Arial", size=10, color="111111")
+                        x.fill      = _P4("solid", fgColor="EEF2F8" if even else "FFFFFF")
+                        x.alignment = _A4(horizontal="left", vertical="top", wrap_text=True)
+                        x.border    = _bdr4
+
+                    # Titre
+                    _ws.merge_cells("A1:Z1")
+                    _th = _ws.cell(1, 1, f"{ma_company} — {title}")
+                    _th.font      = _F4(name="Arial", bold=True, size=13, color="FFFFFF")
+                    _th.fill      = _P4("solid", fgColor="1F3864")
+                    _th.alignment = _A4(horizontal="left", vertical="center", indent=1)
+                    _ws.row_dimensions[1].height = 28
+
+                    # Parser les tableaux
+                    _lines = [l.strip() for l in text.split("\n")]
+                    _tables, _buf = [], []
+                    for _l in _lines:
+                        if _l.startswith("|"):
+                            _buf.append(_l)
+                        else:
+                            if _buf:
+                                _tables.append(_buf); _buf = []
+                    if _buf:
+                        _tables.append(_buf)
+
+                    if _tables:
+                        _ri = 3
+                        for _ti, _tl in enumerate(_tables):
+                            _hrow, _drows = None, []
+                            for _l in _tl:
+                                if _re4b.match(r"^\|[-| :]+\|$", _l):
+                                    continue
+                                _cells = [c.strip() for c in _l.strip("|").split("|")]
+                                if _hrow is None:
+                                    _hrow = _cells
+                                else:
+                                    _drows.append(_cells)
+                            if not _hrow:
+                                continue
+                            _cw = {ci: len(v)+2 for ci, v in enumerate(_hrow, 1)}
+                            for _row in _drows:
+                                for ci, v in enumerate(_row, 1):
+                                    _cw[ci] = max(_cw.get(ci, 10), min(len(v), 65))
+                            for ci in _cw:
+                                _cw[ci] = max(20, min(65, _cw[ci]))
+                            if _ti > 0:
+                                _ri += 2
+                            for ci, v in enumerate(_hrow, 1):
+                                _hc(_ri, ci, v)
+                                _ws.column_dimensions[_gcl4(ci)].width = _cw[ci]
+                            _ws.row_dimensions[_ri].height = 28
+                            _ri += 1
+                            for dr, _row in enumerate(_drows):
+                                _ml = 1
+                                for ci, v in enumerate(_row, 1):
+                                    _cpp = max(10, int(_cw.get(ci, 20) * 1.6))
+                                    _ml = max(_ml, max(1, (len(v)+_cpp-1)//_cpp))
+                                _ws.row_dimensions[_ri].height = max(22, min(160, _ml*16+6))
+                                for ci, v in enumerate(_row, 1):
+                                    _dc(_ri, ci, v, even=dr%2==0)
+                                _ri += 1
+                    else:
+                        _ws.column_dimensions["A"].width = 90
+                        _ri = 3
+                        for _l in _lines:
+                            if not _l:
+                                continue
+                            _ws.merge_cells(start_row=_ri, start_column=1, end_row=_ri, end_column=8)
+                            _x = _ws.cell(_ri, 1, _l)
+                            _x.font      = _F4(name="Arial", size=10)
+                            _x.alignment = _A4(wrap_text=True, vertical="top")
+                            _ws.row_dimensions[_ri].height = max(18, max(1, len(_l)//110)*16+6)
+                            _ri += 1
+
+                for _sh_title, _sh_text in _sheets:
+                    _add_sheet(_sh_title, _sh_text)
+
+                _buf4 = _io4.BytesIO()
+                _wb4.save(_buf4)
+                _fname_g = f"screening_{ma_company.replace(' ', '_').lower()}.xlsx"
+                st.download_button(
+                    "📥 Télécharger le rapport complet",
+                    data=_buf4.getvalue(),
+                    file_name=_fname_g,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True,
+                    type="primary",
+                )
 
         st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
         if st.button("🔄 Recommencer la mission", use_container_width=True):
