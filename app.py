@@ -25,13 +25,13 @@ def _generate_single_xlsx(mod_key: str, mod_label: str, text: str, company: str)
 
     def _hcell(r, c, v):
         x = ws.cell(r, c, v)
-        x.font      = _Font(name="Arial", bold=True, color="FFFFFF", size=9)
+        x.font      = _Font(name="Arial", bold=True, color="FFFFFF", size=10)
         x.fill      = _Fill("solid", fgColor="1F3864")
         x.alignment = _Align(horizontal="center", vertical="center", wrap_text=True)
         x.border    = bdr
     def _dcell(r, c, v, even=True):
         x = ws.cell(r, c, v)
-        x.font      = _Font(name="Arial", size=9, color="111111")
+        x.font      = _Font(name="Arial", size=10, color="111111")
         x.fill      = _Fill("solid", fgColor="EEF2F8" if even else "FFFFFF")
         x.alignment = _Align(horizontal="left", vertical="top", wrap_text=True)
         x.border    = bdr
@@ -39,7 +39,7 @@ def _generate_single_xlsx(mod_key: str, mod_label: str, text: str, company: str)
     # Titre classeur
     ws.merge_cells("A1:Z1")
     h = ws.cell(1, 1, f"{company} — {mod_label}")
-    h.font      = _Font(name="Arial", bold=True, size=12, color="FFFFFF")
+    h.font      = _Font(name="Arial", bold=True, size=13, color="FFFFFF")
     h.fill      = _Fill("solid", fgColor="1F3864")
     h.alignment = _Align(horizontal="left", vertical="center", indent=1)
     ws.row_dimensions[1].height = 28
@@ -2060,23 +2060,66 @@ elif st.session_state.screen == 4:
     st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
 
     # ── Helpers ────────────────────────────────────────────────────────────
+    _S4_ESTIMATED = {
+        "buy_01_carto_verticale":   300,
+        "buy_02_carto_horizontale": 240,
+        "buy_03_recherche_cibles":  360,
+    }
+
     def _run_module_s4(mod_key, mod_input, mod_label, next_phase, variables):
-        """Lance un module, sauvegarde le résultat, bascule la phase."""
-        out_ph = st.empty()
-        st.markdown(
-            f'<div style="border:1px solid #CCCCCC;border-radius:10px;background:#FFFFFF;'
-            f'padding:14px 20px;font-size:0.88rem;font-weight:600;color:#111111;">'
-            f'⏳ &nbsp;{mod_label} en cours…</div>',
-            unsafe_allow_html=True,
-        )
-        def _on_text(text, _ph=out_ph):
-            _ph.markdown(
-                '<div style="border:1px solid #E0E0E0;border-radius:10px;background:#FAFAFA;'
-                'padding:16px 20px;max-height:260px;overflow-y:auto;'
-                'font-size:0.87rem;line-height:1.8;color:#333333;">'
-                + text[:4000].replace("\n", "<br>") + '</div>',
+        """Lance un module avec widget de progression, sauvegarde le résultat, bascule la phase."""
+        import time as _t4
+        _ph4   = st.empty()
+        _est4  = _S4_ESTIMATED.get(mod_key, 240)
+        _start = _t4.time()
+
+        def _render_s4_prog(elapsed, preview=""):
+            m_el, s_el = divmod(int(elapsed), 60)
+            elapsed_str = f"{m_el}:{s_el:02d}"
+            remaining = max(0, _est4 - elapsed)
+            m_re, s_re = divmod(int(remaining), 60)
+            if remaining <= 0:
+                rem_str, rem_color = "Finalisation...", "#333333"
+            else:
+                rem_str = f"{m_re}:{s_re:02d}"
+                rem_color = "#333333" if remaining > 60 else "#E67E22"
+            pct = min(97, int(elapsed / _est4 * 100)) if _est4 else 50
+            prev_html = (
+                '<div style="margin-top:12px;background:#FAFAFA;border:1px solid #E0E0E0;'
+                'border-radius:8px;padding:12px 16px;max-height:160px;overflow-y:auto;'
+                'font-size:0.82rem;line-height:1.7;color:#333333;">'
+                + preview[-800:].replace("\n", "<br>") + '</div>'
+            ) if preview else ""
+            _ph4.markdown(
+                f"""<div class="progress-container">
+                <div class="progress-header"><div>
+                    <div class="progress-title">Progression de l'analyse</div>
+                    <div class="progress-company">{ma_company} &nbsp;·&nbsp; {mod_label}</div>
+                </div></div>
+                <div style="background:#F5F5F5;border-radius:8px;padding:12px 18px;margin-bottom:12px;font-size:0.85rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="color:#555555;">⏱ Temps écoulé</span>
+                        <span style="color:#555555;">Temps restant</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <strong style="color:#111111;font-size:1.3rem;font-family:monospace;letter-spacing:1px;">{elapsed_str}</strong>
+                        <strong style="color:{rem_color};font-size:1.3rem;font-family:monospace;letter-spacing:1px;">{rem_str}</strong>
+                    </div>
+                </div>
+                <div style="background:#E5E5E5;border-radius:4px;height:6px;margin-bottom:18px;overflow:hidden;">
+                    <div style="background:#111111;width:{pct}%;height:100%;border-radius:4px;transition:width 0.5s;"></div>
+                </div>
+                <div class="searching-label"><span class="pulse-dot"></span>L'agent effectue des recherches web en temps réel...</div>
+                {prev_html}
+                </div>""",
                 unsafe_allow_html=True,
             )
+
+        _render_s4_prog(0)
+
+        def _on_text(text):
+            _render_s4_prog(_t4.time() - _start, text)
+
         try:
             result = run_ma_module(
                 module_key=mod_key, company=ma_company, sector="",
@@ -2084,11 +2127,11 @@ elif st.session_state.screen == 4:
             )
             st.session_state[f"ma_result_{mod_key}"] = result
             st.session_state.ma_phase = next_phase
-            out_ph.empty()
+            _ph4.empty()
             st.rerun()
         except Exception as _e:
             import traceback
-            out_ph.empty()
+            _ph4.empty()
             st.error(f"❌ Erreur : {_e}")
             with st.expander("Détail"):
                 st.code(traceback.format_exc())
@@ -2416,6 +2459,13 @@ elif st.session_state.screen == 4:
             _cibles_parts.append(f"Entreprises à exclure :\n{variables['exclusions']}")
         if context_docs:
             _cibles_parts.append(context_docs)
+        _cibles_parts.append(
+            "\n\nCONSIGNE ABSOLUE : La liste doit contenir AU MINIMUM 30 sociétés distinctes. "
+            "Ne pas se limiter aux grands noms déjà connus des cabinets M&A. "
+            "Chercher aussi : acteurs régionaux, ETI moins médiatisées, filiales de groupes, "
+            "acteurs de niche, nouveaux entrants, sociétés peu référencées en ligne. "
+            "Le consultant complète ce que les écrans évidents ne montrent pas — exhaustivité et profondeur priment."
+        )
         _cibles_input = "\n".join(_cibles_parts)
 
         _vars_with_cat = {**variables, "categories": current_cat}
