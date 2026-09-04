@@ -1108,13 +1108,13 @@ if st.session_state.screen == 1:
         </div>
         """, unsafe_allow_html=True)
 
-        # Couleurs d'accent par livrable
+        # Couleurs d'accent par livrable — monochrome
         CARD_COLORS = {
-            "complet":   ("#333333", "#F5F5F5"),
-            "fiche":     ("#555555", "#F5F5F5"),
-            "benchmark": ("#A5614A", "#F8EEE8"),
+            "complet":   ("#111111", "#F5F5F5"),
+            "fiche":     ("#111111", "#F5F5F5"),
+            "benchmark": ("#111111", "#F5F5F5"),
             "manda":     ("#111111", "#F5F5F5"),
-            "geo":       ("#A5944A", "#F8F3E8"),
+            "geo":       ("#111111", "#F5F5F5"),
         }
 
         # 2x2 + 1 grid for deliverable cards
@@ -1312,7 +1312,7 @@ elif st.session_state.screen == 2:
                 rem_color = "#333333"
             else:
                 rem_str   = f"{m_re}:{s_re:02d}"
-                rem_color = "#333333" if remaining > 60 else "#E67E22"
+                rem_color = "#333333" if remaining > 60 else "#111111"
             pct_bar = min(97, int(elapsed / estimated * 100)) if estimated else 50
             timing_html = f"""
             <div style="background:#F5F5F5; border-radius:8px; padding:12px 18px; margin-bottom:12px; font-size:0.85rem;">
@@ -2082,7 +2082,7 @@ elif st.session_state.screen == 4:
                 rem_str, rem_color = "Finalisation...", "#333333"
             else:
                 rem_str = f"{m_re}:{s_re:02d}"
-                rem_color = "#333333" if remaining > 60 else "#E67E22"
+                rem_color = "#333333" if remaining > 60 else "#111111"
             pct = min(97, int(elapsed / _est4 * 100)) if _est4 else 50
             prev_html = (
                 '<div style="margin-top:12px;background:#FAFAFA;border:1px solid #E0E0E0;'
@@ -2739,7 +2739,7 @@ elif st.session_state.screen == 5:
             rem_color = "#333333"
         else:
             rem_str   = f"{m_re}:{s_re:02d}"
-            rem_color = "#333333" if remaining > 60 else "#E67E22"
+            rem_color = "#333333" if remaining > 60 else "#111111"
         pct_bar = min(97, int(elapsed / estimated * 100)) if estimated else 50
 
         preview_html = ""
