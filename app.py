@@ -1051,18 +1051,18 @@ if st.session_state.screen == 1:
         _buy_sel = _s1_selected == "buy"
         st.markdown(f"""
         <div style="
-            background:{'#EEF2FF' if _buy_sel else '#F0F4FF'};
-            border:2px solid {'#3B5BDB' if _buy_sel else '#3B5BDB30'};
-            border-left:4px solid #3B5BDB;
+            background:{'#F0F0F0' if _buy_sel else '#FAFAFA'};
+            border:1.5px solid {'#111111' if _buy_sel else '#E5E5E5'};
+            border-left:4px solid #111111;
             border-radius:12px;
             padding:18px 18px 12px;
             min-height:140px;
         ">
             <span style="font-size:1.4rem;">💼</span>
-            <div style="font-weight:700;color:#1E3A8A;font-size:0.96rem;margin:8px 0 5px;">
+            <div style="font-weight:700;color:#111111;font-size:0.96rem;margin:8px 0 5px;">
                 Screening Buy Side
             </div>
-            <div style="font-size:0.79rem;color:#4B5563;line-height:1.5;">
+            <div style="font-size:0.79rem;color:#6B7280;line-height:1.5;">
                 Identifiez des cibles d'acquisition pour votre client acquéreur.
                 Cartographie verticale, horizontale et liste de cibles qualifiées en 3 modules.
             </div>
@@ -1086,18 +1086,18 @@ if st.session_state.screen == 1:
         _sell_sel = _s1_selected == "sell"
         st.markdown(f"""
         <div style="
-            background:{'#ECFDF5' if _sell_sel else '#F0FFF8'};
-            border:2px solid {'#16A34A' if _sell_sel else '#16A34A30'};
-            border-left:4px solid #16A34A;
+            background:{'#F0F0F0' if _sell_sel else '#FAFAFA'};
+            border:1.5px solid {'#111111' if _sell_sel else '#E5E5E5'};
+            border-left:4px solid #111111;
             border-radius:12px;
             padding:18px 18px 12px;
             min-height:140px;
         ">
             <span style="font-size:1.4rem;">📋</span>
-            <div style="font-weight:700;color:#14532D;font-size:0.96rem;margin:8px 0 5px;">
+            <div style="font-weight:700;color:#111111;font-size:0.96rem;margin:8px 0 5px;">
                 Sell Side
             </div>
-            <div style="font-size:0.79rem;color:#4B5563;line-height:1.5;">
+            <div style="font-size:0.79rem;color:#6B7280;line-height:1.5;">
                 Préparez la cession d'une société : rapport d'entretien, plan de l'Information
                 Memorandum, rédaction des slides et reformulation finale.
             </div>
@@ -1126,32 +1126,24 @@ if st.session_state.screen == 1:
     </div>
     """, unsafe_allow_html=True)
 
-    _ANALYSIS_STYLE = {
-        "fiche":     ("#374151", "#F9FAFB", "#9CA3AF"),
-        "benchmark": ("#92400E", "#FFFBEB", "#D97706"),
-        "manda":     ("#1E3A5F", "#EFF6FF", "#3B82F6"),
-        "geo":       ("#14532D", "#F0FFF4", "#16A34A"),
-    }
-
     _col_a, _col_b = st.columns(2, gap="medium")
     _col_c, _col_d = st.columns(2, gap="medium")
     _analysis_cols = [_col_a, _col_b, _col_c, _col_d]
 
     for _idx, _deliv in enumerate(DELIVERABLES):
         _dk = _deliv["key"]
-        _color, _bg, _border = _ANALYSIS_STYLE.get(_dk, ("#374151", "#F9FAFB", "#9CA3AF"))
         _is_sel = _s1_selected == _dk
         with _analysis_cols[_idx]:
             st.markdown(f"""
             <div style="
-                background:{'#F3F4F6' if _is_sel else _bg};
-                border:2px solid {_border if _is_sel else _border + '40'};
-                border-left:4px solid {_border};
+                background:{'#F0F0F0' if _is_sel else '#FAFAFA'};
+                border:1.5px solid {'#111111' if _is_sel else '#E5E5E5'};
+                border-left:3px solid #555555;
                 border-radius:12px;
                 padding:15px 15px 10px;
             ">
                 <span style="font-size:1.25rem;">{_deliv['icon']}</span>
-                <div style="font-weight:700;color:{_color};font-size:0.90rem;margin:6px 0 4px;">
+                <div style="font-weight:700;color:#111111;font-size:0.90rem;margin:6px 0 4px;">
                     {_deliv['title']}
                 </div>
                 <div style="font-size:0.77rem;color:#6B7280;line-height:1.45;">
@@ -1216,19 +1208,19 @@ if st.session_state.screen == 1:
             _cname = company_input.strip() if company_input.strip() else "—"
             st.markdown(f"""
             <div style="
-                background:linear-gradient(135deg,#EFF6FF,#F0FFF4);
-                border:1.5px solid #3B5BDB50;
+                background:#F5F5F5;
+                border:1.5px solid #111111;
                 border-radius:12px;
                 padding:14px 18px 10px;
                 margin:14px 0 6px;
             ">
-                <div style="font-size:0.72rem;color:#6B7280;margin-bottom:3px;
+                <div style="font-size:0.72rem;color:#9CA3AF;margin-bottom:3px;
                             text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">
                     Outil sélectionné
                 </div>
-                <div style="font-weight:700;font-size:1rem;color:#1E3A8A;">{_lbl}</div>
-                <div style="font-size:0.85rem;color:#374151;margin-top:5px;">
-                    Entreprise : <strong>{_cname}</strong>
+                <div style="font-weight:700;font-size:1rem;color:#111111;">{_lbl}</div>
+                <div style="font-size:0.85rem;color:#6B7280;margin-top:5px;">
+                    Entreprise : <strong style="color:#111111;">{_cname}</strong>
                 </div>
             </div>
             """, unsafe_allow_html=True)
