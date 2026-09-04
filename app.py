@@ -1018,8 +1018,11 @@ if st.session_state.screen == 1:
 
     # ── Champ entreprise unique ─────────────────────────────────────────────
     st.markdown(
-        '<p style="font-size:0.82rem;color:#9CA3AF;margin:18px 0 6px;font-weight:600;'
-        'text-transform:uppercase;letter-spacing:0.06em;">Nom de l\'entreprise</p>',
+        '<link rel="preconnect" href="https://fonts.googleapis.com">'
+        '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">'
+        '<p style="font-size:0.72rem;color:#AAAAAA;margin:22px 0 7px;font-weight:600;'
+        'text-transform:uppercase;letter-spacing:0.12em;font-family:\'IBM Plex Sans\',system-ui,sans-serif;">'
+        'Entreprise</p>',
         unsafe_allow_html=True,
     )
     company_input = st.text_input(
@@ -1035,13 +1038,9 @@ if st.session_state.screen == 1:
 
     # ── SCREENINGS M&A ───────────────────────────────────────────────────────
     st.markdown("""
-    <div style="display:flex;align-items:center;gap:10px;margin:28px 0 14px;">
-        <div style="flex:1;height:1px;background:#E5E7EB;"></div>
-        <div style="font-size:0.70rem;font-weight:700;color:#9CA3AF;
-                    text-transform:uppercase;letter-spacing:0.12em;white-space:nowrap;">
-            Screenings M&A
-        </div>
-        <div style="flex:1;height:1px;background:#E5E7EB;"></div>
+    <div style="margin:32px 0 12px;font-family:'IBM Plex Sans',system-ui,sans-serif;">
+        <span style="font-size:0.68rem;font-weight:600;color:#AAAAAA;
+                     text-transform:uppercase;letter-spacing:0.16em;">Screenings M&A</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1051,20 +1050,29 @@ if st.session_state.screen == 1:
         _buy_sel = _s1_selected == "buy"
         st.markdown(f"""
         <div style="
-            background:{'#F0F0F0' if _buy_sel else '#FAFAFA'};
-            border:1.5px solid {'#111111' if _buy_sel else '#E5E5E5'};
-            border-left:4px solid #111111;
-            border-radius:12px;
-            padding:18px 18px 12px;
-            min-height:140px;
+            background:#111111;
+            border-radius:14px;
+            padding:22px 22px 18px;
+            min-height:158px;
+            position:relative;
+            overflow:hidden;
+            box-shadow:{'0 0 0 2px rgba(255,255,255,0.25), 0 8px 32px rgba(0,0,0,0.22)' if _buy_sel else '0 4px 20px rgba(0,0,0,0.14)'};
+            font-family:'IBM Plex Sans',system-ui,sans-serif;
         ">
-            <span style="font-size:1.4rem;">💼</span>
-            <div style="font-weight:700;color:#111111;font-size:0.96rem;margin:8px 0 5px;">
+            <div style="position:absolute;top:0;left:0;right:0;height:2px;
+                        background:linear-gradient(90deg,#444,#222,#444);"></div>
+            <div style="font-size:1.3rem;line-height:1;">💼</div>
+            <div style="font-weight:700;color:#FFFFFF;font-size:0.97rem;
+                        margin:11px 0 6px;letter-spacing:-0.1px;">
                 Screening Buy Side
             </div>
-            <div style="font-size:0.79rem;color:#6B7280;line-height:1.5;">
+            <div style="font-size:0.78rem;color:rgba(255,255,255,0.55);line-height:1.55;">
                 Identifiez des cibles d'acquisition pour votre client acquéreur.
-                Cartographie verticale, horizontale et liste de cibles qualifiées en 3 modules.
+                Cartographie verticale, horizontale et liste de cibles qualifiées.
+            </div>
+            <div style="margin-top:14px;font-size:0.65rem;color:rgba(255,255,255,0.28);
+                        text-transform:uppercase;letter-spacing:0.10em;font-weight:500;">
+                3 modules
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -1086,20 +1094,29 @@ if st.session_state.screen == 1:
         _sell_sel = _s1_selected == "sell"
         st.markdown(f"""
         <div style="
-            background:{'#F0F0F0' if _sell_sel else '#FAFAFA'};
-            border:1.5px solid {'#111111' if _sell_sel else '#E5E5E5'};
-            border-left:4px solid #111111;
-            border-radius:12px;
-            padding:18px 18px 12px;
-            min-height:140px;
+            background:#111111;
+            border-radius:14px;
+            padding:22px 22px 18px;
+            min-height:158px;
+            position:relative;
+            overflow:hidden;
+            box-shadow:{'0 0 0 2px rgba(255,255,255,0.25), 0 8px 32px rgba(0,0,0,0.22)' if _sell_sel else '0 4px 20px rgba(0,0,0,0.14)'};
+            font-family:'IBM Plex Sans',system-ui,sans-serif;
         ">
-            <span style="font-size:1.4rem;">📋</span>
-            <div style="font-weight:700;color:#111111;font-size:0.96rem;margin:8px 0 5px;">
+            <div style="position:absolute;top:0;left:0;right:0;height:2px;
+                        background:linear-gradient(90deg,#444,#222,#444);"></div>
+            <div style="font-size:1.3rem;line-height:1;">📋</div>
+            <div style="font-weight:700;color:#FFFFFF;font-size:0.97rem;
+                        margin:11px 0 6px;letter-spacing:-0.1px;">
                 Sell Side
             </div>
-            <div style="font-size:0.79rem;color:#6B7280;line-height:1.5;">
-                Préparez la cession d'une société : rapport d'entretien, plan de l'Information
-                Memorandum, rédaction des slides et reformulation finale.
+            <div style="font-size:0.78rem;color:rgba(255,255,255,0.55);line-height:1.55;">
+                Préparez la cession d'une société : rapport d'entretien, plan de l'IM,
+                rédaction des slides et reformulation finale.
+            </div>
+            <div style="margin-top:14px;font-size:0.65rem;color:rgba(255,255,255,0.28);
+                        text-transform:uppercase;letter-spacing:0.10em;font-weight:500;">
+                4 étapes
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -1116,13 +1133,9 @@ if st.session_state.screen == 1:
 
     # ── ANALYSES RAPIDES ─────────────────────────────────────────────────────
     st.markdown("""
-    <div style="display:flex;align-items:center;gap:10px;margin:32px 0 14px;">
-        <div style="flex:1;height:1px;background:#E5E7EB;"></div>
-        <div style="font-size:0.70rem;font-weight:700;color:#9CA3AF;
-                    text-transform:uppercase;letter-spacing:0.12em;white-space:nowrap;">
-            Analyses rapides
-        </div>
-        <div style="flex:1;height:1px;background:#E5E7EB;"></div>
+    <div style="margin:36px 0 12px;font-family:'IBM Plex Sans',system-ui,sans-serif;">
+        <span style="font-size:0.68rem;font-weight:600;color:#AAAAAA;
+                     text-transform:uppercase;letter-spacing:0.16em;">Analyses rapides</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1136,17 +1149,19 @@ if st.session_state.screen == 1:
         with _analysis_cols[_idx]:
             st.markdown(f"""
             <div style="
-                background:{'#F0F0F0' if _is_sel else '#FAFAFA'};
-                border:1.5px solid {'#111111' if _is_sel else '#E5E5E5'};
-                border-left:3px solid #555555;
+                background:{'#F4F4F4' if _is_sel else '#FFFFFF'};
+                border:1px solid {'#111111' if _is_sel else '#EBEBEB'};
                 border-radius:12px;
-                padding:15px 15px 10px;
+                padding:16px 16px 12px;
+                box-shadow:{'none' if _is_sel else '0 1px 3px rgba(0,0,0,0.05),0 6px 16px rgba(0,0,0,0.05)'};
+                font-family:'IBM Plex Sans',system-ui,sans-serif;
             ">
-                <span style="font-size:1.25rem;">{_deliv['icon']}</span>
-                <div style="font-weight:700;color:#111111;font-size:0.90rem;margin:6px 0 4px;">
+                <div style="font-size:1.15rem;line-height:1;">{_deliv['icon']}</div>
+                <div style="font-weight:600;color:#111111;font-size:0.87rem;
+                            margin:9px 0 4px;letter-spacing:-0.1px;">
                     {_deliv['title']}
                 </div>
-                <div style="font-size:0.77rem;color:#6B7280;line-height:1.45;">
+                <div style="font-size:0.75rem;color:#888888;line-height:1.5;">
                     {_deliv['desc']}
                 </div>
             </div>
@@ -1208,19 +1223,26 @@ if st.session_state.screen == 1:
             _cname = company_input.strip() if company_input.strip() else "—"
             st.markdown(f"""
             <div style="
-                background:#F5F5F5;
-                border:1.5px solid #111111;
-                border-radius:12px;
-                padding:14px 18px 10px;
-                margin:14px 0 6px;
+                background:#111111;
+                border-radius:14px;
+                padding:18px 22px 16px;
+                margin:14px 0 8px;
+                position:relative;
+                overflow:hidden;
+                box-shadow:0 4px 24px rgba(0,0,0,0.16);
+                font-family:'IBM Plex Sans',system-ui,sans-serif;
             ">
-                <div style="font-size:0.72rem;color:#9CA3AF;margin-bottom:3px;
-                            text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">
-                    Outil sélectionné
+                <div style="position:absolute;top:0;left:0;right:0;height:2px;
+                            background:linear-gradient(90deg,#444,#222,#444);"></div>
+                <div style="font-size:0.62rem;color:rgba(255,255,255,0.3);
+                            text-transform:uppercase;letter-spacing:0.14em;font-weight:600;
+                            margin-bottom:6px;">
+                    Prêt à lancer
                 </div>
-                <div style="font-weight:700;font-size:1rem;color:#111111;">{_lbl}</div>
-                <div style="font-size:0.85rem;color:#6B7280;margin-top:5px;">
-                    Entreprise : <strong style="color:#111111;">{_cname}</strong>
+                <div style="font-weight:700;color:#FFFFFF;font-size:1.0rem;
+                            letter-spacing:-0.2px;">{_lbl}</div>
+                <div style="font-size:0.82rem;color:rgba(255,255,255,0.45);margin-top:5px;">
+                    {_cname}
                 </div>
             </div>
             """, unsafe_allow_html=True)
