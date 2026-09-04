@@ -1016,29 +1016,35 @@ if st.session_state.screen == 1:
         unsafe_allow_html=True,
     )
 
-    tab_standard, tab_mission, tab_sell = st.tabs(["🔍 Analyses rapides", "💼 Screening Buy Side", "📋 Sell Side"])
+    # ── Barre de recherche principale ────────────────────────────────────────
+    company_input = st.text_input(
+        "Entreprise",
+        placeholder="Nom de l'entreprise à analyser...",
+        label_visibility="collapsed",
+        key="company_input_field",
+    )
 
-    # ── TAB 2 : Screening Buy Side ────────────────────────────────────────────────
-    with tab_mission:
-        st.markdown(
-            '<p style="font-size:0.82rem;color:#9CA3AF;margin-bottom:6px;font-weight:600;'
-            'text-transform:uppercase;letter-spacing:0.06em;">Nom de l\'acquéreur</p>',
-            unsafe_allow_html=True,
-        )
-        with st.form("ma_start_form", border=False):
-            buy_company = st.text_input(
-                "Acquéreur",
-                placeholder="Ex : Milliris, Acuitis...",
-                label_visibility="collapsed",
-                key="buy_company_input",
-            )
-            st.markdown(
-                '<p style="font-size:0.82rem;color:#9CA3AF;margin-top:10px;margin-bottom:4px;'
-                'font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">'
-                'Documents de contexte <span style="font-weight:400;text-transform:none;'
-                'letter-spacing:0;font-size:0.75rem;">— facultatif</span></p>',
-                unsafe_allow_html=True,
-            )
+    # ── SECTION SCREENINGS ───────────────────────────────────────────────────
+    st.markdown(
+        '<div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;'
+        'letter-spacing:0.1em;color:#9CA3AF;margin:22px 0 10px 0;">Screenings</div>',
+        unsafe_allow_html=True,
+    )
+
+    col_buy, col_sell = st.columns(2)
+
+    # Buy Side
+    with col_buy:
+        st.markdown("""
+        <div style="border:1px solid #E5E5E5;border-left:3px solid #111111;
+                    border-radius:10px;padding:16px 18px;margin-bottom:10px;background:#FAFAFA;">
+            <div style="font-weight:700;color:#111111;font-size:0.95rem;">💼 Buy Side</div>
+            <div style="font-size:0.78rem;color:#6B7280;margin-top:5px;line-height:1.4;">
+                Screening d'acquisition complet avec analyse de cible et recommandations stratégiques.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        with st.expander("Documents (facultatif)"):
             ma_docs_upload = st.file_uploader(
                 "Documents",
                 type=["pdf", "docx", "txt", "md", "xlsx", "csv"],
@@ -1047,16 +1053,13 @@ if st.session_state.screen == 1:
                 key="ma_start_docs",
                 help="Plaquette, rapport annuel, mémo… L'IA les utilisera pendant la mission.",
             )
-            submitted = st.form_submit_button(
-                "Commencer →", type="primary", use_container_width=True
-            )
-        if submitted:
-            if not buy_company.strip():
-                st.warning("⚠️ Entrez le nom de l'acquéreur.")
+        buy_submit = st.button("Lancer →", key="buy_launch", use_container_width=True, type="primary")
+        if buy_submit:
+            if not company_input.strip():
+                st.warning("Entrez le nom de l'entreprise.")
             elif not anthropic_key or not tavily_key:
-                st.error("🔑 Clés API manquantes.")
+                st.error("Clés API manquantes.")
             else:
-                # Extraire le contenu des documents uploadés
                 docs_text = ""
                 if ma_docs_upload:
                     from document_extractor import extract_text as _ext_start
@@ -1065,202 +1068,141 @@ if st.session_state.screen == 1:
                         if extracted.strip():
                             docs_text += f"\n\n--- Document fourni : {uf.name} ---\n{extracted}"
                 st.session_state["ma_context_docs"] = docs_text
-                # Reset wizard state for fresh start
                 for k in list(st.session_state.keys()):
                     if k.startswith("q_ma_buy_wizard") or k.startswith("q_idx_ma_buy_wizard"):
                         del st.session_state[k]
                 st.session_state.ma_universe    = "buy"
-                st.session_state.ma_company     = buy_company.strip()
+                st.session_state.ma_company     = company_input.strip()
                 st.session_state.ma_sector      = ""
                 st.session_state.ma_step_result = {}
                 st.session_state.screen         = 4
                 st.rerun()
 
-    # ── TAB 1 : Analyses rapides ───────────────────────────────────────────
-    with tab_standard:
-        # Company name input
-        company_input = st.text_input(
-            "Entreprise",
-            placeholder="Nom de l'entreprise...",
-            label_visibility="collapsed",
-            key="company_input_field",
-        )
-
+    # Sell Side
+    with col_sell:
         st.markdown("""
-        <div style="
-            background: linear-gradient(135deg, #111111 0%, #1A1A1A 100%);
-            border-radius: 14px;
-            padding: 14px 22px;
-            margin: 18px 0 14px 0;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        ">
-            <span style="font-size:1.3rem;">📊</span>
-            <div>
-                <div style="color:#FFFFFF; font-size:1.05rem; font-weight:700; letter-spacing:-0.3px;">
-                    Choisissez le type d'analyse
-                </div>
-                <div style="color:#9CA3AF; font-size:0.82rem; margin-top:2px;">
-                    Cliquez sur un livrable pour lancer l'analyse
-                </div>
+        <div style="border:1px solid #E5E5E5;border-left:3px solid #111111;
+                    border-radius:10px;padding:16px 18px;margin-bottom:10px;background:#FAFAFA;">
+            <div style="font-weight:700;color:#111111;font-size:0.95rem;">📋 Sell Side</div>
+            <div style="font-size:0.78rem;color:#6B7280;margin-top:5px;line-height:1.4;">
+                Préparation à la cession avec valorisation, mémo confidentiel et pitch stratégique.
             </div>
         </div>
         """, unsafe_allow_html=True)
-
-        # Couleurs d'accent par livrable — monochrome
-        CARD_COLORS = {
-            "complet":   ("#111111", "#F5F5F5"),
-            "fiche":     ("#111111", "#F5F5F5"),
-            "benchmark": ("#111111", "#F5F5F5"),
-            "manda":     ("#111111", "#F5F5F5"),
-            "geo":       ("#111111", "#F5F5F5"),
-        }
-
-        # 2x2 + 1 grid for deliverable cards
-        col_a, col_b = st.columns(2)
-        col_c, col_d = st.columns(2)
-        col_e, _, _ = st.columns(3)
-
-        card_cols = [col_a, col_b, col_c, col_d, col_e]
-
-        # Zone d'erreur visible AU-DESSUS des cartes
-        error_zone = st.empty()
-
-        clicked_key = None
-        for idx, deliv in enumerate(DELIVERABLES):
-            accent, bg = CARD_COLORS[deliv["key"]]
-            with card_cols[idx]:
-                st.markdown(f"""
-                <div style="
-                    background:{bg};
-                    border:2px solid {accent}40;
-                    border-left:4px solid {accent};
-                    border-radius:12px;
-                    padding:16px 18px;
-                    margin-bottom:8px;
-                ">
-                    <span style="font-size:1.5rem;">{deliv['icon']}</span>
-                    <div style="font-weight:700;color:#111111;font-size:0.95rem;margin:6px 0 3px 0;">{deliv['title']}</div>
-                    <div style="font-size:0.78rem;color:#6B7280;line-height:1.4;">{deliv['desc']}</div>
-                </div>
-                """, unsafe_allow_html=True)
-                if st.button("Sélectionner", key=f"card_{deliv['key']}", use_container_width=True):
-                    clicked_key = deliv["key"]
-
-        # Validation centralisée — messages visibles
-        if clicked_key:
-            if not company_input.strip():
-                error_zone.warning("Veuillez entrer le nom d'une entreprise avant de choisir un type d'analyse.")
-            elif not anthropic_key or not tavily_key:
-                error_zone.error("Clés API manquantes. Contactez l'administrateur.")
-            else:
-                st.session_state.company          = company_input.strip()
-                st.session_state.deliverable_type = clicked_key
-                st.session_state.screen           = 2
-                st.session_state.steps_done       = []
-                st.session_state.current_step     = ""
-                st.session_state.result_text      = ""
-                st.rerun()
-
-        # Context section — tabs for manual input and document import
-        with st.expander("💡 Informations déjà connues (optionnel)"):
-            tab_manual, tab_docs = st.tabs(["✏️ Saisie libre", "📎 Importer des documents"])
-
-            with tab_manual:
-                manual_context = st.text_area(
-                    "Ce que vous savez déjà sur cette entreprise",
-                    placeholder=(
-                        "Exemples : secteur d'activité, chiffre d'affaires approximatif, "
-                        "principaux clients, zone géographique, contexte de l'opération..."
-                    ),
-                    height=130,
-                    key="context_input_field",
-                )
-
-            with tab_docs:
-                st.markdown(
-                    '<div class="section-label">Glissez jusqu\'à 5 fichiers (PDF, Word, Excel, TXT, CSV, MD)</div>',
-                    unsafe_allow_html=True,
-                )
-                uploaded_files = st.file_uploader(
-                    "Importer des documents",
-                    type=["pdf", "docx", "xlsx", "xls", "txt", "md", "csv"],
-                    accept_multiple_files=True,
-                    label_visibility="collapsed",
-                    key="doc_uploader",
-                )
-
-                doc_texts = []
-                if uploaded_files:
-                    from document_extractor import extract_text
-                    shown = uploaded_files[:5]
-                    for uf in shown:
-                        extracted = extract_text(uf)
-                        char_count = len(extracted)
-                        doc_texts.append(
-                            f"\n\n--- Document : {uf.name} ---\n\n{extracted}"
-                        )
-                        st.markdown(
-                            f'<div class="file-badge">'
-                            f'📄 <span class="file-badge-name">{uf.name}</span>'
-                            f' &nbsp;·&nbsp; {char_count:,} car.'
-                            f'</div>',
-                            unsafe_allow_html=True,
-                        )
-                    if len(uploaded_files) > 5:
-                        st.caption("Seuls les 5 premiers fichiers sont pris en compte.")
-
-            # Combine manual text + document texts into session context
-            combined_context = manual_context
-            if doc_texts:
-                combined_context = combined_context + "".join(doc_texts)
-            st.session_state.context = combined_context
-
-    # ── TAB 3 : Sell Side ─────────────────────────────────────────────────
-    with tab_sell:
-        st.markdown(
-            '<p style="font-size:0.82rem;color:#9CA3AF;margin-bottom:6px;font-weight:600;'
-            'text-transform:uppercase;letter-spacing:0.06em;">Société à céder</p>',
-            unsafe_allow_html=True,
+        ss_subsidiary_input = st.text_input(
+            "Filiale / entité secondaire — facultatif",
+            placeholder="Ex : Koki Diagnostics...",
+            key="ss_subsidiary_input",
         )
-        with st.form("ss_start_form", border=False):
-            ss_company_input = st.text_input(
-                "Société",
-                placeholder="Ex : Koki, MedSoft...",
-                label_visibility="collapsed",
-                key="ss_company_input",
-            )
-            st.markdown(
-                '<p style="font-size:0.82rem;color:#9CA3AF;margin-top:10px;margin-bottom:4px;'
-                'font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">'
-                'Filiale / entité secondaire <span style="font-weight:400;text-transform:none;'
-                'letter-spacing:0;font-size:0.75rem;">— facultatif</span></p>',
-                unsafe_allow_html=True,
-            )
-            ss_subsidiary_input = st.text_input(
-                "Filiale",
-                placeholder="Ex : Koki Diagnostics...",
-                label_visibility="collapsed",
-                key="ss_subsidiary_input",
-            )
-            ss_submitted = st.form_submit_button(
-                "Commencer la mission →", type="primary", use_container_width=True
-            )
-        if ss_submitted:
-            if not ss_company_input.strip():
-                st.warning("⚠️ Entrez le nom de la société à céder.")
+        sell_submit = st.button("Lancer →", key="sell_launch", use_container_width=True, type="primary")
+        if sell_submit:
+            if not company_input.strip():
+                st.warning("Entrez le nom de l'entreprise.")
             elif not anthropic_key:
-                st.error("🔑 Clé API manquante.")
+                st.error("Clé API manquante.")
             else:
                 for k in list(st.session_state.keys()):
                     if k.startswith("ss_"):
                         del st.session_state[k]
-                st.session_state.ss_company    = ss_company_input.strip()
+                st.session_state.ss_company    = company_input.strip()
                 st.session_state.ss_subsidiary = ss_subsidiary_input.strip()
                 st.session_state.ss_phase      = "upload_entretien"
                 st.session_state.screen        = 5
                 st.rerun()
+
+    # ── SECTION ANALYSES RAPIDES ─────────────────────────────────────────────
+    st.markdown(
+        '<div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;'
+        'letter-spacing:0.1em;color:#9CA3AF;margin:28px 0 10px 0;">Analyses rapides</div>',
+        unsafe_allow_html=True,
+    )
+
+    col_a, col_b = st.columns(2)
+    col_c, col_d = st.columns(2)
+    card_cols = [col_a, col_b, col_c, col_d]
+
+    error_zone = st.empty()
+    clicked_key = None
+
+    for idx, deliv in enumerate(DELIVERABLES):
+        with card_cols[idx]:
+            st.markdown(f"""
+            <div style="border:1px solid #E5E5E5;border-left:3px solid #111111;
+                        border-radius:10px;padding:16px 18px;margin-bottom:8px;background:#FAFAFA;">
+                <span style="font-size:1.4rem;">{deliv['icon']}</span>
+                <div style="font-weight:700;color:#111111;font-size:0.92rem;margin:5px 0 3px 0;">{deliv['title']}</div>
+                <div style="font-size:0.76rem;color:#6B7280;line-height:1.4;">{deliv['desc']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("Sélectionner", key=f"card_{deliv['key']}", use_container_width=True):
+                clicked_key = deliv["key"]
+
+    if clicked_key:
+        if not company_input.strip():
+            error_zone.warning("Veuillez entrer le nom d'une entreprise avant de choisir un type d'analyse.")
+        elif not anthropic_key or not tavily_key:
+            error_zone.error("Clés API manquantes. Contactez l'administrateur.")
+        else:
+            st.session_state.company          = company_input.strip()
+            st.session_state.deliverable_type = clicked_key
+            st.session_state.screen           = 2
+            st.session_state.steps_done       = []
+            st.session_state.current_step     = ""
+            st.session_state.result_text      = ""
+            st.rerun()
+
+    # Contexte optionnel pour les analyses rapides
+    with st.expander("💡 Informations déjà connues (optionnel)"):
+        tab_manual, tab_docs = st.tabs(["✏️ Saisie libre", "📎 Importer des documents"])
+
+        with tab_manual:
+            manual_context = st.text_area(
+                "Ce que vous savez déjà sur cette entreprise",
+                placeholder=(
+                    "Exemples : secteur d'activité, chiffre d'affaires approximatif, "
+                    "principaux clients, zone géographique, contexte de l'opération..."
+                ),
+                height=130,
+                key="context_input_field",
+            )
+
+        with tab_docs:
+            st.markdown(
+                '<div class="section-label">Glissez jusqu\'à 5 fichiers (PDF, Word, Excel, TXT, CSV, MD)</div>',
+                unsafe_allow_html=True,
+            )
+            uploaded_files = st.file_uploader(
+                "Importer des documents",
+                type=["pdf", "docx", "xlsx", "xls", "txt", "md", "csv"],
+                accept_multiple_files=True,
+                label_visibility="collapsed",
+                key="doc_uploader",
+            )
+
+            doc_texts = []
+            if uploaded_files:
+                from document_extractor import extract_text
+                shown = uploaded_files[:5]
+                for uf in shown:
+                    extracted = extract_text(uf)
+                    char_count = len(extracted)
+                    doc_texts.append(
+                        f"\n\n--- Document : {uf.name} ---\n\n{extracted}"
+                    )
+                    st.markdown(
+                        f'<div class="file-badge">'
+                        f'📄 <span class="file-badge-name">{uf.name}</span>'
+                        f' &nbsp;·&nbsp; {char_count:,} car.'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+                if len(uploaded_files) > 5:
+                    st.caption("Seuls les 5 premiers fichiers sont pris en compte.")
+
+        combined_context = manual_context
+        if doc_texts:
+            combined_context = combined_context + "".join(doc_texts)
+        st.session_state.context = combined_context
 
 
 # ══════════════════════════════════════════════════════════════════════════════
