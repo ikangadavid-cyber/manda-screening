@@ -1018,148 +1018,80 @@ if st.session_state.screen == 1:
 
     _s1_selected = st.session_state.get("s1_selected", "")
 
-    # ── Helper : carte outil ─────────────────────────────────────────────────
-    def _tool_card(icon, title, desc, meta, selected):
-        _bg  = "#F5F5F4" if selected else "#FFFFFF"
-        _bdr = "1.5px solid #111111" if selected else "1px solid #E8E8E8"
-        _shd = "none" if selected else "0 1px 3px rgba(0,0,0,0.04),0 4px 14px rgba(0,0,0,0.05)"
-        st.markdown(f"""
-        <div style="background:{_bg};border:{_bdr};border-radius:10px;
-                    padding:18px 16px 14px;min-height:130px;box-shadow:{_shd};
-                    margin-bottom:2px;">
-            <div style="font-size:1.2rem;line-height:1;">{icon}</div>
-            <div style="font-weight:700;color:#111111;font-size:0.91rem;
-                        margin:9px 0 4px;letter-spacing:-0.2px;">{title}</div>
-            <div style="font-size:0.76rem;color:#777777;line-height:1.5;">{desc}</div>
-            {'<div style="margin-top:10px;font-size:0.61rem;color:#C0C0C0;text-transform:uppercase;letter-spacing:0.09em;font-weight:500;">' + meta + '</div>' if meta else ''}
-        </div>
-        """, unsafe_allow_html=True)
-
-    # ── SCREENINGS M&A ───────────────────────────────────────────────────────
-    st.markdown(
-        '<p style="font-size:0.68rem;font-weight:600;color:#AAAAAA;'
-        'text-transform:uppercase;letter-spacing:0.12em;margin:28px 0 10px;">Screenings M&A</p>',
-        unsafe_allow_html=True,
-    )
-    _col_buy, _col_sell = st.columns(2, gap="medium")
-
-    with _col_buy:
-        _tool_card("💼", "Screening Buy Side",
-                   "Identifiez des cibles d'acquisition : cartographie verticale, horizontale et liste de cibles qualifiées.",
-                   "3 modules", _s1_selected == "buy")
-        if st.button("Sélectionner", key="select_buy", use_container_width=True,
-                     type="secondary" if _s1_selected == "buy" else "secondary"):
+    # ── SCREENINGS ───────────────────────────────────────────────────────────
+    st.markdown('<p style="color:#AAAAAA;font-size:0.72rem;margin:32px 0 8px;">Screenings</p>',
+                unsafe_allow_html=True)
+    _cb, _cs = st.columns(2, gap="small")
+    with _cb:
+        _lbl_buy = "✦ Buy Side" if _s1_selected == "buy" else "Buy Side"
+        if st.button(_lbl_buy, key="select_buy", use_container_width=True):
             st.session_state["s1_selected"] = "buy"
             st.rerun()
-
-    with _col_sell:
-        _tool_card("📋", "Sell Side",
-                   "Préparez la cession d'une société : rapport d'entretien, plan IM, slides, reformulation finale.",
-                   "4 étapes", _s1_selected == "sell")
-        if st.button("Sélectionner", key="select_sell", use_container_width=True,
-                     type="secondary" if _s1_selected == "sell" else "secondary"):
+    with _cs:
+        _lbl_sell = "✦ Sell Side" if _s1_selected == "sell" else "Sell Side"
+        if st.button(_lbl_sell, key="select_sell", use_container_width=True):
             st.session_state["s1_selected"] = "sell"
             st.rerun()
 
-    # ── ANALYSES RAPIDES ─────────────────────────────────────────────────────
-    st.markdown(
-        '<p style="font-size:0.68rem;font-weight:600;color:#AAAAAA;'
-        'text-transform:uppercase;letter-spacing:0.12em;margin:30px 0 10px;">Analyses rapides</p>',
-        unsafe_allow_html=True,
-    )
-    _col_a, _col_b = st.columns(2, gap="medium")
-    _col_c, _col_d = st.columns(2, gap="medium")
-    _analysis_cols = [_col_a, _col_b, _col_c, _col_d]
-
+    # ── ANALYSES ─────────────────────────────────────────────────────────────
+    st.markdown('<p style="color:#AAAAAA;font-size:0.72rem;margin:24px 0 8px;">Analyses rapides</p>',
+                unsafe_allow_html=True)
+    _ca, _cb2 = st.columns(2, gap="small")
+    _cc, _cd  = st.columns(2, gap="small")
+    _acols = [_ca, _cb2, _cc, _cd]
+    _TOOL_NAMES = {"fiche": "Fiche Entreprise", "benchmark": "Benchmark Concurrents",
+                   "manda": "Note M&A & Secteur", "geo": "Analyse Géographique"}
     for _idx, _deliv in enumerate(DELIVERABLES):
         _dk = _deliv["key"]
-        with _analysis_cols[_idx]:
-            _tool_card(_deliv["icon"], _deliv["title"], _deliv["desc"], "", _s1_selected == _dk)
-            if st.button("Sélectionner", key=f"select_{_dk}", use_container_width=True,
-                         type="secondary"):
+        with _acols[_idx]:
+            _lbl_a = f"✦ {_TOOL_NAMES[_dk]}" if _s1_selected == _dk else _TOOL_NAMES[_dk]
+            if st.button(_lbl_a, key=f"select_{_dk}", use_container_width=True):
                 st.session_state["s1_selected"] = _dk
                 st.rerun()
 
-    # ── FORMULAIRE ENTREPRISE (apparaît après sélection) ─────────────────────
+    # ── FORMULAIRE (apparaît après sélection) ────────────────────────────────
     if _s1_selected:
-        _TOOL_LABELS = {
-            "buy":       "💼 Screening Buy Side",
-            "sell":      "📋 Sell Side",
-            "fiche":     "🏢 Fiche Entreprise",
-            "benchmark": "⚔️ Benchmark Concurrents",
-            "manda":     "📰 Note M&A & Secteur",
-            "geo":       "🌍 Analyse Géographique",
-        }
-        _lbl = _TOOL_LABELS.get(_s1_selected, _s1_selected)
+        st.markdown('<div style="height:1px;background:#E8E8E8;margin:28px 0 20px;"></div>',
+                    unsafe_allow_html=True)
 
-        st.markdown(
-            '<div style="height:1px;background:#E8E8E8;margin:28px 0 22px;"></div>',
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            f'<p style="font-size:0.68rem;font-weight:600;color:#AAAAAA;'
-            f'text-transform:uppercase;letter-spacing:0.12em;margin-bottom:4px;">Outil sélectionné</p>'
-            f'<p style="font-size:0.95rem;font-weight:700;color:#111111;margin-bottom:16px;">{_lbl}</p>',
-            unsafe_allow_html=True,
-        )
-
-        # Champ principal
         if _s1_selected == "sell":
-            _label_co = "Société à céder"
-            _ph_co    = "Ex : Koki, MedSoft…"
+            _ph_co = "Société à céder — ex : Koki, MedSoft…"
         else:
-            _label_co = "Nom de l'entreprise"
-            _ph_co    = "Ex : Acuitis, Milliris…"
+            _ph_co = "Nom de l'entreprise — ex : Acuitis, Milliris…"
 
-        st.markdown(
-            f'<p style="font-size:0.68rem;font-weight:600;color:#9CA3AF;'
-            f'text-transform:uppercase;letter-spacing:0.10em;margin-bottom:5px;">{_label_co}</p>',
-            unsafe_allow_html=True,
-        )
         company_input = st.text_input(
-            _label_co,
+            "Entreprise",
             placeholder=_ph_co,
             label_visibility="collapsed",
             key="company_input_field",
         )
 
-        # Champ filiale (Sell Side uniquement)
         if _s1_selected == "sell":
-            st.markdown(
-                '<p style="font-size:0.68rem;font-weight:600;color:#9CA3AF;'
-                'text-transform:uppercase;letter-spacing:0.10em;margin:10px 0 5px;">'
-                'Filiale <span style="font-weight:400;text-transform:none;font-size:0.72rem;">'
-                '— facultatif</span></p>',
-                unsafe_allow_html=True,
-            )
             st.text_input(
                 "Filiale",
-                placeholder="Ex : Koki Diagnostics…",
+                placeholder="Filiale / entité secondaire — facultatif",
                 label_visibility="collapsed",
                 key="ss_subsidiary_input",
             )
 
-        # Documents de contexte (Buy Side)
         if _s1_selected == "buy":
-            with st.expander("📎 Documents de contexte — facultatif"):
+            with st.expander("Documents de contexte — facultatif"):
                 st.file_uploader(
-                    "Documents Buy Side",
+                    "Documents",
                     type=["pdf", "docx", "txt", "md", "xlsx", "csv"],
                     accept_multiple_files=True,
                     label_visibility="collapsed",
                     key="ma_start_docs",
-                    help="Plaquette, rapport annuel, mémo…",
                 )
 
-        # Contexte connu (analyses rapides)
         if _s1_selected not in ("buy", "sell"):
-            with st.expander("💡 Informations déjà connues — facultatif"):
-                _tab_m, _tab_d = st.tabs(["✏️ Saisie libre", "📎 Importer des documents"])
+            with st.expander("Contexte — facultatif"):
+                _tab_m, _tab_d = st.tabs(["Saisie libre", "Importer des documents"])
                 with _tab_m:
                     st.text_area(
                         "Contexte",
-                        placeholder="Secteur, CA approximatif, clients, contexte de l'opération…",
-                        height=100,
+                        placeholder="Secteur, CA, clients, contexte de l'opération…",
+                        height=90,
                         key="context_input_field",
                     )
                 with _tab_d:
@@ -1189,14 +1121,12 @@ if st.session_state.screen == 1:
         else:
             st.session_state.context = ""
 
-        # Boutons
         _err_zone = st.empty()
-        _cb, _cl = st.columns([2, 1])
-        with _cb:
-            _launch = st.button(f"Lancer →", key="confirm_go",
-                                type="primary", use_container_width=True)
-        with _cl:
-            if st.button("Changer d'outil", key="confirm_cancel", use_container_width=True):
+        _cgo, _cx = st.columns([3, 1])
+        with _cgo:
+            _launch = st.button("Lancer →", key="confirm_go", type="primary", use_container_width=True)
+        with _cx:
+            if st.button("×", key="confirm_cancel", use_container_width=True):
                 del st.session_state["s1_selected"]
                 st.rerun()
 
