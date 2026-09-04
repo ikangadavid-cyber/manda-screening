@@ -1016,172 +1016,251 @@ if st.session_state.screen == 1:
         unsafe_allow_html=True,
     )
 
-    _s1_selected = st.session_state.get("s1_selected", "")
+    tab_standard, tab_mission, tab_sell = st.tabs(["🔍 Analyses rapides", "💼 Screening Buy Side", "📋 Sell Side"])
 
-    _SCR_MAP  = {"buy": "Buy Side", "sell": "Sell Side"}
-    _ANA_MAP  = {"fiche": "Fiche Entreprise", "benchmark": "Benchmark Concurrents",
-                 "manda": "Note M&A & Secteur", "geo": "Analyse Géographique"}
-    _SCR_RMAP = {v: k for k, v in _SCR_MAP.items()}
-    _ANA_RMAP = {v: k for k, v in _ANA_MAP.items()}
-
-    # Détecter les changements avant que les widgets soient rendus
-    _pw_scr  = st.session_state.get("_pw_scr")
-    _pw_ana  = st.session_state.get("_pw_ana")
-    _exp_scr = _SCR_MAP.get(_s1_selected)
-    _exp_ana = _ANA_MAP.get(_s1_selected)
-
-    if _pw_scr != _exp_scr:
-        _nk = _SCR_RMAP.get(_pw_scr)
-        if _nk:
-            st.session_state["s1_selected"] = _nk
-            st.session_state["_pw_ana"] = None
-        else:
-            st.session_state.pop("s1_selected", None)
-        st.rerun()
-    elif _pw_ana != _exp_ana:
-        _nk = _ANA_RMAP.get(_pw_ana)
-        if _nk:
-            st.session_state["s1_selected"] = _nk
-            st.session_state["_pw_scr"] = None
-        else:
-            st.session_state.pop("s1_selected", None)
-        st.rerun()
-
-    # Synchroniser l'état contrôlé des pills
-    st.session_state["_pw_scr"] = _exp_scr
-    st.session_state["_pw_ana"] = _exp_ana
-
-    # ── SÉLECTION ────────────────────────────────────────────────────────────
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.pills("Screenings", list(_SCR_MAP.values()), key="_pw_scr")
-    st.pills("Analyses rapides", list(_ANA_MAP.values()), key="_pw_ana")
-
-    # ── FORMULAIRE (apparaît après sélection) ────────────────────────────────
-    if _s1_selected:
+    # ── TAB 2 : Screening Buy Side ────────────────────────────────────────────────
+    with tab_mission:
         st.markdown(
-            '<div style="height:1px;background:#EFEFEF;margin:24px 0 18px;"></div>',
+            '<p style="font-size:0.82rem;color:#9CA3AF;margin-bottom:6px;font-weight:600;'
+            'text-transform:uppercase;letter-spacing:0.06em;">Nom de l\'acquéreur</p>',
             unsafe_allow_html=True,
         )
+        with st.form("ma_start_form", border=False):
+            buy_company = st.text_input(
+                "Acquéreur",
+                placeholder="Ex : Milliris, Acuitis...",
+                label_visibility="collapsed",
+                key="buy_company_input",
+            )
+            st.markdown(
+                '<p style="font-size:0.82rem;color:#9CA3AF;margin-top:10px;margin-bottom:4px;'
+                'font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">'
+                'Documents de contexte <span style="font-weight:400;text-transform:none;'
+                'letter-spacing:0;font-size:0.75rem;">— facultatif</span></p>',
+                unsafe_allow_html=True,
+            )
+            ma_docs_upload = st.file_uploader(
+                "Documents",
+                type=["pdf", "docx", "txt", "md", "xlsx", "csv"],
+                accept_multiple_files=True,
+                label_visibility="collapsed",
+                key="ma_start_docs",
+                help="Plaquette, rapport annuel, mémo… L'IA les utilisera pendant la mission.",
+            )
+            submitted = st.form_submit_button(
+                "Commencer →", type="primary", use_container_width=True
+            )
+        if submitted:
+            if not buy_company.strip():
+                st.warning("⚠️ Entrez le nom de l'acquéreur.")
+            elif not anthropic_key or not tavily_key:
+                st.error("🔑 Clés API manquantes.")
+            else:
+                # Extraire le contenu des documents uploadés
+                docs_text = ""
+                if ma_docs_upload:
+                    from document_extractor import extract_text as _ext_start
+                    for uf in ma_docs_upload:
+                        extracted = _ext_start(uf)
+                        if extracted.strip():
+                            docs_text += f"\n\n--- Document fourni : {uf.name} ---\n{extracted}"
+                st.session_state["ma_context_docs"] = docs_text
+                # Reset wizard state for fresh start
+                for k in list(st.session_state.keys()):
+                    if k.startswith("q_ma_buy_wizard") or k.startswith("q_idx_ma_buy_wizard"):
+                        del st.session_state[k]
+                st.session_state.ma_universe    = "buy"
+                st.session_state.ma_company     = buy_company.strip()
+                st.session_state.ma_sector      = ""
+                st.session_state.ma_step_result = {}
+                st.session_state.screen         = 4
+                st.rerun()
 
-        _ph_co = "Société à céder — ex : Koki, MedSoft…" if _s1_selected == "sell" \
-                 else "Entreprise — ex : Acuitis, Milliris…"
-
+    # ── TAB 1 : Analyses rapides ───────────────────────────────────────────
+    with tab_standard:
+        # Company name input
         company_input = st.text_input(
             "Entreprise",
-            placeholder=_ph_co,
+            placeholder="Nom de l'entreprise...",
             label_visibility="collapsed",
             key="company_input_field",
         )
 
-        if _s1_selected == "sell":
-            st.text_input(
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #111111 0%, #1A1A1A 100%);
+            border-radius: 14px;
+            padding: 14px 22px;
+            margin: 18px 0 14px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        ">
+            <span style="font-size:1.3rem;">📊</span>
+            <div>
+                <div style="color:#FFFFFF; font-size:1.05rem; font-weight:700; letter-spacing:-0.3px;">
+                    Choisissez le type d'analyse
+                </div>
+                <div style="color:#9CA3AF; font-size:0.82rem; margin-top:2px;">
+                    Cliquez sur un livrable pour lancer l'analyse
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Couleurs d'accent par livrable
+        CARD_COLORS = {
+            "complet":   ("#333333", "#F5F5F5"),
+            "fiche":     ("#555555", "#F5F5F5"),
+            "benchmark": ("#A5614A", "#F8EEE8"),
+            "manda":     ("#111111", "#F5F5F5"),
+            "geo":       ("#A5944A", "#F8F3E8"),
+        }
+
+        # 2x2 + 1 grid for deliverable cards
+        col_a, col_b = st.columns(2)
+        col_c, col_d = st.columns(2)
+        col_e, _, _ = st.columns(3)
+
+        card_cols = [col_a, col_b, col_c, col_d, col_e]
+
+        # Zone d'erreur visible AU-DESSUS des cartes
+        error_zone = st.empty()
+
+        clicked_key = None
+        for idx, deliv in enumerate(DELIVERABLES):
+            accent, bg = CARD_COLORS[deliv["key"]]
+            with card_cols[idx]:
+                st.markdown(f"""
+                <div style="
+                    background:{bg};
+                    border:2px solid {accent}40;
+                    border-left:4px solid {accent};
+                    border-radius:12px;
+                    padding:16px 18px;
+                    margin-bottom:8px;
+                ">
+                    <span style="font-size:1.5rem;">{deliv['icon']}</span>
+                    <div style="font-weight:700;color:#111111;font-size:0.95rem;margin:6px 0 3px 0;">{deliv['title']}</div>
+                    <div style="font-size:0.78rem;color:#6B7280;line-height:1.4;">{deliv['desc']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button("Sélectionner", key=f"card_{deliv['key']}", use_container_width=True):
+                    clicked_key = deliv["key"]
+
+        # Validation centralisée — messages visibles
+        if clicked_key:
+            if not company_input.strip():
+                error_zone.warning("Veuillez entrer le nom d'une entreprise avant de choisir un type d'analyse.")
+            elif not anthropic_key or not tavily_key:
+                error_zone.error("Clés API manquantes. Contactez l'administrateur.")
+            else:
+                st.session_state.company          = company_input.strip()
+                st.session_state.deliverable_type = clicked_key
+                st.session_state.screen           = 2
+                st.session_state.steps_done       = []
+                st.session_state.current_step     = ""
+                st.session_state.result_text      = ""
+                st.rerun()
+
+        # Context section — tabs for manual input and document import
+        with st.expander("💡 Informations déjà connues (optionnel)"):
+            tab_manual, tab_docs = st.tabs(["✏️ Saisie libre", "📎 Importer des documents"])
+
+            with tab_manual:
+                manual_context = st.text_area(
+                    "Ce que vous savez déjà sur cette entreprise",
+                    placeholder=(
+                        "Exemples : secteur d'activité, chiffre d'affaires approximatif, "
+                        "principaux clients, zone géographique, contexte de l'opération..."
+                    ),
+                    height=130,
+                    key="context_input_field",
+                )
+
+            with tab_docs:
+                st.markdown(
+                    '<div class="section-label">Glissez jusqu\'à 5 fichiers (PDF, Word, Excel, TXT, CSV, MD)</div>',
+                    unsafe_allow_html=True,
+                )
+                uploaded_files = st.file_uploader(
+                    "Importer des documents",
+                    type=["pdf", "docx", "xlsx", "xls", "txt", "md", "csv"],
+                    accept_multiple_files=True,
+                    label_visibility="collapsed",
+                    key="doc_uploader",
+                )
+
+                doc_texts = []
+                if uploaded_files:
+                    from document_extractor import extract_text
+                    shown = uploaded_files[:5]
+                    for uf in shown:
+                        extracted = extract_text(uf)
+                        char_count = len(extracted)
+                        doc_texts.append(
+                            f"\n\n--- Document : {uf.name} ---\n\n{extracted}"
+                        )
+                        st.markdown(
+                            f'<div class="file-badge">'
+                            f'📄 <span class="file-badge-name">{uf.name}</span>'
+                            f' &nbsp;·&nbsp; {char_count:,} car.'
+                            f'</div>',
+                            unsafe_allow_html=True,
+                        )
+                    if len(uploaded_files) > 5:
+                        st.caption("Seuls les 5 premiers fichiers sont pris en compte.")
+
+            # Combine manual text + document texts into session context
+            combined_context = manual_context
+            if doc_texts:
+                combined_context = combined_context + "".join(doc_texts)
+            st.session_state.context = combined_context
+
+    # ── TAB 3 : Sell Side ─────────────────────────────────────────────────
+    with tab_sell:
+        st.markdown(
+            '<p style="font-size:0.82rem;color:#9CA3AF;margin-bottom:6px;font-weight:600;'
+            'text-transform:uppercase;letter-spacing:0.06em;">Société à céder</p>',
+            unsafe_allow_html=True,
+        )
+        with st.form("ss_start_form", border=False):
+            ss_company_input = st.text_input(
+                "Société",
+                placeholder="Ex : Koki, MedSoft...",
+                label_visibility="collapsed",
+                key="ss_company_input",
+            )
+            st.markdown(
+                '<p style="font-size:0.82rem;color:#9CA3AF;margin-top:10px;margin-bottom:4px;'
+                'font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">'
+                'Filiale / entité secondaire <span style="font-weight:400;text-transform:none;'
+                'letter-spacing:0;font-size:0.75rem;">— facultatif</span></p>',
+                unsafe_allow_html=True,
+            )
+            ss_subsidiary_input = st.text_input(
                 "Filiale",
-                placeholder="Filiale / entité secondaire — facultatif",
+                placeholder="Ex : Koki Diagnostics...",
                 label_visibility="collapsed",
                 key="ss_subsidiary_input",
             )
-
-        if _s1_selected == "buy":
-            with st.expander("Documents de contexte — facultatif"):
-                st.file_uploader(
-                    "Documents",
-                    type=["pdf", "docx", "txt", "md", "xlsx", "csv"],
-                    accept_multiple_files=True,
-                    label_visibility="collapsed",
-                    key="ma_start_docs",
-                )
-
-        if _s1_selected not in ("buy", "sell"):
-            with st.expander("Contexte — facultatif"):
-                _tab_m, _tab_d = st.tabs(["Saisie libre", "Importer des documents"])
-                with _tab_m:
-                    st.text_area(
-                        "Contexte",
-                        placeholder="Secteur, CA, clients, contexte de l'opération…",
-                        height=90,
-                        key="context_input_field",
-                    )
-                with _tab_d:
-                    uploaded_files = st.file_uploader(
-                        "Documents",
-                        type=["pdf", "docx", "xlsx", "xls", "txt", "md", "csv"],
-                        accept_multiple_files=True,
-                        label_visibility="collapsed",
-                        key="doc_uploader",
-                    )
-                    doc_texts = []
-                    if uploaded_files:
-                        from document_extractor import extract_text
-                        for uf in uploaded_files[:5]:
-                            extracted = extract_text(uf)
-                            doc_texts.append(f"\n\n--- Document : {uf.name} ---\n\n{extracted}")
-                            st.markdown(
-                                f'<div class="file-badge">📄 <span class="file-badge-name">{uf.name}</span>'
-                                f' &nbsp;·&nbsp; {len(extracted):,} car.</div>',
-                                unsafe_allow_html=True,
-                            )
-                        if len(uploaded_files) > 5:
-                            st.caption("Seuls les 5 premiers fichiers sont pris en compte.")
-            _ctx_manual = st.session_state.get("context_input_field", "")
-            _doc_texts  = locals().get("doc_texts", [])
-            st.session_state.context = _ctx_manual + "".join(_doc_texts)
-        else:
-            st.session_state.context = ""
-
-        _err_zone = st.empty()
-        st.button("Lancer →", key="confirm_go", type="primary", use_container_width=True)
-        _launch = st.session_state.get("confirm_go", False)
-
-        if _launch:
-            if not company_input.strip():
-                _err_zone.warning("⚠️ Entrez le nom de l'entreprise.")
+            ss_submitted = st.form_submit_button(
+                "Commencer la mission →", type="primary", use_container_width=True
+            )
+        if ss_submitted:
+            if not ss_company_input.strip():
+                st.warning("⚠️ Entrez le nom de la société à céder.")
             elif not anthropic_key:
-                _err_zone.error("🔑 Clé API Anthropic manquante.")
-            elif _s1_selected == "buy":
-                if not tavily_key:
-                    _err_zone.error("🔑 Clé Tavily manquante.")
-                else:
-                    _docs_text = ""
-                    _docs = st.session_state.get("ma_start_docs") or []
-                    if _docs:
-                        from document_extractor import extract_text as _ext_s
-                        for _uf in _docs:
-                            _ex = _ext_s(_uf)
-                            if _ex.strip():
-                                _docs_text += f"\n\n--- Document : {_uf.name} ---\n{_ex}"
-                    st.session_state["ma_context_docs"] = _docs_text
-                    for _k in list(st.session_state.keys()):
-                        if _k.startswith("q_ma_buy_wizard") or _k.startswith("q_idx_ma_buy_wizard"):
-                            del st.session_state[_k]
-                    st.session_state.ma_universe    = "buy"
-                    st.session_state.ma_company     = company_input.strip()
-                    st.session_state.ma_sector      = ""
-                    st.session_state.ma_step_result = {}
-                    st.session_state.screen         = 4
-                    del st.session_state["s1_selected"]
-                    st.rerun()
-            elif _s1_selected == "sell":
-                for _k in list(st.session_state.keys()):
-                    if _k.startswith("ss_"):
-                        del st.session_state[_k]
-                st.session_state.ss_company    = company_input.strip()
-                st.session_state.ss_subsidiary = st.session_state.get("ss_subsidiary_input", "").strip()
+                st.error("🔑 Clé API manquante.")
+            else:
+                for k in list(st.session_state.keys()):
+                    if k.startswith("ss_"):
+                        del st.session_state[k]
+                st.session_state.ss_company    = ss_company_input.strip()
+                st.session_state.ss_subsidiary = ss_subsidiary_input.strip()
                 st.session_state.ss_phase      = "upload_entretien"
                 st.session_state.screen        = 5
-                del st.session_state["s1_selected"]
                 st.rerun()
-            else:
-                if not tavily_key:
-                    _err_zone.error("🔑 Clé Tavily manquante.")
-                else:
-                    st.session_state.company          = company_input.strip()
-                    st.session_state.deliverable_type = _s1_selected
-                    st.session_state.screen           = 2
-                    st.session_state.steps_done       = []
-                    st.session_state.current_step     = ""
-                    st.session_state.result_text      = ""
-                    del st.session_state["s1_selected"]
-                    st.rerun()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
