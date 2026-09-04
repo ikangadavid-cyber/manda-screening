@@ -1018,82 +1018,52 @@ if st.session_state.screen == 1:
 
     _s1_selected = st.session_state.get("s1_selected", "")
 
-    # CSS injecté uniquement sur screen 1 — cible les boutons en colonnes
-    st.markdown("""
-    <style>
-    div[data-testid="stColumn"] div[data-testid="stButton"] > button[kind="secondary"] {
-        min-height:58px!important;height:auto!important;
-        padding:14px 18px!important;
-        text-align:left!important;justify-content:flex-start!important;
-        font-size:0.9rem!important;font-weight:500!important;letter-spacing:-0.1px!important;
-        background:#FFFFFF!important;border:1px solid #E8E8E8!important;
-        border-radius:8px!important;color:#111111!important;
-        transition:border-color 0.15s,background 0.15s!important;
-    }
-    div[data-testid="stColumn"] div[data-testid="stButton"] > button[kind="secondary"]:hover {
-        border-color:#111111!important;background:#FAFAFA!important;
-    }
-    div[data-testid="stColumn"] div[data-testid="stButton"] > button[kind="primary"] {
-        min-height:58px!important;height:auto!important;
-        padding:14px 18px!important;
-        text-align:left!important;justify-content:flex-start!important;
-        font-size:0.9rem!important;font-weight:600!important;letter-spacing:-0.1px!important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    _SCR_MAP  = {"buy": "Buy Side", "sell": "Sell Side"}
+    _ANA_MAP  = {"fiche": "Fiche Entreprise", "benchmark": "Benchmark Concurrents",
+                 "manda": "Note M&A & Secteur", "geo": "Analyse Géographique"}
+    _SCR_RMAP = {v: k for k, v in _SCR_MAP.items()}
+    _ANA_RMAP = {v: k for k, v in _ANA_MAP.items()}
 
-    # ── SCREENINGS ───────────────────────────────────────────────────────────
-    st.markdown(
-        '<p style="font-size:0.7rem;color:#BBBBBB;font-weight:500;'
-        'text-transform:uppercase;letter-spacing:0.10em;margin:32px 0 8px;">Screenings</p>',
-        unsafe_allow_html=True,
-    )
-    _cb, _cs = st.columns(2, gap="small")
-    with _cb:
-        _t = "primary" if _s1_selected == "buy" else "secondary"
-        _l = "✓  Buy Side" if _s1_selected == "buy" else "Buy Side"
-        if st.button(_l, key="select_buy", type=_t, use_container_width=True):
-            st.session_state["s1_selected"] = "buy"
-            st.rerun()
-    with _cs:
-        _t = "primary" if _s1_selected == "sell" else "secondary"
-        _l = "✓  Sell Side" if _s1_selected == "sell" else "Sell Side"
-        if st.button(_l, key="select_sell", type=_t, use_container_width=True):
-            st.session_state["s1_selected"] = "sell"
-            st.rerun()
+    # Détecter les changements avant que les widgets soient rendus
+    _pw_scr  = st.session_state.get("_pw_scr")
+    _pw_ana  = st.session_state.get("_pw_ana")
+    _exp_scr = _SCR_MAP.get(_s1_selected)
+    _exp_ana = _ANA_MAP.get(_s1_selected)
 
-    # ── ANALYSES ─────────────────────────────────────────────────────────────
-    st.markdown(
-        '<p style="font-size:0.7rem;color:#BBBBBB;font-weight:500;'
-        'text-transform:uppercase;letter-spacing:0.10em;margin:24px 0 8px;">Analyses rapides</p>',
-        unsafe_allow_html=True,
-    )
-    _ca, _cb2 = st.columns(2, gap="small")
-    _cc, _cd  = st.columns(2, gap="small")
-    _acols = [_ca, _cb2, _cc, _cd]
-    _TOOL_NAMES = {
-        "fiche":     "Fiche Entreprise",
-        "benchmark": "Benchmark Concurrents",
-        "manda":     "Note M&A & Secteur",
-        "geo":       "Analyse Géographique",
-    }
-    for _idx, _deliv in enumerate(DELIVERABLES):
-        _dk = _deliv["key"]
-        with _acols[_idx]:
-            _t = "primary" if _s1_selected == _dk else "secondary"
-            _l = f"✓  {_TOOL_NAMES[_dk]}" if _s1_selected == _dk else _TOOL_NAMES[_dk]
-            if st.button(_l, key=f"select_{_dk}", type=_t, use_container_width=True):
-                st.session_state["s1_selected"] = _dk
-                st.rerun()
+    if _pw_scr != _exp_scr:
+        _nk = _SCR_RMAP.get(_pw_scr)
+        if _nk:
+            st.session_state["s1_selected"] = _nk
+            st.session_state["_pw_ana"] = None
+        else:
+            st.session_state.pop("s1_selected", None)
+        st.rerun()
+    elif _pw_ana != _exp_ana:
+        _nk = _ANA_RMAP.get(_pw_ana)
+        if _nk:
+            st.session_state["s1_selected"] = _nk
+            st.session_state["_pw_scr"] = None
+        else:
+            st.session_state.pop("s1_selected", None)
+        st.rerun()
+
+    # Synchroniser l'état contrôlé des pills
+    st.session_state["_pw_scr"] = _exp_scr
+    st.session_state["_pw_ana"] = _exp_ana
+
+    # ── SÉLECTION ────────────────────────────────────────────────────────────
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.pills("Screenings", list(_SCR_MAP.values()), key="_pw_scr")
+    st.pills("Analyses rapides", list(_ANA_MAP.values()), key="_pw_ana")
 
     # ── FORMULAIRE (apparaît après sélection) ────────────────────────────────
     if _s1_selected:
         st.markdown(
-            '<div style="height:1px;background:#EFEFEF;margin:28px 0 20px;"></div>',
+            '<div style="height:1px;background:#EFEFEF;margin:24px 0 18px;"></div>',
             unsafe_allow_html=True,
         )
 
-        _ph_co = "Société — ex : Koki, MedSoft…" if _s1_selected == "sell" \
+        _ph_co = "Société à céder — ex : Koki, MedSoft…" if _s1_selected == "sell" \
                  else "Entreprise — ex : Acuitis, Milliris…"
 
         company_input = st.text_input(
@@ -1159,10 +1129,8 @@ if st.session_state.screen == 1:
             st.session_state.context = ""
 
         _err_zone = st.empty()
-        _launch = st.button("Lancer →", key="confirm_go", type="primary", use_container_width=True)
-        if st.button("↩ Changer d'outil", key="confirm_cancel"):
-            del st.session_state["s1_selected"]
-            st.rerun()
+        st.button("Lancer →", key="confirm_go", type="primary", use_container_width=True)
+        _launch = st.session_state.get("confirm_go", False)
 
         if _launch:
             if not company_input.strip():
