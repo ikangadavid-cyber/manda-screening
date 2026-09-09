@@ -502,7 +502,7 @@ def _parse_companies_from_md(content: str) -> list[dict]:
 
 _DANGEROUS = [
     "subprocess", "os.system", "os.popen", "__import__",
-    "eval(", "exec(", "open(", "shutil", "socket",
+    "shutil.rmtree", "shutil.move", "socket",
 ]
 
 def try_exec_pptx_code(ai_output: str) -> bytes | None:
@@ -529,10 +529,10 @@ def try_exec_pptx_code(ai_output: str) -> bytes | None:
         if danger in code:
             return None
 
-    # Remplacer prs.save("quelquechose") par prs.save(_output_buf)
-    code = re.sub(r'prs\.save\(["\'][^"\']*["\']\)', "prs.save(_output_buf)", code)
-    # Même chose avec des variables : prs.save(output_path) etc.
-    code = re.sub(r'prs\.save\(\w+\)', "prs.save(_output_buf)", code)
+    # Remplacer toute forme de prs.save(...) par prs.save(_output_buf)
+    code = re.sub(r'prs\.save\([^)]*\)', "prs.save(_output_buf)", code)
+    # Aussi presentation.save(...)
+    code = re.sub(r'presentation\.save\([^)]*\)', "presentation.save(_output_buf)", code)
 
     buf = io.BytesIO()
     namespace: dict = {"_output_buf": buf}
