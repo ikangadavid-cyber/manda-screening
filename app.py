@@ -3006,9 +3006,11 @@ elif st.session_state.screen == 5:
             code = m.group(1) if m else code_response
             with _tmp.TemporaryDirectory() as _td:
                 _out = _os5.path.join(_td, "result.pptx")
-                # Forcer le chemin de sauvegarde
+                # Injecter la variable output_path en tête (couvre prs.save(output_path))
+                code = f'output_path = r"{_out}"\n' + code
+                # Remplacer aussi tout prs.save(...) littéral ou variable
                 code = _re_pptx.sub(
-                    r'prs\.save\(["\'][^"\']*["\']\)',
+                    r'prs\.save\([^)]+\)',
                     f'prs.save(r"{_out}")',
                     code,
                 )
