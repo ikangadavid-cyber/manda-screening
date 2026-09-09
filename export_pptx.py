@@ -122,7 +122,8 @@ def _section_body_text(section: dict, max_chars=900) -> str:
         s = re.sub(r"\*([^*]+)\*", r"\1", s)         # *italic*
         s = re.sub(r"^[-•*]\s*", "• ", s)            # bullets
         s = re.sub(r"^\d+\.\s*", "→ ", s)            # numbered
-        s = re.sub(r"^\|.*\|$", "", s)               # tables (skip)
+        s = re.sub(r"^\|[-\s|]+\|$", "", s)           # séparateurs tableau (skip)
+        s = re.sub(r"^\|(.*)\|$", lambda m: "  ".join(c.strip() for c in m.group(1).split("|") if c.strip()), s)  # lignes tableau → texte
         s = re.sub(r"^#+\s*", "", s)                  # nested headers
         if s:
             lines.append(s)
