@@ -2981,6 +2981,19 @@ elif st.session_state.screen == 5:
         docs_text   = st.session_state.get("ss_slides_docs_text", "")
         selection   = st.session_state.get("ss_slides_selection", "")
         input_parts = []
+        input_parts.append(
+            "**Exigence de densité — Mémorandum d'information professionnel :**\n"
+            "Chaque slide doit être extrêmement dense, au niveau d'un slide de banque d'affaires "
+            "(style McKinsey / BCG / Lazard). Cela signifie :\n"
+            "- Remplir l'intégralité de la surface de la slide — aucun espace blanc inutile\n"
+            "- Minimum 4 à 6 blocs de contenu distincts par slide (sous-sections, KPIs, tableaux, listes)\n"
+            "- Chaque bloc contient du texte substantiel : 2 à 4 phrases ou 4 à 8 bullet points détaillés\n"
+            "- Inclure systématiquement des chiffres concrets, métriques et données précises\n"
+            "- Structurer en 2 ou 3 colonnes pour maximiser la densité visuelle\n"
+            "- Ajouter des encadrés de métriques clés (KPI tiles) avec grands chiffres + label + commentaire\n"
+            "- Chaque argument doit être étayé : pas de bullet point vague, tout est chiffré ou sourcé\n"
+            "Le résultat doit ressembler à une slide d'Information Memorandum réel remis à un acquéreur institutionnel."
+        )
         if plan_result:
             input_parts.append(f"**Plan IM validé :**\n{plan_result}")
         if selection:
