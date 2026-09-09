@@ -2974,8 +2974,8 @@ elif st.session_state.screen == 5:
             "**Instruction impérative — Périmètre et nombre de slides :**\n"
             "Tu dois générer EN TOTALITÉ le PowerPoint de l'Information Memorandum, "
             "couvrant TOUTES les sections et TOUTES les slides décrites dans le Plan IM validé ci-dessous. "
-            "Respecte scrupuleusement chaque section du plan : une section du plan = AU MINIMUM 5 slides distinctes (cible : 8 slides par section). "
-            "Couvre TOUTES les sections sans exception — ne jamais s'arrêter avant d'avoir produit l'intégralité du plan. "
+            "Respecte scrupuleusement chaque section du plan : chaque section du plan doit donner lieu à au moins 1 slide distincte. "
+            "MINIMUM ABSOLU : 5 slides au total. Ne génère pas de slides inutiles ou répétitives — qualité et pertinence priment sur la quantité. "
             "Ne jamais t'arrêter en cours de route — tu dois produire la totalité du plan, pas un extrait."
         )
         if plan_result:
