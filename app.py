@@ -457,11 +457,8 @@ Une fois les recherches faites, réponds UNIQUEMENT avec un JSON valide (aucun a
 def get_key(name):
     """Read API keys from Streamlit Cloud (st.secrets) or local .env file."""
     try:
-        val = st.secrets[name]
-        print(f"[DEBUG get_key] '{name}' lu depuis st.secrets, longueur={len(str(val))}, vide={not val}")
-        return val
-    except Exception as _e:
-        print(f"[DEBUG get_key] Impossible de lire '{name}' depuis st.secrets : {type(_e).__name__}: {_e}")
+        return st.secrets[name]
+    except Exception:
         return os.environ.get(name, "")
 
 anthropic_key = get_key("ANTHROPIC_API_KEY")
