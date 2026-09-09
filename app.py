@@ -3001,29 +3001,32 @@ elif st.session_state.screen == 5:
             import re as _re_pptx, tempfile as _tmp, subprocess as _sub, os as _os5, sys as _sys5
             m = _re_pptx.search(r"```python\s*(.*?)\s*```", code_response, _re_pptx.DOTALL)
             code = m.group(1) if m else code_response
-            # Remplacer les caractères non-ASCII invalides comme token Python
+            # Remplacer les caractères invalides comme token Python
             code = code.replace('€', 'EUR').replace('£', 'GBP').replace('¥', 'JPY')
             with _tmp.TemporaryDirectory() as _td:
                 _out = _os5.path.join(_td, "result.pptx")
-                # Injecter la variable output_path en tête (couvre prs.save(output_path))
-                code = f'output_path = r"{_out}"\n' + code
-                # Remplacer aussi tout prs.save(...) littéral ou variable
-                code = _re_pptx.sub(
-                    r'prs\.save\([^)]+\)',
-                    f'prs.save(r"{_out}")',
-                    code,
+                # Monkey-patch Presentation.save pour forcer le chemin cible,
+                # quelle que soit la valeur passée par le code généré
+                _header = (
+                    f'import pptx as _pptx_patch\n'
+                    f'_orig_pptx_save = _pptx_patch.Presentation.save\n'
+                    f'def _forced_save(self, *a, **kw): _orig_pptx_save(self, r"{_out}")\n'
+                    f'_pptx_patch.Presentation.save = _forced_save\n'
+                    f'output_path = r"{_out}"\n'
                 )
                 _script = _os5.path.join(_td, "gen.py")
                 with open(_script, "w", encoding="utf-8") as _f:
-                    _f.write(code)
+                    _f.write(_header + code)
                 _proc = _sub.run(
                     [_sys5.executable, _script],
                     capture_output=True, text=True, timeout=120, cwd=_td,
                 )
                 if _proc.returncode != 0:
-                    raise RuntimeError(_proc.stderr or "Erreur inconnue")
+                    raise RuntimeError(_proc.stderr or _proc.stdout or "Erreur inconnue")
                 if not _os5.path.exists(_out):
-                    raise FileNotFoundError("Fichier PPTX non généré")
+                    raise FileNotFoundError(
+                        f"Fichier PPTX non généré. stdout={_proc.stdout[:500]}"
+                    )
                 with open(_out, "rb") as _f:
                     return _f.read()
 
