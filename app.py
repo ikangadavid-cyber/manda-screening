@@ -3001,6 +3001,8 @@ elif st.session_state.screen == 5:
             import re as _re_pptx, tempfile as _tmp, subprocess as _sub, os as _os5, sys as _sys5
             m = _re_pptx.search(r"```python\s*(.*?)\s*```", code_response, _re_pptx.DOTALL)
             code = m.group(1) if m else code_response
+            # Remplacer les caractères non-ASCII invalides comme token Python
+            code = code.replace('€', 'EUR').replace('£', 'GBP').replace('¥', 'JPY')
             with _tmp.TemporaryDirectory() as _td:
                 _out = _os5.path.join(_td, "result.pptx")
                 # Injecter la variable output_path en tête (couvre prs.save(output_path))
