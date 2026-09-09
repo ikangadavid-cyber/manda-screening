@@ -529,20 +529,36 @@ def try_exec_pptx_code(ai_output: str) -> bytes | None:
         if danger in code:
             return None
 
-    # Remplacer toute forme de prs.save(...) par prs.save(_output_buf)
-    code = re.sub(r'prs\.save\([^)]*\)', "prs.save(_output_buf)", code)
-    # Aussi presentation.save(...)
-    code = re.sub(r'presentation\.save\([^)]*\)', "presentation.save(_output_buf)", code)
+    # Remplacer prs.save(...) ligne par ligne (évite le problème de parens imbriquées)
+    fixed_lines = []
+    for _ln in code.splitlines():
+        if 'prs.save(' in _ln:
+            fixed_lines.append('prs.save(_output_buf)')
+        elif 'presentation.save(' in _ln:
+            fixed_lines.append('presentation.save(_output_buf)')
+        else:
+            fixed_lines.append(_ln)
+    code = "\n".join(fixed_lines)
 
     buf = io.BytesIO()
-    namespace: dict = {"_output_buf": buf}
+    # Namespace préchargé avec les imports communs pour que le code exec'd puisse les utiliser
+    import pptx as _pptx_mod
+    import pptx.util as _pptx_util
+    import pptx.dml.color as _pptx_color
+    import pptx.enum.text as _pptx_enum
+    namespace: dict = {
+        "_output_buf": buf,
+        "io": io,
+        "copy": __import__("copy"),
+        "pptx": _pptx_mod,
+    }
 
     try:
         exec(textwrap.dedent(code), namespace)  # noqa: S102
         buf.seek(0)
         data = buf.read()
-        if len(data) < 1000:          # trop petit = probablement pas un vrai PPTX
+        if len(data) < 1000:
             return None
         return data
-    except Exception:
-        return None
+    except Exception as _e:
+        raise RuntimeError(f"Exec PPTX: {type(_e).__name__}: {_e}") from _e

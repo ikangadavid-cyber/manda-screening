@@ -3040,14 +3040,7 @@ elif st.session_state.screen == 5:
                 with st.spinner("Génération du fichier PowerPoint…"):
                     try:
                         from export_pptx import generate_sell_pptx, try_exec_pptx_code
-                        _has_code = "```python" in slides_result or "```Python" in slides_result
-                        _exec_result = try_exec_pptx_code(slides_result)
-                        if _exec_result:
-                            _pptx_result = _exec_result
-                        elif _has_code:
-                            raise RuntimeError("Le code Python généré n'a pas pu être exécuté. Relancez la génération des slides.")
-                        else:
-                            _pptx_result = generate_sell_pptx(slides_result, ss_company)
+                        _pptx_result = try_exec_pptx_code(slides_result) or generate_sell_pptx(slides_result, ss_company)
                         st.session_state["ss_pptx_bytes"] = _pptx_result
                         st.session_state["ss_pptx_error"] = None
                     except Exception as _ep:
