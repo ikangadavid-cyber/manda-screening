@@ -93,7 +93,7 @@ def _parse_sections(content: str) -> list[dict]:
         elif current is not None:
             stripped = line.strip()
             if not current["teaser"] and stripped and not stripped.startswith("|") and not stripped.startswith("*"):
-                current["teaser"] = stripped
+                current["teaser"] = re.sub(r"^#+\s*", "", stripped)
             else:
                 current["body_lines"].append(line)
 
@@ -120,6 +120,8 @@ def _section_body_text(section: dict, max_chars=900) -> str:
         # Nettoyer le markdown
         s = re.sub(r"\*\*([^*]+)\*\*", r"\1", s)   # **bold**
         s = re.sub(r"\*([^*]+)\*", r"\1", s)         # *italic*
+        if re.match(r'^[-_*]{2,}$', s):
+            continue                                      # skip horizontal rules (---, ___, ***)
         s = re.sub(r"^[-•*]\s*", "• ", s)            # bullets
         s = re.sub(r"^\d+\.\s*", "→ ", s)            # numbered
         s = re.sub(r"^\|[-\s|]+\|$", "", s)           # séparateurs tableau (skip)
