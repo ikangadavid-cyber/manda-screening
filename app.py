@@ -458,7 +458,8 @@ def get_key(name):
     """Read API keys from Streamlit Cloud (st.secrets) or local .env file."""
     try:
         return st.secrets[name]
-    except Exception:
+    except Exception as _e:
+        print(f"[DEBUG get_key] Impossible de lire '{name}' depuis st.secrets : {type(_e).__name__}: {_e}")
         return os.environ.get(name, "")
 
 anthropic_key = get_key("ANTHROPIC_API_KEY")
