@@ -3036,16 +3036,15 @@ elif st.session_state.screen == 5:
                 'letter-spacing:0.08em;margin-bottom:10px;">Présentation PowerPoint</div>',
                 unsafe_allow_html=True,
             )
-            if "ss_pptx_bytes" not in st.session_state:
+            if st.session_state.get("ss_pptx_bytes") is None and st.session_state.get("ss_pptx_error") is None:
                 with st.spinner("Génération du fichier PowerPoint…"):
                     try:
                         from export_pptx import generate_sell_pptx, try_exec_pptx_code
-                        _has_code = bool(re.search(r"```python", slides_result, re.IGNORECASE))
+                        _has_code = "```python" in slides_result or "```Python" in slides_result
                         _exec_result = try_exec_pptx_code(slides_result)
                         if _exec_result:
                             _pptx_result = _exec_result
                         elif _has_code:
-                            # Le code Python a échoué à l'exécution — ne pas l'afficher comme texte
                             raise RuntimeError("Le code Python généré n'a pas pu être exécuté. Relancez la génération des slides.")
                         else:
                             _pptx_result = generate_sell_pptx(slides_result, ss_company)
@@ -3071,6 +3070,10 @@ elif st.session_state.screen == 5:
                 )
             elif _pptx_error:
                 st.error(f"❌ Génération PPTX échouée : {_pptx_error}")
+                if st.button("🔄 Réessayer (sans relancer l'IA)", key="retry_pptx"):
+                    for _k in ["ss_pptx_bytes", "ss_pptx_error"]:
+                        st.session_state.pop(_k, None)
+                    st.rerun()
                 with st.expander("Voir la réponse brute"):
                     st.code(slides_result[:3000])
 
