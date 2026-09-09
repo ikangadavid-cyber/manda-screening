@@ -2971,14 +2971,7 @@ elif st.session_state.screen == 5:
         selection   = st.session_state.get("ss_slides_selection", "")
         input_parts = []
         input_parts.append(
-            "**Instruction impérative — Format et périmètre :**\n"
-            "FORMAT DE SORTIE OBLIGATOIRE : génère uniquement du texte structuré en markdown. "
-            "NE génère PAS de code Python, NE génère PAS de fichier .pptx. "
-            "Pour chaque slide, utilise exactement ce format :\n"
-            "## SLIDE X — [TITRE DE LA SLIDE]\n"
-            "**TITRE :** [titre court, max 65 caractères]\n"
-            "**MESSAGE CLÉ :** [une phrase de synthèse, 250–300 caractères]\n"
-            "**CORPS :** [contenu structuré de la slide]\n\n"
+            "**Instruction impérative — Périmètre :**\n"
             "Couvre TOUTES les sections du Plan IM validé ci-dessous, dans l'ordre. "
             "Minimum 5 slides au total. Ne jamais t'arrêter avant d'avoir couvert tout le plan."
         )

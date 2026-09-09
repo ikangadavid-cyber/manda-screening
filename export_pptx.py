@@ -134,113 +134,62 @@ def _section_body_text(section: dict, max_chars=900) -> str:
 
 # ── SELL-SIDE PPT ─────────────────────────────────────────────────────────────
 
-def _parse_sell_section(section: dict) -> dict:
-    """Extrait TITRE, MESSAGE CLÉ, CORPS depuis la sortie structurée de sell_03."""
-    titre = section["title"]
-    # Supprimer le préfixe "SLIDE X.Y — " ou "## SLIDE …"
-    titre = re.sub(r'^SLIDE\s+[\d.]+\s*[—–\-]+\s*', '', titre).strip()
-
-    msg_cle = section.get("teaser", "")
-    corps_lines = []
-    in_corps = False
-
-    for line in section["body_lines"]:
-        s = line.strip()
-        if not s:
-            if in_corps:
-                corps_lines.append("")
-            continue
-
-        m = re.match(r'\*{0,2}TITRE\s*:\*{0,2}\s*(.*)', s, re.IGNORECASE)
-        if m and not in_corps:
-            val = m.group(1).strip().strip('*').strip()
-            if val:
-                titre = val
-            continue
-
-        m = re.match(r'\*{0,2}MESSAGE\s+CL[EÉ]\s*:\*{0,2}\s*(.*)', s, re.IGNORECASE)
-        if m and not in_corps:
-            val = m.group(1).strip().strip('*').strip()
-            if val:
-                msg_cle = val
-            in_corps = False
-            continue
-
-        if re.match(r'\*{0,2}CORPS\s*:\*{0,2}', s, re.IGNORECASE):
-            in_corps = True
-            continue
-
-        corps_lines.append(s)
-
-    if not corps_lines:
-        corps_lines = [l.strip() for l in section["body_lines"] if l.strip()]
-
-    return {"title": titre, "message_cle": msg_cle, "corps": corps_lines}
-
-
 def _sell_slide(prs: Presentation, section: dict, company: str, section_num: int, total: int, date_str: str):
-    """Ajoute une slide sell-side fidèle au template de référence."""
-    slide_layout = prs.slide_layouts[6]  # Blank
+    """Ajoute une slide sell-side au format Inspirit Partners."""
+    slide_layout = prs.slide_layouts[6]  # Blank layout
     slide = prs.slides.add_slide(slide_layout)
     _set_bg(slide, BG_GRAY)
 
     W, H = SLIDE_W, SLIDE_H
-    parsed = _parse_sell_section(section)
-    titre   = parsed["title"]
-    msg_cle = parsed["message_cle"]
-    corps   = parsed["corps"]
+    LEFT_COL  = Cm(0.5)
+    HEADER_H  = Cm(1.0)
+    MARGIN    = Cm(0.5)
 
-    # ── Étiquette section (top right, dark navy) ──────────────────────────────
-    _add_rect(slide, Cm(18.5), Cm(0.26), Cm(10.9), Cm(0.6), DARK_NAVY)
-    hdr = f"CONFIDENTIEL  ·  {company.upper()}  ·  Mémorandum d'information  ·  {date_str}"
-    _add_textbox(slide, Cm(18.55), Cm(0.26), Cm(10.0), Cm(0.6),
-                 hdr, 6.5, False, RGBColor(0x9C, 0xB4, 0xB6))
-    # Numéro de slide (à droite dans la même barre)
-    _add_textbox(slide, W - Cm(1.3), Cm(0.26), Cm(1.0), Cm(0.6),
-                 f"{section_num}/{total}", 6.5, True, RGBColor(0x9C, 0xB4, 0xB6),
+    # ── Barre header ──────────────────────────────────────────────────────────
+    _add_rect(slide, 0, 0, W, HEADER_H, DARK_NAVY)
+    hdr_text = f"CONFIDENTIEL  ·  {company}  ·  Mémorandum d'information  ·  {date_str}"
+    _add_textbox(slide, MARGIN, Cm(0.15), W - Cm(1), HEADER_H - Cm(0.3),
+                 hdr_text, 7.5, False, WHITE)
+
+    # Numéro de slide en haut à droite
+    _add_textbox(slide, W - Cm(1.5), Cm(0.15), Cm(1.2), HEADER_H - Cm(0.3),
+                 f"{section_num}/{total}", 7.5, False, RGBColor(0x9C, 0xB4, 0xB6),
                  align=PP_ALIGN.RIGHT)
 
-    # ── TITRE (pos exacte du template : x=1.6, y=1.26 | 26.5×1.5 | 20pt bold TEAL)
-    _add_textbox(slide, Cm(1.6), Cm(1.26), Cm(26.5), Cm(1.5),
-                 titre, 20, bold=True, color=TEAL)
+    # ── Bande teal sous le header ─────────────────────────────────────────────
+    _add_rect(slide, 0, HEADER_H, W, Cm(0.07), TEAL)
 
-    # ── Ligne teal sous le titre ──────────────────────────────────────────────
-    _add_rect(slide, Cm(1.6), Cm(2.6), Cm(4.0), Cm(0.06), TEAL)
+    # ── Titre de la slide ─────────────────────────────────────────────────────
+    title = section["title"]
+    title = re.sub(r'^SLIDE\s+[\d.]+\s*[—–\-]+\s*', '', title).strip()
+    _add_textbox(slide, LEFT_COL, Cm(1.25), W - Cm(1), Cm(0.8),
+                 title, 15, True, TEAL)
 
-    # ── MESSAGE CLÉ (pos : x=1.6, y=2.7 | 26.5×1.2 | 11pt regular black) ────
-    if msg_cle:
-        _add_textbox(slide, Cm(1.6), Cm(2.7), Cm(26.5), Cm(1.2),
-                     msg_cle, 11, bold=False, color=BLACK)
+    # ── Ligne séparatrice sous le titre ───────────────────────────────────────
+    _add_rect(slide, LEFT_COL, Cm(2.1), Cm(8), Cm(0.04), TEAL)
 
-    # ── CORPS (pos : x=1.6, y=4.29 | 26.5×15.3) ─────────────────────────────
-    CORPS_T = Cm(4.29)
-    CORPS_H = Cm(15.3)
-    CORPS_W = Cm(26.5)
+    # ── Teaser (accroche) ────────────────────────────────────────────────────
+    teaser = section.get("teaser", "")
+    if teaser:
+        _add_textbox(slide, LEFT_COL, Cm(2.25), W - Cm(1), Cm(0.9),
+                     teaser, 9.5, False, RGBColor(0x2C, 0x3E, 0x50), italic=True)
 
-    _add_rect(slide, Cm(1.6), CORPS_T, CORPS_W, CORPS_H, WHITE)
-    _add_rect(slide, Cm(1.6), CORPS_T, Cm(0.13), CORPS_H, TEAL)
+    # ── Carte de contenu ──────────────────────────────────────────────────────
+    card_top = Cm(3.2) if teaser else Cm(2.5)
+    card_h = H - card_top - Cm(0.6)
 
-    if corps:
-        body = "\n".join(corps)
-        body = re.sub(r'\*\*([^*]+)\*\*', r'\1', body)
-        body = re.sub(r'\*([^*]+)\*', r'\1', body)
-        body = re.sub(r'^[-•]\s*', '• ', body, flags=re.MULTILINE)
-        body = re.sub(r'^\d+\.\s+', '→ ', body, flags=re.MULTILINE)
-        if len(body) > 1500:
-            body = body[:1500].rsplit('\n', 1)[0] + '\n…'
-        _add_textbox(slide, Cm(1.87), CORPS_T + Cm(0.3),
-                     CORPS_W - Cm(0.4), CORPS_H - Cm(0.5),
-                     body, 10, False, BLACK)
-    else:
-        body = _section_body_text(section, max_chars=1500)
-        if body:
-            _add_textbox(slide, Cm(1.87), CORPS_T + Cm(0.3),
-                         CORPS_W - Cm(0.4), CORPS_H - Cm(0.5),
-                         body, 10, False, BLACK)
+    _add_rect(slide, LEFT_COL, card_top, W - Cm(1), card_h, WHITE)
+    _add_rect(slide, LEFT_COL, card_top, Cm(0.12), card_h, TEAL)
 
-    # ── Footer company name (bottom left) ─────────────────────────────────────
-    _add_rect(slide, Cm(1.6), H - Cm(0.5), Cm(5.0), Cm(0.5), DARK_NAVY)
-    _add_textbox(slide, Cm(1.7), H - Cm(0.5), Cm(4.8), Cm(0.5),
+    body_text = _section_body_text(section, max_chars=1100)
+    if body_text:
+        _add_textbox(slide, LEFT_COL + Cm(0.3), card_top + Cm(0.2),
+                     W - Cm(1.5), card_h - Cm(0.4),
+                     body_text, 9, False, BLACK)
+
+    # ── Étiquette de section (coin bas gauche) ────────────────────────────────
+    _add_rect(slide, 0, H - Cm(0.5), Cm(5), Cm(0.5), DARK_NAVY)
+    _add_textbox(slide, MARGIN, H - Cm(0.5), Cm(4.5), Cm(0.5),
                  company.upper(), 7, True, RGBColor(0x9C, 0xB4, 0xB6))
 
     return slide
@@ -253,7 +202,7 @@ def generate_sell_pptx(content: str, company: str) -> bytes:
     prs.slide_height = SLIDE_H
 
     sections = _parse_sections(content)
-    date_str = datetime.date.today().strftime("%B %Y").capitalize()
+    date_str = datetime.date.today().strftime("%B %Y")
 
     for i, section in enumerate(sections, 1):
         _sell_slide(prs, section, company, i, len(sections), date_str)
@@ -560,5 +509,5 @@ def try_exec_pptx_code(ai_output: str) -> bytes | None:
         if len(data) < 1000:
             return None
         return data
-    except Exception as _e:
-        raise RuntimeError(f"Exec PPTX: {type(_e).__name__}: {_e}") from _e
+    except Exception:
+        return None
