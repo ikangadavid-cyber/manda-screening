@@ -3001,7 +3001,7 @@ elif st.session_state.screen == 5:
 
         # ── Générer le PPTX depuis le code produit par l'IA ─────────────────
         def _build_pptx(code_response: str) -> bytes:
-            import re as _re_pptx, tempfile as _tmp, subprocess as _sub, os as _os5
+            import re as _re_pptx, tempfile as _tmp, subprocess as _sub, os as _os5, sys as _sys5
             m = _re_pptx.search(r"```python\s*(.*?)\s*```", code_response, _re_pptx.DOTALL)
             code = m.group(1) if m else code_response
             with _tmp.TemporaryDirectory() as _td:
@@ -3016,7 +3016,7 @@ elif st.session_state.screen == 5:
                 with open(_script, "w", encoding="utf-8") as _f:
                     _f.write(code)
                 _proc = _sub.run(
-                    ["python3", _script],
+                    [_sys5.executable, _script],
                     capture_output=True, text=True, timeout=120, cwd=_td,
                 )
                 if _proc.returncode != 0:
