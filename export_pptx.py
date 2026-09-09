@@ -472,6 +472,9 @@ def try_exec_pptx_code(ai_output: str) -> bytes | None:
 
     code = "\n".join(blocks)
 
+    # Remplacer les caractères invalides comme token Python
+    code = code.replace('€', 'EUR').replace('£', 'GBP').replace('¥', 'JPY')
+
     # Vérification de sécurité minimale
     for danger in _DANGEROUS:
         if danger in code:
