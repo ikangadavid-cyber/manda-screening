@@ -3039,7 +3039,9 @@ elif st.session_state.screen == 5:
             if "ss_pptx_bytes" not in st.session_state:
                 with st.spinner("Génération du fichier PowerPoint…"):
                     try:
-                        st.session_state["ss_pptx_bytes"] = _build_pptx(slides_result)
+                        from export_pptx import generate_sell_pptx, try_exec_pptx_code
+                        _pptx_result = try_exec_pptx_code(slides_result) or generate_sell_pptx(slides_result, ss_company)
+                        st.session_state["ss_pptx_bytes"] = _pptx_result
                         st.session_state["ss_pptx_error"] = None
                     except Exception as _ep:
                         st.session_state["ss_pptx_bytes"] = None
