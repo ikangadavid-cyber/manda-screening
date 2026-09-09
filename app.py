@@ -2939,7 +2939,8 @@ elif st.session_state.screen == 5:
                 '<div style="font-size:0.88rem;font-weight:700;color:#111111;margin-bottom:4px;">'
                 '③ Rédaction des slides</div>'
                 '<div style="font-size:0.82rem;color:#6B7280;margin-bottom:14px;">'
-                'Importez les documents source (rapports, annexes…) et précisez les slides à rédiger.</div>',
+                'Importez les documents source si disponibles (rapports, annexes financières…). '
+                'L\'outil génère automatiquement toutes les slides du Plan IM validé.</div>',
                 unsafe_allow_html=True,
             )
             slides_files = st.file_uploader(
@@ -2948,19 +2949,7 @@ elif st.session_state.screen == 5:
                 accept_multiple_files=True,
                 label_visibility="collapsed",
                 key="s5_slides_upload",
-                help="Rapport annuel, annexes financières, pitch existant…",
-            )
-            st.markdown(
-                '<p style="font-size:0.82rem;color:#9CA3AF;margin:10px 0 4px;font-weight:600;'
-                'text-transform:uppercase;letter-spacing:0.06em;">Slides à rédiger</p>',
-                unsafe_allow_html=True,
-            )
-            slides_selection = st.text_area(
-                "Slides",
-                placeholder="Ex : Section 1 — Présentation du groupe (slides 1-8)\nSection 2 — Marché et positionnement (slides 9-16)",
-                label_visibility="collapsed",
-                height=120,
-                key="s5_slides_selection",
+                help="Rapport annuel, annexes financières, pitch existant… — facultatif",
             )
             st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
             if st.button("Lancer la rédaction →", type="primary",
@@ -2971,7 +2960,7 @@ elif st.session_state.screen == 5:
                     for uf in slides_files:
                         docs_parts.append(f"--- {uf.name} ---\n{_extract_raw(uf)}")
                 st.session_state["ss_slides_docs_text"] = "\n\n".join(docs_parts)
-                st.session_state["ss_slides_selection"] = slides_selection
+                st.session_state["ss_slides_selection"] = ""
                 st.session_state.ss_phase = "run_slides"
                 st.rerun()
 
@@ -2982,17 +2971,17 @@ elif st.session_state.screen == 5:
         selection   = st.session_state.get("ss_slides_selection", "")
         input_parts = []
         input_parts.append(
-            "**Instruction impérative — Nombre de slides :**\n"
-            "Tu dois générer TOUTES les slides demandées dans la sélection. "
-            "Si la sélection indique 'slides 1 à 8', tu génères exactement 8 slides. "
-            "Si plusieurs sections sont demandées, tu génères autant de slides que le total indiqué. "
-            "MINIMUM ABSOLU : 5 slides. Ne jamais produire moins de 5 slides — "
-            "chaque grande section du plan IM doit avoir au moins 2 slides distinctes."
+            "**Instruction impérative — Périmètre et nombre de slides :**\n"
+            "Tu dois générer EN TOTALITÉ le PowerPoint de l'Information Memorandum, "
+            "couvrant TOUTES les sections et TOUTES les slides décrites dans le Plan IM validé ci-dessous. "
+            "Respecte scrupuleusement chaque section du plan : une section du plan = au minimum 2 slides distinctes. "
+            "MINIMUM ABSOLU : 5 slides au total. "
+            "Ne jamais t'arrêter en cours de route — tu dois produire la totalité du plan, pas un extrait."
         )
         if plan_result:
-            input_parts.append(f"**Plan IM validé :**\n{plan_result}")
+            input_parts.append(f"**Plan IM validé (à couvrir intégralement) :**\n{plan_result}")
         if selection:
-            input_parts.append(f"**Slides à rédiger :**\n{selection}")
+            input_parts.append(f"**Précisions complémentaires :**\n{selection}")
         if docs_text:
             input_parts.append(f"**Documents source :**\n{docs_text}")
         _run_s5_module(
