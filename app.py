@@ -2971,9 +2971,12 @@ elif st.session_state.screen == 5:
         selection   = st.session_state.get("ss_slides_selection", "")
         input_parts = []
         input_parts.append(
-            "**Instruction impérative — Périmètre :**\n"
-            "Couvre TOUTES les sections du Plan IM validé ci-dessous, dans l'ordre. "
-            "Minimum 5 slides au total. Ne jamais t'arrêter avant d'avoir couvert tout le plan."
+            "**Instruction impérative — Périmètre et nombre de slides :**\n"
+            "Tu dois générer EN TOTALITÉ le PowerPoint de l'Information Memorandum, "
+            "couvrant TOUTES les sections et TOUTES les slides décrites dans le Plan IM validé ci-dessous. "
+            "Respecte scrupuleusement chaque section du plan : une section du plan = au minimum 2 slides distinctes. "
+            "MINIMUM ABSOLU : 5 slides au total. "
+            "Ne jamais t'arrêter en cours de route — tu dois produire la totalité du plan, pas un extrait."
         )
         if plan_result:
             input_parts.append(f"**Plan IM validé (à couvrir intégralement) :**\n{plan_result}")
@@ -3033,7 +3036,7 @@ elif st.session_state.screen == 5:
                 'letter-spacing:0.08em;margin-bottom:10px;">Présentation PowerPoint</div>',
                 unsafe_allow_html=True,
             )
-            if st.session_state.get("ss_pptx_bytes") is None and st.session_state.get("ss_pptx_error") is None:
+            if "ss_pptx_bytes" not in st.session_state:
                 with st.spinner("Génération du fichier PowerPoint…"):
                     try:
                         from export_pptx import generate_sell_pptx, try_exec_pptx_code
@@ -3060,10 +3063,6 @@ elif st.session_state.screen == 5:
                 )
             elif _pptx_error:
                 st.error(f"❌ Génération PPTX échouée : {_pptx_error}")
-                if st.button("🔄 Réessayer (sans relancer l'IA)", key="retry_pptx"):
-                    for _k in ["ss_pptx_bytes", "ss_pptx_error"]:
-                        st.session_state.pop(_k, None)
-                    st.rerun()
                 with st.expander("Voir la réponse brute"):
                     st.code(slides_result[:3000])
 

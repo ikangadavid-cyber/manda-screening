@@ -134,93 +134,64 @@ def _section_body_text(section: dict, max_chars=900) -> str:
 
 # ── SELL-SIDE PPT ─────────────────────────────────────────────────────────────
 
-def _extract_sell_fields(section: dict) -> tuple[str, str, str]:
-    """Extrait titre, message clé et corps depuis le markdown structuré."""
-    raw_title = section["title"]
-    raw_title = re.sub(r'(?i)^slide\s+[\d.]+\s*[—–\-]+\s*', '', raw_title).strip()
-
-    titre, msg_cle, corps_lines = raw_title, "", []
-    in_corps = False
-
-    for line in section["body_lines"]:
-        s = line.strip()
-        if not s:
-            if in_corps:
-                corps_lines.append("")
-            continue
-        if re.match(r'\*{0,2}titre\s*:\*{0,2}\s*', s, re.IGNORECASE):
-            val = re.sub(r'(?i)^\*{0,2}titre\s*:\*{0,2}\s*', '', s).strip().strip('*')
-            if val:
-                titre = val
-            continue
-        if re.match(r'\*{0,2}message\s+cl[eé]\s*:\*{0,2}\s*', s, re.IGNORECASE):
-            val = re.sub(r'(?i)^\*{0,2}message\s+cl[eé]\s*:\*{0,2}\s*', '', s).strip().strip('*')
-            if val:
-                msg_cle = val
-            in_corps = False
-            continue
-        if re.match(r'\*{0,2}corps\s*:\*{0,2}', s, re.IGNORECASE):
-            in_corps = True
-            continue
-        corps_lines.append(s)
-
-    if not corps_lines:
-        corps_lines = [l.strip() for l in section["body_lines"] if l.strip()
-                       and not re.match(r'(?i)\*{0,2}(titre|message cl[eé]|corps)\s*:', l)]
-
-    body = "\n".join(corps_lines)
-    body = re.sub(r'\*\*([^*]+)\*\*', r'\1', body)
-    body = re.sub(r'\*([^*]+)\*', r'\1', body)
-    body = re.sub(r'^\|.*\|$', '', body, flags=re.MULTILINE)  # supprimer tables markdown
-    body = re.sub(r'^[-•*]\s*', '• ', body, flags=re.MULTILINE)
-    body = re.sub(r'^\d+\.\s+', '→ ', body, flags=re.MULTILINE)
-    body = re.sub(r'\n{3,}', '\n\n', body).strip()
-    if len(body) > 1400:
-        body = body[:1400].rsplit('\n', 1)[0] + '\n…'
-
-    return titre, msg_cle, body
-
-
 def _sell_slide(prs: Presentation, section: dict, company: str, section_num: int, total: int, date_str: str):
-    """Ajoute une slide sell-side au format template de référence."""
-    slide_layout = prs.slide_layouts[6]
+    """Ajoute une slide sell-side au format Inspirit Partners."""
+    slide_layout = prs.slide_layouts[6]  # Blank layout
     slide = prs.slides.add_slide(slide_layout)
     _set_bg(slide, BG_GRAY)
 
     W, H = SLIDE_W, SLIDE_H
-    titre, msg_cle, corps = _extract_sell_fields(section)
+    LEFT_COL  = Cm(0.5)
+    HEADER_H  = Cm(1.0)
+    MARGIN    = Cm(0.5)
 
-    # ── Étiquette header top right ────────────────────────────────────────────
-    _add_rect(slide, Cm(10.0), Cm(0.26), W - Cm(10.0), Cm(0.6), DARK_NAVY)
-    hdr = f"CONFIDENTIEL  ·  {company}  ·  Mémorandum d'information  ·  {date_str}"
-    _add_textbox(slide, Cm(10.1), Cm(0.26), W - Cm(11.5), Cm(0.6),
-                 hdr, 6.5, False, RGBColor(0x9C, 0xB4, 0xB6))
-    _add_textbox(slide, W - Cm(1.4), Cm(0.26), Cm(1.2), Cm(0.6),
-                 f"{section_num}/{total}", 6.5, True, RGBColor(0x9C, 0xB4, 0xB6),
+    # ── Barre header ──────────────────────────────────────────────────────────
+    _add_rect(slide, 0, 0, W, HEADER_H, DARK_NAVY)
+    hdr_text = f"CONFIDENTIEL  ·  {company}  ·  Mémorandum d'information  ·  {date_str}"
+    _add_textbox(slide, MARGIN, Cm(0.15), W - Cm(1), HEADER_H - Cm(0.3),
+                 hdr_text, 7.5, False, WHITE)
+
+    # Numéro de slide en haut à droite
+    _add_textbox(slide, W - Cm(1.5), Cm(0.15), Cm(1.2), HEADER_H - Cm(0.3),
+                 f"{section_num}/{total}", 7.5, False, RGBColor(0x9C, 0xB4, 0xB6),
                  align=PP_ALIGN.RIGHT)
 
-    # ── TITRE ─────────────────────────────────────────────────────────────────
-    _add_textbox(slide, Cm(1.6), Cm(1.26), Cm(26.5), Cm(1.5),
-                 titre, 20, bold=True, color=TEAL)
-    _add_rect(slide, Cm(1.6), Cm(2.68), Cm(4.0), Cm(0.06), TEAL)
+    # ── Bande teal sous le header ─────────────────────────────────────────────
+    _add_rect(slide, 0, HEADER_H, W, Cm(0.07), TEAL)
 
-    # ── MESSAGE CLÉ ───────────────────────────────────────────────────────────
-    if msg_cle:
-        _add_textbox(slide, Cm(1.6), Cm(2.8), Cm(26.5), Cm(1.2),
-                     msg_cle, 11, bold=False, color=BLACK)
+    # ── Titre de la slide ─────────────────────────────────────────────────────
+    title_text = section["title"].upper() if len(section["title"]) < 60 else section["title"]
+    txTitle = _add_textbox(slide, LEFT_COL, Cm(1.25), W - Cm(1), Cm(0.8),
+                           title_text, 15, True, TEAL)
 
-    # ── CORPS ─────────────────────────────────────────────────────────────────
-    ct = Cm(4.29)
-    ch = H - ct - Cm(0.55)
-    _add_rect(slide, Cm(1.6), ct, Cm(26.5), ch, WHITE)
-    _add_rect(slide, Cm(1.6), ct, Cm(0.13), ch, TEAL)
-    if corps:
-        _add_textbox(slide, Cm(1.87), ct + Cm(0.25), Cm(26.1), ch - Cm(0.4),
-                     corps, 10, False, BLACK)
+    # ── Ligne séparatrice sous le titre ───────────────────────────────────────
+    _add_rect(slide, LEFT_COL, Cm(2.1), Cm(8), Cm(0.04), TEAL)
 
-    # ── Footer ────────────────────────────────────────────────────────────────
-    _add_rect(slide, Cm(1.6), H - Cm(0.5), Cm(5.0), Cm(0.45), DARK_NAVY)
-    _add_textbox(slide, Cm(1.7), H - Cm(0.5), Cm(4.8), Cm(0.45),
+    # ── Teaser (accroche italique) ────────────────────────────────────────────
+    teaser = section.get("teaser", "")
+    if teaser:
+        _add_textbox(slide, LEFT_COL, Cm(2.25), W - Cm(1), Cm(0.9),
+                     teaser, 9.5, False, RGBColor(0x2C, 0x3E, 0x50), italic=True)
+
+    # ── Carte de contenu ──────────────────────────────────────────────────────
+    card_top = Cm(3.2) if teaser else Cm(2.5)
+    card_h = H - card_top - Cm(0.6)
+
+    # Fond de la carte (blanc légèrement grisé)
+    card_rect = _add_rect(slide, LEFT_COL, card_top, W - Cm(1), card_h, WHITE)
+    # Bordure gauche teal
+    _add_rect(slide, LEFT_COL, card_top, Cm(0.12), card_h, TEAL)
+
+    # Contenu
+    body_text = _section_body_text(section, max_chars=1100)
+    if body_text:
+        _add_textbox(slide, LEFT_COL + Cm(0.3), card_top + Cm(0.2),
+                     W - Cm(1.5), card_h - Cm(0.4),
+                     body_text, 9, False, BLACK)
+
+    # ── Étiquette de section (coin bas gauche) ────────────────────────────────
+    _add_rect(slide, 0, H - Cm(0.5), Cm(5), Cm(0.5), DARK_NAVY)
+    _add_textbox(slide, MARGIN, H - Cm(0.5), Cm(4.5), Cm(0.5),
                  company.upper(), 7, True, RGBColor(0x9C, 0xB4, 0xB6))
 
     return slide
@@ -482,7 +453,7 @@ def _parse_companies_from_md(content: str) -> list[dict]:
 
 _DANGEROUS = [
     "subprocess", "os.system", "os.popen", "__import__",
-    "shutil.rmtree", "shutil.move", "socket",
+    "eval(", "exec(", "open(", "shutil", "socket",
 ]
 
 def try_exec_pptx_code(ai_output: str) -> bytes | None:
@@ -509,35 +480,19 @@ def try_exec_pptx_code(ai_output: str) -> bytes | None:
         if danger in code:
             return None
 
-    # Remplacer prs.save(...) ligne par ligne (évite le problème de parens imbriquées)
-    fixed_lines = []
-    for _ln in code.splitlines():
-        if 'prs.save(' in _ln:
-            fixed_lines.append('prs.save(_output_buf)')
-        elif 'presentation.save(' in _ln:
-            fixed_lines.append('presentation.save(_output_buf)')
-        else:
-            fixed_lines.append(_ln)
-    code = "\n".join(fixed_lines)
+    # Remplacer prs.save("quelquechose") par prs.save(_output_buf)
+    code = re.sub(r'prs\.save\(["\'][^"\']*["\']\)', "prs.save(_output_buf)", code)
+    # Même chose avec des variables : prs.save(output_path) etc.
+    code = re.sub(r'prs\.save\(\w+\)', "prs.save(_output_buf)", code)
 
     buf = io.BytesIO()
-    # Namespace préchargé avec les imports communs pour que le code exec'd puisse les utiliser
-    import pptx as _pptx_mod
-    import pptx.util as _pptx_util
-    import pptx.dml.color as _pptx_color
-    import pptx.enum.text as _pptx_enum
-    namespace: dict = {
-        "_output_buf": buf,
-        "io": io,
-        "copy": __import__("copy"),
-        "pptx": _pptx_mod,
-    }
+    namespace: dict = {"_output_buf": buf}
 
     try:
         exec(textwrap.dedent(code), namespace)  # noqa: S102
         buf.seek(0)
         data = buf.read()
-        if len(data) < 1000:
+        if len(data) < 1000:          # trop petit = probablement pas un vrai PPTX
             return None
         return data
     except Exception:

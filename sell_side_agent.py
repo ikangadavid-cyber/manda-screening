@@ -24,8 +24,7 @@ MODEL_BY_MODULE = {
 }
 
 MAX_TOKENS_BY_MODULE = {
-    "sell_02_plan_im":          16000,
-    "sell_03_redaction_slides": 16000,
+    "sell_02_plan_im": 16000,
 }
 DEFAULT_MAX_TOKENS = 8096
 
