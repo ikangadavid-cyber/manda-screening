@@ -2971,12 +2971,16 @@ elif st.session_state.screen == 5:
         selection   = st.session_state.get("ss_slides_selection", "")
         input_parts = []
         input_parts.append(
-            "**Instruction impérative — Périmètre et nombre de slides :**\n"
-            "Tu dois générer EN TOTALITÉ le PowerPoint de l'Information Memorandum, "
-            "couvrant TOUTES les sections et TOUTES les slides décrites dans le Plan IM validé ci-dessous. "
-            "Respecte scrupuleusement chaque section du plan : chaque section du plan doit donner lieu à au moins 1 slide distincte. "
-            "MINIMUM ABSOLU : 5 slides au total. Ne génère pas de slides inutiles ou répétitives — qualité et pertinence priment sur la quantité. "
-            "Ne jamais t'arrêter en cours de route — tu dois produire la totalité du plan, pas un extrait."
+            "**Instruction impérative — Format et périmètre :**\n"
+            "FORMAT DE SORTIE OBLIGATOIRE : génère uniquement du texte structuré en markdown. "
+            "NE génère PAS de code Python, NE génère PAS de fichier .pptx. "
+            "Pour chaque slide, utilise exactement ce format :\n"
+            "## SLIDE X — [TITRE DE LA SLIDE]\n"
+            "**TITRE :** [titre court, max 65 caractères]\n"
+            "**MESSAGE CLÉ :** [une phrase de synthèse, 250–300 caractères]\n"
+            "**CORPS :** [contenu structuré de la slide]\n\n"
+            "Couvre TOUTES les sections du Plan IM validé ci-dessous, dans l'ordre. "
+            "Minimum 5 slides au total. Ne jamais t'arrêter avant d'avoir couvert tout le plan."
         )
         if plan_result:
             input_parts.append(f"**Plan IM validé (à couvrir intégralement) :**\n{plan_result}")
