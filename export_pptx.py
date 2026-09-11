@@ -93,7 +93,9 @@ def _parse_sections(content: str) -> list[dict]:
         elif current is not None:
             stripped = line.strip()
             if not current["teaser"] and stripped and not stripped.startswith("|") and not stripped.startswith("*"):
-                current["teaser"] = re.sub(r"^#+\s*", "", stripped)
+                cleaned = re.sub(r"^#+\s*", "", stripped)
+                if cleaned.upper() not in _STRUCTURAL_LABELS:
+                    current["teaser"] = cleaned
             else:
                 current["body_lines"].append(line)
 
@@ -110,6 +112,8 @@ def _parse_sections(content: str) -> list[dict]:
     return sections
 
 
+_STRUCTURAL_LABELS = {"TITRE", "MESSAGE CLÉ", "MESSAGE CLE", "CORPS", "CONTENU", "ACCROCHE"}
+
 def _section_body_text(section: dict, max_chars=900) -> str:
     """Renvoie le texte body nettoyé, tronqué si besoin."""
     lines = []
@@ -117,21 +121,24 @@ def _section_body_text(section: dict, max_chars=900) -> str:
         s = line.strip()
         if not s:
             continue
+        # Ignorer les labels structurels du format markdown intermédiaire
+        if s.upper() in _STRUCTURAL_LABELS:
+            continue
         # Nettoyer le markdown
         s = re.sub(r"\*\*([^*]+)\*\*", r"\1", s)   # **bold**
         s = re.sub(r"\*([^*]+)\*", r"\1", s)         # *italic*
-        if re.match(r'^[-_*]{2,}$', s):
-            continue                                      # skip horizontal rules (---, ___, ***)
+        if re.match(r'^[-_*\.]{2,}$', s):
+            continue                                      # skip horizontal rules et "..."
         s = re.sub(r"^[-•*]\s*", "• ", s)            # bullets
         s = re.sub(r"^\d+\.\s*", "→ ", s)            # numbered
-        s = re.sub(r"^\|[-\s|]+\|$", "", s)           # séparateurs tableau (skip)
-        s = re.sub(r"^\|(.*)\|$", lambda m: "  ".join(c.strip() for c in m.group(1).split("|") if c.strip()), s)  # lignes tableau → texte
+        s = re.sub(r"^\|[-\s|:]+\|\s*$", "", s)       # séparateurs tableau (skip)
+        s = re.sub(r"^\|(.*)\|\s*$", lambda m: "  ".join(c.strip() for c in m.group(1).split("|") if c.strip()), s)
         s = re.sub(r"^#+\s*", "", s)                  # nested headers
         if s:
             lines.append(s)
     text = "\n".join(lines)
     if len(text) > max_chars:
-        text = text[:max_chars].rsplit("\n", 1)[0] + "\n…"
+        text = text[:max_chars].rsplit("\n", 1)[0]
     return text
 
 
