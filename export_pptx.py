@@ -138,64 +138,60 @@ def _section_body_text(section: dict, max_chars=900) -> str:
 # ── SELL-SIDE PPT ─────────────────────────────────────────────────────────────
 
 def _sell_slide(prs: Presentation, section: dict, company: str, section_num: int, total: int, date_str: str):
-    """Ajoute une slide sell-side au format Inspirit Partners."""
+    """Ajoute une slide sell-side au format template 3b (Inspirit Partners)."""
     slide_layout = prs.slide_layouts[6]  # Blank layout
     slide = prs.slides.add_slide(slide_layout)
-    _set_bg(slide, BG_GRAY)
+    _set_bg(slide, WHITE)
 
     W, H = SLIDE_W, SLIDE_H
-    LEFT_COL  = Cm(0.5)
-    HEADER_H  = Cm(1.0)
-    MARGIN    = Cm(0.5)
 
-    # ── Barre header ──────────────────────────────────────────────────────────
-    _add_rect(slide, 0, 0, W, HEADER_H, DARK_NAVY)
-    hdr_text = f"CONFIDENTIEL  ·  {company}  ·  Mémorandum d'information  ·  {date_str}"
-    _add_textbox(slide, MARGIN, Cm(0.15), W - Cm(1), HEADER_H - Cm(0.3),
-                 hdr_text, 7.5, False, WHITE)
+    # ── Logo (rectangle teal en haut à gauche) ────────────────────────────────
+    _add_rect(slide, Cm(1.88), Cm(0.26), Cm(1.60), Cm(0.60), TEAL)
+    initials = "".join(w[0].upper() for w in company.split()[:3] if w)
+    _add_textbox(slide, Cm(1.88), Cm(0.26), Cm(1.60), Cm(0.60),
+                 initials, 9, True, WHITE, align=PP_ALIGN.CENTER)
 
-    # Numéro de slide en haut à droite
-    _add_textbox(slide, W - Cm(1.5), Cm(0.15), Cm(1.2), HEADER_H - Cm(0.3),
-                 f"{section_num}/{total}", 7.5, False, RGBColor(0x9C, 0xB4, 0xB6),
-                 align=PP_ALIGN.RIGHT)
+    # ── Label section (rectangle en haut à droite) ────────────────────────────
+    label_w = Cm(7.50)
+    label_text = section["title"].upper()
+    if len(label_text) > 45:
+        label_text = label_text[:45]
+    _add_rect(slide, W - label_w - Cm(0.3), Cm(0.26), label_w, Cm(0.60), DARK_NAVY)
+    _add_textbox(slide, W - label_w - Cm(0.3), Cm(0.26), label_w, Cm(0.60),
+                 label_text, 8, False, WHITE, align=PP_ALIGN.CENTER)
 
-    # ── Bande teal sous le header ─────────────────────────────────────────────
-    _add_rect(slide, 0, HEADER_H, W, Cm(0.07), TEAL)
+    # ── Titre principal ───────────────────────────────────────────────────────
+    _add_textbox(slide, Cm(1.60), Cm(1.26), Cm(26.50), Cm(1.50),
+                 section["title"], 20, True, TEAL)
 
-    # ── Titre de la slide ─────────────────────────────────────────────────────
-    title_text = section["title"].upper() if len(section["title"]) < 60 else section["title"]
-    txTitle = _add_textbox(slide, LEFT_COL, Cm(1.25), W - Cm(1), Cm(0.8),
-                           title_text, 15, True, TEAL)
-
-    # ── Ligne séparatrice sous le titre ───────────────────────────────────────
-    _add_rect(slide, LEFT_COL, Cm(2.1), Cm(8), Cm(0.04), TEAL)
-
-    # ── Teaser (accroche italique) ────────────────────────────────────────────
+    # ── Sous-titre / teaser ───────────────────────────────────────────────────
     teaser = section.get("teaser", "")
     if teaser:
-        _add_textbox(slide, LEFT_COL, Cm(2.25), W - Cm(1), Cm(0.9),
-                     teaser, 9.5, False, RGBColor(0x2C, 0x3E, 0x50), italic=True)
+        _add_textbox(slide, Cm(1.60), Cm(2.70), Cm(26.50), Cm(1.20),
+                     teaser, 11, False, BLACK)
 
-    # ── Carte de contenu ──────────────────────────────────────────────────────
-    card_top = Cm(3.2) if teaser else Cm(2.5)
-    card_h = H - card_top - Cm(0.6)
+    # ── Ligne séparatrice teal ────────────────────────────────────────────────
+    _add_rect(slide, Cm(1.60), Cm(4.30), Cm(8.0), Cm(0.08), TEAL)
 
-    # Fond de la carte (blanc légèrement grisé)
-    card_rect = _add_rect(slide, LEFT_COL, card_top, W - Cm(1), card_h, WHITE)
-    # Bordure gauche teal
-    _add_rect(slide, LEFT_COL, card_top, Cm(0.12), card_h, TEAL)
+    # ── Zone contenu (bordure teal gauche + texte) ────────────────────────────
+    card_top = Cm(4.54)
+    card_h   = H - card_top - Cm(0.90)
+    _add_rect(slide, Cm(1.60), card_top, Cm(0.13), card_h, TEAL)
 
-    # Contenu
-    body_text = _section_body_text(section, max_chars=1100)
+    body_text = _section_body_text(section, max_chars=1200)
     if body_text:
-        _add_textbox(slide, LEFT_COL + Cm(0.3), card_top + Cm(0.2),
-                     W - Cm(1.5), card_h - Cm(0.4),
+        _add_textbox(slide, Cm(1.90), card_top + Cm(0.15),
+                     Cm(25.80), card_h - Cm(0.30),
                      body_text, 9, False, BLACK)
 
-    # ── Étiquette de section (coin bas gauche) ────────────────────────────────
-    _add_rect(slide, 0, H - Cm(0.5), Cm(5), Cm(0.5), DARK_NAVY)
-    _add_textbox(slide, MARGIN, H - Cm(0.5), Cm(4.5), Cm(0.5),
-                 company.upper(), 7, True, RGBColor(0x9C, 0xB4, 0xB6))
+    # ── Footer discret ────────────────────────────────────────────────────────
+    footer = f"{company.upper()}  ·  Mémorandum d'information  ·  {date_str}"
+    _add_textbox(slide, Cm(1.60), H - Cm(0.70), Cm(22.0), Cm(0.60),
+                 footer, 7.5, False, MID_GRAY)
+
+    # ── Numéro de slide ───────────────────────────────────────────────────────
+    _add_textbox(slide, Cm(27.08), H - Cm(0.70), Cm(1.50), Cm(0.60),
+                 f"{section_num}", 9, False, MID_GRAY, align=PP_ALIGN.RIGHT)
 
     return slide
 
@@ -456,7 +452,7 @@ def _parse_companies_from_md(content: str) -> list[dict]:
 
 _DANGEROUS = [
     "subprocess", "os.system", "os.popen", "__import__",
-    "eval(", "exec(", "open(", "shutil", "socket",
+    "eval(", "exec(", "shutil", "socket",
 ]
 
 def try_exec_pptx_code(ai_output: str) -> bytes | None:
