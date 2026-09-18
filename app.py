@@ -483,8 +483,10 @@ html, body, [class*="css"] {
 /* ── Fond général ── */
 
 .main .block-container {
-    max-width: 900px;
-    padding-top: 2rem;
+    max-width: 860px;
+    padding-top: 2.5rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
     margin: 0 auto;
     background: transparent;
     animation: fadeIn 0.3s ease both;
@@ -660,11 +662,11 @@ footer { visibility:hidden!important; }
 .q-optional-badge { font-size:0.72rem; font-weight:400; color:#9CA3AF; margin-left:8px; text-transform:uppercase; letter-spacing:0.05em; }
 
 /* ── Fond général ── */
-[data-testid="stAppViewContainer"] { background: #D0D0D0; }
+[data-testid="stAppViewContainer"] { background: #F0F0F0; }
 
 /* ── Header ── */
 header[data-testid="stHeader"] {
-    background:#D0D0D0!important; box-shadow:none!important; border-bottom:none!important;
+    background:#F0F0F0!important; box-shadow:none!important; border-bottom:none!important;
 }
 
 /* ── Cacher la barre décorative Streamlit ── */
@@ -1044,39 +1046,7 @@ if st.session_state.screen == 1:
             </div>
         </div>
         """, unsafe_allow_html=True)
-        with st.expander("Documents (facultatif)"):
-            ma_docs_upload = st.file_uploader(
-                "Documents",
-                type=["pdf", "docx", "txt", "md", "xlsx", "csv"],
-                accept_multiple_files=True,
-                label_visibility="collapsed",
-                key="ma_start_docs",
-                help="Plaquette, rapport annuel, mémo… L'IA les utilisera pendant la mission.",
-            )
         buy_submit = st.button("Lancer →", key="buy_launch", use_container_width=True, type="primary")
-        if buy_submit:
-            if not company_input.strip():
-                st.warning("Entrez le nom de l'entreprise.")
-            elif not anthropic_key or not tavily_key:
-                st.error("Clés API manquantes.")
-            else:
-                docs_text = ""
-                if ma_docs_upload:
-                    from document_extractor import extract_text as _ext_start
-                    for uf in ma_docs_upload:
-                        extracted = _ext_start(uf)
-                        if extracted.strip():
-                            docs_text += f"\n\n--- Document fourni : {uf.name} ---\n{extracted}"
-                st.session_state["ma_context_docs"] = docs_text
-                for k in list(st.session_state.keys()):
-                    if k.startswith("q_ma_buy_wizard") or k.startswith("q_idx_ma_buy_wizard"):
-                        del st.session_state[k]
-                st.session_state.ma_universe    = "buy"
-                st.session_state.ma_company     = company_input.strip()
-                st.session_state.ma_sector      = ""
-                st.session_state.ma_step_result = {}
-                st.session_state.screen         = 4
-                st.rerun()
 
     # Sell Side
     with col_sell:
@@ -1090,20 +1060,56 @@ if st.session_state.screen == 1:
         </div>
         """, unsafe_allow_html=True)
         sell_submit = st.button("Lancer →", key="sell_launch", use_container_width=True, type="primary")
-        if sell_submit:
-            if not company_input.strip():
-                st.warning("Entrez le nom de l'entreprise.")
-            elif not anthropic_key:
-                st.error("Clé API manquante.")
-            else:
-                for k in list(st.session_state.keys()):
-                    if k.startswith("ss_"):
-                        del st.session_state[k]
-                st.session_state.ss_company   = company_input.strip()
-                st.session_state.ss_variables = {"company": company_input.strip()}
-                st.session_state.ss_phase     = "run_1a"
-                st.session_state.screen       = 5
-                st.rerun()
+
+    # Docs upload Buy Side (hors colonnes pour ne pas casser la symétrie des hauteurs)
+    with st.expander("Documents (facultatif)"):
+        ma_docs_upload = st.file_uploader(
+            "Documents",
+            type=["pdf", "docx", "txt", "md", "xlsx", "csv"],
+            accept_multiple_files=True,
+            label_visibility="collapsed",
+            key="ma_start_docs",
+            help="Plaquette, rapport annuel, mémo… L'IA les utilisera pendant la mission.",
+        )
+
+    if buy_submit:
+        if not company_input.strip():
+            st.warning("Entrez le nom de l'entreprise.")
+        elif not anthropic_key or not tavily_key:
+            st.error("Clés API manquantes.")
+        else:
+            docs_text = ""
+            if ma_docs_upload:
+                from document_extractor import extract_text as _ext_start
+                for uf in ma_docs_upload:
+                    extracted = _ext_start(uf)
+                    if extracted.strip():
+                        docs_text += f"\n\n--- Document fourni : {uf.name} ---\n{extracted}"
+            st.session_state["ma_context_docs"] = docs_text
+            for k in list(st.session_state.keys()):
+                if k.startswith("q_ma_buy_wizard") or k.startswith("q_idx_ma_buy_wizard"):
+                    del st.session_state[k]
+            st.session_state.ma_universe    = "buy"
+            st.session_state.ma_company     = company_input.strip()
+            st.session_state.ma_sector      = ""
+            st.session_state.ma_step_result = {}
+            st.session_state.screen         = 4
+            st.rerun()
+
+    if sell_submit:
+        if not company_input.strip():
+            st.warning("Entrez le nom de l'entreprise.")
+        elif not anthropic_key:
+            st.error("Clé API manquante.")
+        else:
+            for k in list(st.session_state.keys()):
+                if k.startswith("ss_"):
+                    del st.session_state[k]
+            st.session_state.ss_company   = company_input.strip()
+            st.session_state.ss_variables = {"company": company_input.strip()}
+            st.session_state.ss_phase     = "run_1a"
+            st.session_state.screen       = 5
+            st.rerun()
 
     # ── SECTION ANALYSES RAPIDES ─────────────────────────────────────────────
     st.markdown(
@@ -1251,6 +1257,7 @@ elif st.session_state.screen == 2:
                 rem_str   = f"{m_re}:{s_re:02d}"
                 rem_color = "#333333" if remaining > 60 else "#111111"
             pct_bar = min(97, int(elapsed / estimated * 100)) if estimated else 50
+            _start_ts = time.time() - elapsed
             timing_html = f"""
             <div style="background:#F5F5F5; border-radius:8px; padding:12px 18px; margin-bottom:12px; font-size:0.85rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -1258,13 +1265,14 @@ elif st.session_state.screen == 2:
                     <span style="color:#555555;">Temps restant</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong style="color:#111111; font-size:1.3rem; font-family:monospace; letter-spacing:1px;">{elapsed_str}</strong>
-                    <strong style="color:{rem_color}; font-size:1.3rem; font-family:monospace; letter-spacing:1px;">{rem_str}</strong>
+                    <strong id="ma-el" style="color:#111111; font-size:1.3rem; font-family:monospace; letter-spacing:1px;">{elapsed_str}</strong>
+                    <strong id="ma-re" style="color:{rem_color}; font-size:1.3rem; font-family:monospace; letter-spacing:1px;">{rem_str}</strong>
                 </div>
             </div>
             <div style="background:#E5E5E5; border-radius:4px; height:6px; margin-bottom:18px; overflow:hidden;">
-                <div style="background:#111111; width:{pct_bar}%; height:100%; border-radius:4px; transition:width 0.5s;"></div>
-            </div>"""
+                <div id="ma-bar" style="background:#111111; width:{pct_bar}%; height:100%; border-radius:4px; transition:width 0.5s;"></div>
+            </div>
+            <script>(function(){{if(window._maTimer)clearInterval(window._maTimer);var ts={_start_ts:.3f},est={estimated};function tick(){{var el=Date.now()/1000-ts,m=Math.floor(el/60),s=Math.floor(el%60),re=Math.max(0,est-el),mr=Math.floor(re/60),sr=Math.floor(re%60),e=document.getElementById('ma-el'),r=document.getElementById('ma-re'),b=document.getElementById('ma-bar');if(e)e.textContent=m+':'+(s<10?'0':'')+s;if(r){{r.textContent=re<=0?'Finalisation...':(mr+':'+(sr<10?'0':'')+sr);r.style.color=re<=60?'#111111':'#333333';}}if(b)b.style.width=Math.min(97,Math.round(el/est*100))+'%';}}tick();window._maTimer=setInterval(tick,1000);}})();</script>"""
         else:
             est_min = max(1, int(estimated / 60))
             m_est, s_est = divmod(estimated, 60)
@@ -2021,6 +2029,7 @@ elif st.session_state.screen == 4:
                 rem_str = f"{m_re}:{s_re:02d}"
                 rem_color = "#333333" if remaining > 60 else "#111111"
             pct = min(97, int(elapsed / _est4 * 100)) if _est4 else 50
+            _start_ts4 = _t4.time() - elapsed
             prev_html = (
                 '<div style="margin-top:12px;background:#FAFAFA;border:1px solid #E0E0E0;'
                 'border-radius:8px;padding:12px 16px;max-height:160px;overflow-y:auto;'
@@ -2039,15 +2048,16 @@ elif st.session_state.screen == 4:
                         <span style="color:#555555;">Temps restant</span>
                     </div>
                     <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <strong style="color:#111111;font-size:1.3rem;font-family:monospace;letter-spacing:1px;">{elapsed_str}</strong>
-                        <strong style="color:{rem_color};font-size:1.3rem;font-family:monospace;letter-spacing:1px;">{rem_str}</strong>
+                        <strong id="ma-el" style="color:#111111;font-size:1.3rem;font-family:monospace;letter-spacing:1px;">{elapsed_str}</strong>
+                        <strong id="ma-re" style="color:{rem_color};font-size:1.3rem;font-family:monospace;letter-spacing:1px;">{rem_str}</strong>
                     </div>
                 </div>
                 <div style="background:#E5E5E5;border-radius:4px;height:6px;margin-bottom:18px;overflow:hidden;">
-                    <div style="background:#111111;width:{pct}%;height:100%;border-radius:4px;transition:width 0.5s;"></div>
+                    <div id="ma-bar" style="background:#111111;width:{pct}%;height:100%;border-radius:4px;transition:width 0.5s;"></div>
                 </div>
                 <div class="searching-label"><span class="pulse-dot"></span>L'agent effectue des recherches web en temps réel...</div>
                 {prev_html}
+                <script>(function(){{if(window._maTimer)clearInterval(window._maTimer);var ts={_start_ts4:.3f},est={_est4};function tick(){{var el=Date.now()/1000-ts,m=Math.floor(el/60),s=Math.floor(el%60),re=Math.max(0,est-el),mr=Math.floor(re/60),sr=Math.floor(re%60),e=document.getElementById('ma-el'),r=document.getElementById('ma-re'),b=document.getElementById('ma-bar');if(e)e.textContent=m+':'+(s<10?'0':'')+s;if(r){{r.textContent=re<=0?'Finalisation...':(mr+':'+(sr<10?'0':'')+sr);r.style.color=re<=60?'#111111':'#333333';}}if(b)b.style.width=Math.min(97,Math.round(el/est*100))+'%';}}tick();window._maTimer=setInterval(tick,1000);}})();</script>
                 </div>""",
                 unsafe_allow_html=True,
             )
@@ -2677,6 +2687,7 @@ elif st.session_state.screen == 5:
             rem_str   = f"{m_re}:{s_re:02d}"
             rem_color = "#333333" if remaining > 60 else "#111111"
         pct_bar = min(97, int(elapsed / estimated * 100)) if estimated else 50
+        _start_ts5 = _time5.time() - elapsed
 
         preview_html = ""
         if text_preview:
@@ -2703,18 +2714,19 @@ elif st.session_state.screen == 5:
                         <span style="color:#555555;">Temps restant</span>
                     </div>
                     <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <strong style="color:#111111;font-size:1.3rem;font-family:monospace;letter-spacing:1px;">{elapsed_str}</strong>
-                        <strong style="color:{rem_color};font-size:1.3rem;font-family:monospace;letter-spacing:1px;">{rem_str}</strong>
+                        <strong id="ma-el" style="color:#111111;font-size:1.3rem;font-family:monospace;letter-spacing:1px;">{elapsed_str}</strong>
+                        <strong id="ma-re" style="color:{rem_color};font-size:1.3rem;font-family:monospace;letter-spacing:1px;">{rem_str}</strong>
                     </div>
                 </div>
                 <div style="background:#E5E5E5;border-radius:4px;height:6px;margin-bottom:18px;overflow:hidden;">
-                    <div style="background:#111111;width:{pct_bar}%;height:100%;border-radius:4px;transition:width 0.5s;"></div>
+                    <div id="ma-bar" style="background:#111111;width:{pct_bar}%;height:100%;border-radius:4px;transition:width 0.5s;"></div>
                 </div>
                 <div class="searching-label">
                     <span class="pulse-dot"></span>
                     L'agent rédige en temps réel...
                 </div>
                 {preview_html}
+                <script>(function(){{if(window._maTimer)clearInterval(window._maTimer);var ts={_start_ts5:.3f},est={estimated};function tick(){{var el=Date.now()/1000-ts,m=Math.floor(el/60),s=Math.floor(el%60),re=Math.max(0,est-el),mr=Math.floor(re/60),sr=Math.floor(re%60),e=document.getElementById('ma-el'),r=document.getElementById('ma-re'),b=document.getElementById('ma-bar');if(e)e.textContent=m+':'+(s<10?'0':'')+s;if(r){{r.textContent=re<=0?'Finalisation...':(mr+':'+(sr<10?'0':'')+sr);r.style.color=re<=60?'#111111':'#333333';}}if(b)b.style.width=Math.min(97,Math.round(el/est*100))+'%';}}tick();window._maTimer=setInterval(tick,1000);}})();</script>
             </div>
             """,
             unsafe_allow_html=True,
