@@ -662,11 +662,11 @@ footer { visibility:hidden!important; }
 .q-optional-badge { font-size:0.72rem; font-weight:400; color:#9CA3AF; margin-left:8px; text-transform:uppercase; letter-spacing:0.05em; }
 
 /* ── Fond général ── */
-[data-testid="stAppViewContainer"] { background: #F0F0F0; }
+[data-testid="stAppViewContainer"] { background: #D0D0D0; }
 
 /* ── Header ── */
 header[data-testid="stHeader"] {
-    background:#F0F0F0!important; box-shadow:none!important; border-bottom:none!important;
+    background:#D0D0D0!important; box-shadow:none!important; border-bottom:none!important;
 }
 
 /* ── Cacher la barre décorative Streamlit ── */
@@ -1039,7 +1039,7 @@ if st.session_state.screen == 1:
     with col_buy:
         st.markdown("""
         <div style="border:1px solid #E5E5E5;border-left:3px solid #111111;
-                    border-radius:10px;padding:16px 18px;margin-bottom:10px;background:#FAFAFA;">
+                    border-radius:10px;padding:16px 18px;margin-bottom:10px;background:#FAFAFA;min-height:88px;">
             <div style="font-weight:700;color:#111111;font-size:0.95rem;">💼 Buy Side</div>
             <div style="font-size:0.78rem;color:#6B7280;margin-top:5px;line-height:1.4;">
                 Screening d'acquisition complet avec analyse de cible et recommandations stratégiques.
@@ -1052,7 +1052,7 @@ if st.session_state.screen == 1:
     with col_sell:
         st.markdown("""
         <div style="border:1px solid #E5E5E5;border-left:3px solid #111111;
-                    border-radius:10px;padding:16px 18px;margin-bottom:10px;background:#FAFAFA;">
+                    border-radius:10px;padding:16px 18px;margin-bottom:10px;background:#FAFAFA;min-height:88px;">
             <div style="font-weight:700;color:#111111;font-size:0.95rem;">📋 Sell Side</div>
             <div style="font-size:0.78rem;color:#6B7280;margin-top:5px;line-height:1.4;">
                 Cartographie du marché, identification et qualification des acquéreurs potentiels.
