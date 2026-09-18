@@ -1,6 +1,5 @@
 """
-Agent pour les missions M&A sell-side.
-Utilise les prompts stockés dans prompts/sell_side/ (ou Streamlit secrets).
+Agent pour les missions M&A sell-side — Modules acquéreurs.
 """
 import os
 import re
@@ -12,70 +11,84 @@ from agent import _COMMON_INSTRUCTIONS
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 WEB_SEARCH_MODULES = {
-    "sell_03_redaction_slides",
-    "sell_04_reformulation",
+    "sell_2_recherche_acquereurs",
+    "sell_3_profil_acquereur",
 }
 
 MODEL_BY_MODULE = {
-    "sell_01_rapport_entretien": "claude-sonnet-4-6",
-    "sell_02_plan_im":           "claude-sonnet-4-6",
-    "sell_03_redaction_slides":  "claude-sonnet-4-6",
-    "sell_04_reformulation":     "claude-sonnet-4-6",
+    "sell_1a_cartographie_verticale":   "claude-sonnet-4-6",
+    "sell_1b_cartographie_horizontale": "claude-sonnet-4-6",
+    "sell_2_recherche_acquereurs":      "claude-sonnet-4-6",
+    "sell_3_profil_acquereur":          "claude-sonnet-4-6",
+    "sell_4_qualification_acquereurs":  "claude-sonnet-4-6",
 }
 
 MAX_TOKENS_BY_MODULE = {
-    "sell_02_plan_im": 16000,
+    "sell_2_recherche_acquereurs":     16000,
+    "sell_3_profil_acquereur":         16000,
+    "sell_4_qualification_acquereurs": 16000,
 }
 DEFAULT_MAX_TOKENS = 8096
 
 PROMPT_FILES = {
-    "sell_01_rapport_entretien": "prompts/sell_side/01_rapport_entretien.txt",
-    "sell_02_plan_im":           "prompts/sell_side/02_plan_im.txt",
-    "sell_03_redaction_slides":  "prompts/sell_side/03_redaction_slides.txt",
-    "sell_04_reformulation":     "prompts/sell_side/04_reformulation.txt",
+    "sell_1a_cartographie_verticale":   "prompts/sell_side/1a_acquereurs.txt",
+    "sell_1b_cartographie_horizontale": "prompts/sell_side/1b_acquereurs.txt",
+    "sell_2_recherche_acquereurs":      "prompts/sell_side/2_acquereurs.txt",
+    "sell_3_profil_acquereur":          "prompts/sell_side/3_acquereurs.txt",
+    "sell_4_qualification_acquereurs":  "prompts/sell_side/4_acquereurs.txt",
 }
 
 MODULE_LABELS = {
-    "sell_01_rapport_entretien": "Rapport d'entretien",
-    "sell_02_plan_im":           "Plan de l'Information Memorandum",
-    "sell_03_redaction_slides":  "Rédaction des slides",
-    "sell_04_reformulation":     "Reformulation",
+    "sell_1a_cartographie_verticale":   "Cartographie verticale",
+    "sell_1b_cartographie_horizontale": "Cartographie horizontale",
+    "sell_2_recherche_acquereurs":      "Recherche d'acquéreurs",
+    "sell_3_profil_acquereur":          "Profil des acquéreurs",
+    "sell_4_qualification_acquereurs":  "Qualification des acquéreurs",
 }
 
 MODULE_ESTIMATED_SECONDS = {
-    "sell_01_rapport_entretien": 90,
-    "sell_02_plan_im":           240,
-    "sell_03_redaction_slides":  180,
-    "sell_04_reformulation":     120,
+    "sell_1a_cartographie_verticale":   120,
+    "sell_1b_cartographie_horizontale": 120,
+    "sell_2_recherche_acquereurs":      300,
+    "sell_3_profil_acquereur":          360,
+    "sell_4_qualification_acquereurs":  240,
 }
 
 
-def _load_prompt(module_key: str, company: str, subsidiary: str = "") -> str:
+def _load_prompt(module_key: str, variables: dict) -> str:
     try:
         import streamlit as _st
         text = _st.secrets["prompts"][module_key]
-        text = text.replace("{company}", company)
-        if subsidiary:
-            text = text.replace("{company_subsidiary}", subsidiary)
-        return text
     except Exception:
-        pass
+        rel = PROMPT_FILES.get(module_key)
+        if not rel:
+            raise FileNotFoundError(f"Prompt introuvable : {module_key}")
+        path = os.path.join(_BASE_DIR, rel)
+        if not os.path.exists(path):
+            raise FileNotFoundError(
+                f"Prompt '{module_key}' absent.\n"
+                f"• En local : vérifier {path}\n"
+                f"• En production : ajouter la clé [prompts] dans Streamlit Cloud → Settings → Secrets"
+            )
+        with open(path, encoding="utf-8") as f:
+            text = f.read()
 
-    rel = PROMPT_FILES.get(module_key)
-    if not rel:
-        raise FileNotFoundError(f"Prompt introuvable : {module_key}")
-    path = os.path.join(_BASE_DIR, rel)
-    if not os.path.exists(path):
-        raise FileNotFoundError(
-            f"Prompt '{module_key}' absent.\n"
-            f"• En local : vérifier {path}\n"
-            f"• En production : ajouter la clé [prompts] dans Streamlit Cloud → Settings → Secrets"
-        )
-    with open(path, encoding="utf-8") as f:
-        text = f.read()
-    text = text.replace("{company}", company)
-    if subsidiary:
-        text = text.replace("{company_subsidiary}", subsidiary)
+    company = variables.get("company", "")
+    replacements = {
+        "[SOCIÉTÉ CONCERNÉE]":                    company,
+        "[CA SOCIÉTÉ CONCERNÉE]":                  variables.get("ca", "ND"),
+        "[EBITDA SOCIÉTÉ CONCERNÉE]":              variables.get("ebitda", "ND"),
+        "[PAYS DU SIÈGE]":                         variables.get("pays", "ND"),
+        "[ZONES GÉOGRAPHIQUES DES ACQUÉREURS]":    variables.get("zones", "France et Europe"),
+        "[CATÉGORIES DU MAPPING RETENUES]":        variables.get("categories", "ND"),
+        "[NOMBRE D'ACQUÉREURS ATTENDUS]":           str(variables.get("nb_acquereurs", 30)),
+        "[TYPOLOGIE RECHERCHÉE]":                  variables.get("typologie", "industriels et financiers"),
+        "[SOCIÉTÉS EXCLUES PAR LE CÉDANT]":        variables.get("exclusions", "Aucune"),
+        "[ACTIVITÉ CŒUR]":                         variables.get("activite", company),
+        "[SOURCES SECTORIELLES DU MANDAT]":        variables.get("sources_sectorielles", "ND"),
+    }
+    for placeholder, value in replacements.items():
+        text = text.replace(placeholder, str(value))
     return text
 
 
@@ -97,8 +110,7 @@ def _split_prompt(prompt_text: str) -> tuple[str, str]:
 
 def run_sell_side_module(
     module_key: str,
-    company: str,
-    subsidiary: str = "",
+    variables: dict,
     input_data: str = "",
     on_text=None,
     on_tool_use=None,
@@ -109,15 +121,32 @@ def run_sell_side_module(
     model      = MODEL_BY_MODULE.get(module_key, "claude-sonnet-4-6")
     max_tokens = MAX_TOKENS_BY_MODULE.get(module_key, DEFAULT_MAX_TOKENS)
 
-    prompt_text   = _load_prompt(module_key, company, subsidiary)
+    prompt_text   = _load_prompt(module_key, variables)
     instructions, _ = _split_prompt(prompt_text)
     instructions  += _COMMON_INSTRUCTIONS
 
+    company = variables.get("company", "")
     user_parts = [f"Société : **{company}**"]
-    if subsidiary:
-        user_parts.append(f"Filiale / entité secondaire : **{subsidiary}**")
+    if variables.get("activite"):
+        user_parts.append(f"Activité cœur : {variables['activite']}")
+    if variables.get("ca"):
+        user_parts.append(f"CA : {variables['ca']}")
+    if variables.get("ebitda"):
+        user_parts.append(f"EBITDA : {variables['ebitda']}")
+    if variables.get("pays"):
+        user_parts.append(f"Pays du siège : {variables['pays']}")
+    if variables.get("zones"):
+        user_parts.append(f"Zones acquéreurs : {variables['zones']}")
+    if variables.get("nb_acquereurs"):
+        user_parts.append(f"Nombre d'acquéreurs attendus : {variables['nb_acquereurs']}")
+    if variables.get("typologie"):
+        user_parts.append(f"Typologie : {variables['typologie']}")
+    if variables.get("exclusions"):
+        user_parts.append(f"Exclusions : {variables['exclusions']}")
+    if variables.get("categories"):
+        user_parts.append(f"Catégories du mapping retenues : {variables['categories']}")
     if input_data and input_data.strip():
-        user_parts.append(f"\n\n**Documents / Données disponibles :**\n{input_data.strip()}")
+        user_parts.append(f"\n\n**Données et contexte :**\n{input_data.strip()}")
     user_message = "\n".join(user_parts)
 
     use_web = module_key in WEB_SEARCH_MODULES

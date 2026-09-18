@@ -1085,15 +1085,10 @@ if st.session_state.screen == 1:
                     border-radius:10px;padding:16px 18px;margin-bottom:10px;background:#FAFAFA;">
             <div style="font-weight:700;color:#111111;font-size:0.95rem;">📋 Sell Side</div>
             <div style="font-size:0.78rem;color:#6B7280;margin-top:5px;line-height:1.4;">
-                Préparation à la cession avec valorisation, mémo confidentiel et pitch stratégique.
+                Cartographie du marché, identification et qualification des acquéreurs potentiels.
             </div>
         </div>
         """, unsafe_allow_html=True)
-        ss_subsidiary_input = st.text_input(
-            "Filiale / entité secondaire — facultatif",
-            placeholder="Ex : Koki Diagnostics...",
-            key="ss_subsidiary_input",
-        )
         sell_submit = st.button("Lancer →", key="sell_launch", use_container_width=True, type="primary")
         if sell_submit:
             if not company_input.strip():
@@ -1104,10 +1099,10 @@ if st.session_state.screen == 1:
                 for k in list(st.session_state.keys()):
                     if k.startswith("ss_"):
                         del st.session_state[k]
-                st.session_state.ss_company    = company_input.strip()
-                st.session_state.ss_subsidiary = ss_subsidiary_input.strip()
-                st.session_state.ss_phase      = "upload_entretien"
-                st.session_state.screen        = 5
+                st.session_state.ss_company   = company_input.strip()
+                st.session_state.ss_variables = {"company": company_input.strip()}
+                st.session_state.ss_phase     = "run_1a"
+                st.session_state.screen       = 5
                 st.rerun()
 
     # ── SECTION ANALYSES RAPIDES ─────────────────────────────────────────────
@@ -2641,9 +2636,9 @@ elif st.session_state.screen == 5:
     import time as _time5
     from sell_side_agent import run_sell_side_module, MODULE_LABELS, MODULE_ESTIMATED_SECONDS
 
-    ss_company    = st.session_state.get("ss_company", "")
-    ss_subsidiary = st.session_state.get("ss_subsidiary", "")
-    ss_phase      = st.session_state.get("ss_phase", "upload_entretien")
+    ss_company   = st.session_state.get("ss_company", "")
+    ss_phase     = st.session_state.get("ss_phase", "run_1a")
+    ss_variables = st.session_state.get("ss_variables", {"company": ss_company})
 
     os.environ["ANTHROPIC_API_KEY"] = anthropic_key
 
@@ -2656,10 +2651,9 @@ elif st.session_state.screen == 5:
     # ── En-tête ─────────────────────────────────────────────────────────────
     hdr_col5, quit_col5 = st.columns([7, 1])
     with hdr_col5:
-        sub_label = f" · {ss_subsidiary}" if ss_subsidiary else ""
         st.markdown(
-            f'<div style="font-size:1.05rem;font-weight:700;margin-bottom:2px;">{ss_company}{sub_label}</div>'
-            f'<div style="font-size:0.78rem;color:#777777;margin-bottom:6px;">Mission Sell Side</div>',
+            f'<div style="font-size:1.05rem;font-weight:700;margin-bottom:2px;">{ss_company}</div>'
+            f'<div style="font-size:0.78rem;color:#777777;margin-bottom:6px;">Mission Sell Side — Identification des acquéreurs</div>',
             unsafe_allow_html=True,
         )
     with quit_col5:
@@ -2731,18 +2725,15 @@ elif st.session_state.screen == 5:
         ph5 = st.empty()
         _s5_progress_widget(ph5, mod_key, 0)
         start5 = _time5.time()
-        accumulated = [""]
 
         def _on_text5(text):
-            accumulated[0] = text
             _s5_progress_widget(ph5, mod_key, _time5.time() - start5, text)
 
         try:
             _log_screening(ss_company, f"run_{mod_key}", "")
             result = run_sell_side_module(
                 module_key=mod_key,
-                company=ss_company,
-                subsidiary=ss_subsidiary,
+                variables=ss_variables,
                 input_data=input_data,
                 on_text=_on_text5,
             )
@@ -2779,48 +2770,6 @@ elif st.session_state.screen == 5:
             with st.expander("Voir le résultat"):
                 st.markdown(text)
 
-    # ── Helper : extraction texte haute limite ───────────────────────────────
-    def _extract_raw(uf, max_chars: int = 50_000) -> str:
-        import io as _io5
-        fname = uf.name.lower()
-        raw = uf.read()
-        try:
-            if fname.endswith(".pdf"):
-                import pdfplumber as _pp
-                parts = []
-                with _pp.open(_io5.BytesIO(raw)) as _pdf:
-                    for _page in _pdf.pages:
-                        _t = _page.extract_text()
-                        if _t:
-                            parts.append(_t)
-                        if sum(len(p) for p in parts) >= max_chars:
-                            break
-                text = "\n\n".join(parts)
-            elif fname.endswith(".docx"):
-                from docx import Document as _Docx
-                _doc = _Docx(_io5.BytesIO(raw))
-                text = "\n\n".join(p.text for p in _doc.paragraphs if p.text.strip())
-            elif fname.endswith((".txt", ".md", ".csv")):
-                text = raw.decode("utf-8", errors="replace")
-            elif fname.endswith((".xlsx", ".xls")):
-                import openpyxl as _opx
-                _wb = _opx.load_workbook(_io5.BytesIO(raw), read_only=True, data_only=True)
-                rows = []
-                for _sh in _wb.worksheets:
-                    rows.append(f"[{_sh.title}]")
-                    for _row in _sh.iter_rows(values_only=True):
-                        _cells = [str(c) for c in _row if c is not None]
-                        if any(c.strip() for c in _cells):
-                            rows.append("\t".join(_cells))
-                text = "\n".join(rows)
-            else:
-                return f"[Format non supporté : {uf.name}]"
-            if len(text) > max_chars:
-                text = text[:max_chars] + f"\n\n[... tronqué à {max_chars} caractères]"
-            return text
-        except Exception as _ex5:
-            return f"[Erreur lecture {uf.name} : {_ex5}]"
-
     # ── Helper : boutons satisfaction ────────────────────────────────────────
     def _s5_satisfaction(yes_phase: str, no_phase: str, no_clears: list,
                          yes_label: str = "✓ Oui — continuer",
@@ -2856,339 +2805,419 @@ elif st.session_state.screen == 5:
     # PHASES
     # ────────────────────────────────────────────────────────────────────────
 
-    # ── Phase : Upload transcription entretien ───────────────────────────────
-    if ss_phase == "upload_entretien":
-        _log_screening(ss_company, "sell_upload_entretien", "")
-        with st.container(border=True):
-            st.markdown(
-                '<div style="font-size:0.88rem;font-weight:700;color:#111111;margin-bottom:4px;">'
-                '① Transcription de l\'entretien de management</div>'
-                '<div style="font-size:0.82rem;color:#6B7280;margin-bottom:14px;">'
-                'Importez la retranscription de l\'entretien avec les dirigeants (PDF, DOCX ou TXT).</div>',
-                unsafe_allow_html=True,
-            )
-            entretien_files = st.file_uploader(
-                "Transcription",
-                type=["pdf", "docx", "txt", "md"],
-                accept_multiple_files=True,
-                label_visibility="collapsed",
-                key="s5_entretien_upload",
-            )
-            st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
-            if st.button("Lancer le rapport d'entretien →", type="primary",
-                         use_container_width=True, disabled=not entretien_files,
-                         key="s5_entretien_go"):
-                texts = []
-                for uf in entretien_files:
-                    texts.append(f"--- {uf.name} ---\n{_extract_raw(uf)}")
-                st.session_state["ss_entretien_docs_text"] = "\n\n".join(texts)
-                st.session_state.ss_phase = "run_entretien"
-                st.rerun()
+    # ── Phase : Module 1a — Cartographie verticale ───────────────────────────
+    if ss_phase == "run_1a":
+        _log_screening(ss_company, "sell_run_1a", "cartographie verticale")
+        _run_s5_module("sell_1a_cartographie_verticale", input_data="",
+                       next_phase="check_1a", result_key="ss_result_1a")
 
-    # ── Phase : Lancer module 01 ─────────────────────────────────────────────
-    elif ss_phase == "run_entretien":
-        _run_s5_module(
-            "sell_01_rapport_entretien",
-            input_data=st.session_state.get("ss_entretien_docs_text", ""),
-            next_phase="check_entretien",
-            result_key="ss_result_entretien",
-        )
-
-    # ── Phase : Satisfaction module 01 ───────────────────────────────────────
-    elif ss_phase == "check_entretien":
-        _log_screening(ss_company, "sell_check_entretien", "")
-        _s5_result_card("Rapport d'entretien", st.session_state.get("ss_result_entretien", ""), "entretien")
+    elif ss_phase == "check_1a":
+        _log_screening(ss_company, "sell_check_1a", "")
+        _s5_result_card("Cartographie verticale", st.session_state.get("ss_result_1a", ""), "carto_v")
         st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
         _s5_satisfaction(
-            yes_phase="run_plan",
-            no_phase="run_entretien",
-            no_clears=["ss_result_entretien"],
-            yes_label="✓ Oui — rédiger le Plan IM →",
+            yes_phase="ask_1b",
+            no_phase="run_1a",
+            no_clears=["ss_result_1a"],
+            yes_label="✓ Oui — cartographie horizontale →",
         )
 
-    # ── Phase : Lancer module 02 ─────────────────────────────────────────────
-    elif ss_phase == "run_plan":
-        entretien_result = st.session_state.get("ss_result_entretien", "")
-        _run_s5_module(
-            "sell_02_plan_im",
-            input_data=f"**Rapport d'entretien :**\n{entretien_result}",
-            next_phase="check_plan",
-            result_key="ss_result_plan",
-        )
-
-    # ── Phase : Satisfaction module 02 ───────────────────────────────────────
-    elif ss_phase == "check_plan":
-        _log_screening(ss_company, "sell_check_plan", "")
-        _s5_result_card("Plan de l'Information Memorandum", st.session_state.get("ss_result_plan", ""), "plan_im")
-        st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
-        _s5_satisfaction(
-            yes_phase="upload_slides",
-            no_phase="run_plan",
-            no_clears=["ss_result_plan"],
-            yes_label="✓ Oui — rédiger les slides →",
-            extra_buttons=[
-                ("✓ Terminer sans slides", "done", [], None),
-            ],
-        )
-
-    # ── Phase : Upload docs pour slides ─────────────────────────────────────
-    elif ss_phase == "upload_slides":
-        _log_screening(ss_company, "sell_upload_slides", "")
+    # ── Phase : Proposition cartographie horizontale ─────────────────────────
+    elif ss_phase == "ask_1b":
         with st.container(border=True):
             st.markdown(
-                '<div style="font-size:0.88rem;font-weight:700;color:#111111;margin-bottom:4px;">'
-                '③ Rédaction des slides</div>'
-                '<div style="font-size:0.82rem;color:#6B7280;margin-bottom:14px;">'
-                'Importez les documents source si disponibles (rapports, annexes financières…). '
-                'L\'outil génère automatiquement toutes les slides du Plan IM validé.</div>',
+                '<div style="font-size:0.92rem;font-weight:600;color:#111111;margin-bottom:6px;">'
+                'Souhaitez-vous lancer la cartographie horizontale ?</div>'
+                '<div style="font-size:0.83rem;color:#555555;">Optionnel — cartographie des segments concurrentiels.</div>',
                 unsafe_allow_html=True,
             )
-            slides_files = st.file_uploader(
-                "Documents source",
-                type=["pdf", "docx", "txt", "md", "xlsx", "csv"],
-                accept_multiple_files=True,
-                label_visibility="collapsed",
-                key="s5_slides_upload",
-                help="Rapport annuel, annexes financières, pitch existant… — facultatif",
-            )
             st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
-            if st.button("Lancer la rédaction →", type="primary",
-                         use_container_width=True,
-                         key="s5_slides_go"):
-                docs_parts = []
-                if slides_files:
-                    for uf in slides_files:
-                        docs_parts.append(f"--- {uf.name} ---\n{_extract_raw(uf)}")
-                st.session_state["ss_slides_docs_text"] = "\n\n".join(docs_parts)
-                st.session_state["ss_slides_selection"] = ""
-                st.session_state.ss_phase = "run_slides"
-                st.rerun()
+            _c1, _c2 = st.columns(2)
+            with _c1:
+                if st.button("Oui, la lancer", type="primary", use_container_width=True, key="ask_1b_yes"):
+                    st.session_state.ss_phase = "run_1b"
+                    st.rerun()
+            with _c2:
+                if st.button("Non, identifier les acquéreurs →", use_container_width=True, key="ask_1b_no"):
+                    st.session_state.ss_phase = "wizard_params"
+                    st.rerun()
 
-    # ── Phase : Lancer module 03 ─────────────────────────────────────────────
-    elif ss_phase == "run_slides":
-        plan_result = st.session_state.get("ss_result_plan", "")
-        docs_text   = st.session_state.get("ss_slides_docs_text", "")
-        selection   = st.session_state.get("ss_slides_selection", "")
-        input_parts = []
-        input_parts.append(
-            "**Instruction impérative — Périmètre et nombre de slides :**\n"
-            "Tu dois générer EN TOTALITÉ le PowerPoint de l'Information Memorandum, "
-            "couvrant TOUTES les sections et TOUTES les slides décrites dans le Plan IM validé ci-dessous. "
-            "Respecte scrupuleusement chaque section du plan : une section du plan = au minimum 2 slides distinctes. "
-            "MINIMUM ABSOLU : 5 slides au total. "
-            "Ne jamais t'arrêter en cours de route — tu dois produire la totalité du plan, pas un extrait."
-        )
-        if plan_result:
-            input_parts.append(f"**Plan IM validé (à couvrir intégralement) :**\n{plan_result}")
-        if selection:
-            input_parts.append(f"**Précisions complémentaires :**\n{selection}")
-        if docs_text:
-            input_parts.append(f"**Documents source :**\n{docs_text}")
-        _run_s5_module(
-            "sell_03_redaction_slides",
-            input_data="\n\n".join(input_parts),
-            next_phase="check_slides",
-            result_key="ss_result_slides",
+    # ── Phase : Module 1b — Cartographie horizontale ─────────────────────────
+    elif ss_phase == "run_1b":
+        _log_screening(ss_company, "sell_run_1b", "cartographie horizontale")
+        _run_s5_module("sell_1b_cartographie_horizontale", input_data="",
+                       next_phase="check_1b", result_key="ss_result_1b")
+
+    elif ss_phase == "check_1b":
+        _log_screening(ss_company, "sell_check_1b", "")
+        _s5_result_card("Cartographie horizontale", st.session_state.get("ss_result_1b", ""), "carto_h")
+        st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+        _s5_satisfaction(
+            yes_phase="wizard_params",
+            no_phase="run_1b",
+            no_clears=["ss_result_1b"],
+            yes_label="✓ Oui — identifier les acquéreurs →",
         )
 
-    # ── Phase : Satisfaction module 03 ───────────────────────────────────────
-    elif ss_phase == "check_slides":
-        _log_screening(ss_company, "sell_check_slides", "")
-        slides_result = st.session_state.get("ss_result_slides", "")
+    # ── Phase : Wizard paramètres (avant module 2) ───────────────────────────
+    elif ss_phase == "wizard_params":
+        # Récap cartographies déjà produites
+        _col_v, _col_h = st.columns(2)
+        with _col_v:
+            _rv = st.session_state.get("ss_result_1a", "")
+            if _rv:
+                with st.container(border=True):
+                    st.markdown('<div style="font-size:0.78rem;font-weight:600;color:#065F46;">✓ Cartographie verticale</div>', unsafe_allow_html=True)
+                    _xv5 = _generate_single_xlsx("carto_v_recap", "Cartographie verticale", _rv, ss_company)
+                    st.download_button("📥 Excel", data=_xv5,
+                                       file_name=f"{ss_company.replace(' ', '_')}_carto_v.xlsx",
+                                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                       key="dl_s5_v_recap")
+        with _col_h:
+            _rh = st.session_state.get("ss_result_1b", "")
+            if _rh:
+                with st.container(border=True):
+                    st.markdown('<div style="font-size:0.78rem;font-weight:600;color:#065F46;">✓ Cartographie horizontale</div>', unsafe_allow_html=True)
+                    _xh5 = _generate_single_xlsx("carto_h_recap", "Cartographie horizontale", _rh, ss_company)
+                    st.download_button("📥 Excel", data=_xh5,
+                                       file_name=f"{ss_company.replace(' ', '_')}_carto_h.xlsx",
+                                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                       key="dl_s5_h_recap")
 
-        # ── Générer le PPTX depuis le code produit par l'IA ─────────────────
-        def _build_pptx(code_response: str) -> bytes:
-            import re as _re_pptx, tempfile as _tmp, subprocess as _sub, os as _os5, sys as _sys5
-            m = _re_pptx.search(r"```python\s*(.*?)\s*```", code_response, _re_pptx.DOTALL)
-            code = m.group(1) if m else code_response
-            # Remplacer les caractères invalides comme token Python
-            code = code.replace('€', 'EUR').replace('£', 'GBP').replace('¥', 'JPY')
-            with _tmp.TemporaryDirectory() as _td:
-                _out = _os5.path.join(_td, "result.pptx")
-                # Monkey-patch Presentation.save pour forcer le chemin cible,
-                # quelle que soit la valeur passée par le code généré
-                _header = (
-                    f'import pptx as _pptx_patch\n'
-                    f'_orig_pptx_save = _pptx_patch.Presentation.save\n'
-                    f'def _forced_save(self, *a, **kw): _orig_pptx_save(self, r"{_out}")\n'
-                    f'_pptx_patch.Presentation.save = _forced_save\n'
-                    f'output_path = r"{_out}"\n'
-                )
-                _script = _os5.path.join(_td, "gen.py")
-                with open(_script, "w", encoding="utf-8") as _f:
-                    _f.write(_header + code)
-                _proc = _sub.run(
-                    [_sys5.executable, _script],
-                    capture_output=True, text=True, timeout=120, cwd=_td,
-                )
-                if _proc.returncode != 0:
-                    raise RuntimeError(_proc.stderr or _proc.stdout or "Erreur inconnue")
-                if not _os5.path.exists(_out):
-                    raise FileNotFoundError(
-                        f"Fichier PPTX non généré. stdout={_proc.stdout[:500]}"
+        st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
+
+        _wc_idx  = st.session_state.get("ss_wc_idx", 0)
+        _wc_vars = st.session_state.get("ss_wc_vars", {})
+
+        _wc_questions = [
+            {"key": "activite",       "label": "Activité cœur de la société",
+             "type": "text_input",    "hint": "Ex : Maintenance industrielle, logiciels de gestion RH…"},
+            {"key": "ca",             "label": "Chiffre d'affaires (dernier exercice)",
+             "type": "chips_single",  "options": ["< 5 M€", "5–15 M€", "15–50 M€", "50–150 M€", "> 150 M€"]},
+            {"key": "ebitda",         "label": "EBITDA (dernier exercice)",
+             "type": "chips_single",  "options": ["< 1 M€", "1–5 M€", "5–15 M€", "15–30 M€", "> 30 M€"]},
+            {"key": "pays",           "label": "Pays du siège",
+             "type": "chips_single",  "options": ["France", "Belgique", "Suisse", "Luxembourg"]},
+            {"key": "zones",          "label": "Zones géographiques des acquéreurs",
+             "type": "chips_multi",   "options": ["France", "Europe", "USA / Amérique du Nord", "Monde entier"]},
+            {"key": "nb_acquereurs",  "label": "Nombre d'acquéreurs à identifier",
+             "type": "chips_single",  "options": ["20", "30", "40", "50"]},
+            {"key": "typologie",      "label": "Typologie d'acquéreurs",
+             "type": "chips_single",  "options": ["Industriels uniquement", "Financiers uniquement", "Les deux"]},
+            {"key": "categories",     "label": "Catégories du mapping à retenir (optionnel)",
+             "type": "textarea",      "hint": "Laissez vide pour laisser l'IA choisir. Sinon : une catégorie par ligne."},
+            {"key": "exclusions",     "label": "Entreprises à exclure (optionnel)",
+             "type": "textarea",      "hint": "Laissez vide si aucune. Une société par ligne."},
+        ]
+        _wc_n = len(_wc_questions)
+
+        # Indicateur de progression
+        _wc_dots = ""
+        for _i in range(_wc_n):
+            if _i < _wc_idx:
+                _wc_dots += '<div style="width:8px;height:8px;border-radius:50%;background:#111111;flex-shrink:0;"></div>'
+            elif _i == _wc_idx:
+                _wc_dots += '<div style="width:10px;height:10px;border-radius:50%;background:#111111;flex-shrink:0;"></div>'
+            else:
+                _wc_dots += '<div style="width:8px;height:8px;border-radius:50%;background:#D5D5D5;flex-shrink:0;"></div>'
+        st.markdown(
+            f'<div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">'
+            f'{_wc_dots}'
+            f'<span style="font-size:0.76rem;color:#9CA3AF;margin-left:3px;">{_wc_idx + 1} / {_wc_n}</span>'
+            f'</div>', unsafe_allow_html=True,
+        )
+
+        if _wc_idx < _wc_n:
+            _wc_q    = _wc_questions[_wc_idx]
+            _wc_qk   = _wc_q["key"]
+            _wc_type = _wc_q["type"]
+
+            with st.container(border=True):
+                st.markdown(f'<p class="q-card-label">{_wc_q["label"]}</p>', unsafe_allow_html=True)
+
+                _wc_value = None
+                _wc_ready = False
+
+                if _wc_type == "chips_multi":
+                    _wc_chosen = st.pills(
+                        "opts", _wc_q["options"] + ["Autre..."],
+                        selection_mode="multi", label_visibility="collapsed",
+                        key=f"ss_wc_{_wc_qk}_pill",
                     )
-                with open(_out, "rb") as _f:
-                    return _f.read()
+                    _wc_has_autre = "Autre..." in (_wc_chosen or [])
+                    _wc_real = [c for c in (_wc_chosen or []) if c != "Autre..."]
+                    if _wc_has_autre:
+                        _wc_custom = st.text_area(
+                            "Précisez", placeholder="Une zone par ligne…",
+                            key=f"ss_wc_{_wc_qk}_custom", label_visibility="collapsed",
+                        )
+                        if _wc_custom.strip():
+                            _wc_real = _wc_real + [l.strip() for l in _wc_custom.strip().split("\n") if l.strip()]
+                    _wc_value = ", ".join(_wc_real)
+                    _wc_ready = bool(_wc_real)
 
-        with st.container(border=True):
-            st.markdown(
-                '<div style="font-size:0.7rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;'
-                'letter-spacing:0.08em;margin-bottom:10px;">Présentation PowerPoint</div>',
-                unsafe_allow_html=True,
-            )
-            if "ss_pptx_bytes" not in st.session_state:
-                with st.spinner("Génération du fichier PowerPoint…"):
-                    try:
-                        from export_pptx import generate_sell_pptx, try_exec_pptx_code
-                        _pptx_result = try_exec_pptx_code(slides_result) or generate_sell_pptx(slides_result, ss_company)
-                        st.session_state["ss_pptx_bytes"] = _pptx_result
-                        st.session_state["ss_pptx_error"] = None
-                    except Exception as _ep:
-                        st.session_state["ss_pptx_bytes"] = None
-                        st.session_state["ss_pptx_error"] = str(_ep)
+                elif _wc_type == "chips_single":
+                    _wc_chosen = st.pills(
+                        "opts", _wc_q["options"] + ["Autre..."],
+                        selection_mode="single", label_visibility="collapsed",
+                        key=f"ss_wc_{_wc_qk}_pill",
+                    )
+                    _wc_has_autre = _wc_chosen == "Autre..."
+                    if _wc_has_autre:
+                        _wc_value = st.text_input(
+                            "Précisez", placeholder=_wc_q.get("hint", ""),
+                            key=f"ss_wc_{_wc_qk}_custom", label_visibility="collapsed",
+                        )
+                    else:
+                        _wc_value = _wc_chosen or ""
+                    _wc_ready = bool(_wc_value)
 
-            _pptx_bytes = st.session_state.get("ss_pptx_bytes")
-            _pptx_error = st.session_state.get("ss_pptx_error")
+                elif _wc_type == "text_input":
+                    _wc_value = st.text_input(
+                        "Précisez", placeholder=_wc_q.get("hint", ""),
+                        key=f"ss_wc_{_wc_qk}_text", label_visibility="collapsed",
+                    )
+                    _wc_ready = bool(_wc_value and _wc_value.strip())
 
-            if _pptx_bytes:
-                _fname_pptx = f"{ss_company.replace(' ', '_')}_IM.pptx"
-                st.download_button(
-                    "📥 Télécharger la présentation PowerPoint",
-                    data=_pptx_bytes,
-                    file_name=_fname_pptx,
-                    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                    type="primary",
-                    use_container_width=True,
-                    key="dl_s5_pptx",
-                )
-            elif _pptx_error:
-                st.error(f"❌ Génération PPTX échouée : {_pptx_error}")
-                with st.expander("Voir la réponse brute"):
-                    st.code(slides_result[:3000])
+                elif _wc_type == "textarea":
+                    _wc_value = st.text_area(
+                        "Précisez", placeholder=_wc_q.get("hint", ""), height=100,
+                        key=f"ss_wc_{_wc_qk}_text", label_visibility="collapsed",
+                    )
+                    _wc_ready = True  # optionnel
 
+                st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+                _prev_col, _next_col = st.columns([1, 2])
+                with _prev_col:
+                    if _wc_idx > 0 and st.button("← Retour", key=f"ss_wc_prev_{_wc_idx}", use_container_width=True):
+                        st.session_state.ss_wc_idx = _wc_idx - 1
+                        st.rerun()
+                with _next_col:
+                    _is_last = (_wc_idx == _wc_n - 1)
+                    _btn_lbl = "🔍 Lancer la recherche d'acquéreurs" if _is_last else "Suivant →"
+                    if _wc_ready and st.button(_btn_lbl, type="primary", key=f"ss_wc_next_{_wc_idx}", use_container_width=True):
+                        _new_wc_vars = {**_wc_vars, _wc_qk: _wc_value}
+                        st.session_state.ss_wc_vars = _new_wc_vars
+                        if not _is_last:
+                            st.session_state.ss_wc_idx = _wc_idx + 1
+                        else:
+                            _all_vars = {**ss_variables, **_new_wc_vars}
+                            st.session_state["ss_variables"] = _all_vars
+                            st.session_state.pop("ss_wc_idx", None)
+                            st.session_state.pop("ss_wc_vars", None)
+                            st.session_state.ss_phase = "run_2"
+                        st.rerun()
+
+    # ── Phase : Module 2 — Recherche acquéreurs ──────────────────────────────
+    elif ss_phase == "run_2":
+        _log_screening(ss_company, "sell_run_2", "recherche acquereurs")
+        _input_parts_2 = []
+        _r1a = st.session_state.get("ss_result_1a", "")
+        _r1b = st.session_state.get("ss_result_1b", "")
+        if _r1a:
+            _input_parts_2.append(f"**Cartographie verticale :**\n{_r1a}")
+        if _r1b:
+            _input_parts_2.append(f"**Cartographie horizontale :**\n{_r1b}")
+        _run_s5_module("sell_2_recherche_acquereurs",
+                       input_data="\n\n".join(_input_parts_2),
+                       next_phase="check_2", result_key="ss_result_2")
+
+    elif ss_phase == "check_2":
+        _log_screening(ss_company, "sell_check_2", "")
+        _s5_result_card("Long-list acquéreurs", st.session_state.get("ss_result_2", ""), "acquereurs")
         st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
         _s5_satisfaction(
-            yes_phase="done",
-            no_phase="run_slides",
-            no_clears=["ss_result_slides", "ss_pptx_bytes", "ss_pptx_error"],
-            yes_label="✓ Terminer la mission",
-            extra_buttons=[
-                ("✎ Reformuler un passage", "upload_reformulation", [], None),
-            ],
+            yes_phase="run_3",
+            no_phase="run_2",
+            no_clears=["ss_result_2"],
+            yes_label="✓ Oui — profils détaillés →",
+            extra_buttons=[("✓ Terminer la mission", "done", [], None)],
         )
 
-    # ── Phase : Reformulation — saisie du passage ───────────────────────────
-    elif ss_phase == "upload_reformulation":
-        _log_screening(ss_company, "sell_upload_reformulation", "")
-        with st.container(border=True):
-            st.markdown(
-                '<div style="font-size:0.88rem;font-weight:700;color:#111111;margin-bottom:4px;">'
-                '④ Reformulation</div>'
-                '<div style="font-size:0.82rem;color:#6B7280;margin-bottom:14px;">'
-                'Collez le passage à reformuler et précisez vos instructions.</div>',
-                unsafe_allow_html=True,
-            )
-            refo_text = st.text_area(
-                "Passage à reformuler",
-                placeholder="Collez ici le texte à reformuler…",
-                label_visibility="collapsed",
-                height=160,
-                key="s5_refo_text",
-            )
-            refo_instructions = st.text_input(
-                "Instructions",
-                placeholder="Ex : Rendre plus commercial, moins technique, plus concis…",
-                label_visibility="collapsed",
-                key="s5_refo_instructions",
-            )
-            refo_files = st.file_uploader(
-                "Documents complémentaires",
-                type=["pdf", "docx", "txt", "md"],
-                accept_multiple_files=True,
-                label_visibility="collapsed",
-                key="s5_refo_upload",
-                help="Facultatif — pour enrichir le contexte.",
-            )
-            st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
-            if st.button("Lancer la reformulation →", type="primary",
-                         use_container_width=True, disabled=not refo_text.strip(),
-                         key="s5_refo_go"):
-                docs_parts = []
-                if refo_files:
-                    for uf in refo_files:
-                        docs_parts.append(f"--- {uf.name} ---\n{_extract_raw(uf)}")
-                input_parts = [f"**Passage à reformuler :**\n{refo_text}"]
-                if refo_instructions:
-                    input_parts.append(f"**Instructions :** {refo_instructions}")
-                if docs_parts:
-                    input_parts.append("**Documents :**\n" + "\n\n".join(docs_parts))
-                st.session_state["ss_refo_input"] = "\n\n".join(input_parts)
-                st.session_state.ss_phase = "run_reformulation"
-                st.rerun()
+    # ── Phase : Module 3 — Profil acquéreurs ─────────────────────────────────
+    elif ss_phase == "run_3":
+        _log_screening(ss_company, "sell_run_3", "profil acquereurs")
+        _input_parts_3 = []
+        for _k3, _l3 in [("ss_result_1a", "Cartographie verticale"),
+                         ("ss_result_1b", "Cartographie horizontale"),
+                         ("ss_result_2",  "Long-list acquéreurs")]:
+            _v3 = st.session_state.get(_k3, "")
+            if _v3:
+                _input_parts_3.append(f"**{_l3} :**\n{_v3}")
+        _run_s5_module("sell_3_profil_acquereur",
+                       input_data="\n\n".join(_input_parts_3),
+                       next_phase="check_3", result_key="ss_result_3")
 
-    # ── Phase : Lancer module 04 ─────────────────────────────────────────────
-    elif ss_phase == "run_reformulation":
-        _run_s5_module(
-            "sell_04_reformulation",
-            input_data=st.session_state.get("ss_refo_input", ""),
-            next_phase="check_reformulation",
-            result_key="ss_result_reformulation",
-        )
-
-    # ── Phase : Satisfaction module 04 ───────────────────────────────────────
-    elif ss_phase == "check_reformulation":
-        _log_screening(ss_company, "sell_check_reformulation", "")
-        _s5_result_card("Reformulation", st.session_state.get("ss_result_reformulation", ""), "reformulation")
+    elif ss_phase == "check_3":
+        _log_screening(ss_company, "sell_check_3", "")
+        _s5_result_card("Profils acquéreurs", st.session_state.get("ss_result_3", ""), "profils")
         st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
         _s5_satisfaction(
-            yes_phase="done",
-            no_phase="run_reformulation",
-            no_clears=["ss_result_reformulation"],
-            yes_label="✓ Terminer la mission",
-            extra_buttons=[
-                ("↺ Nouveau passage", "upload_reformulation", ["ss_result_reformulation", "ss_refo_input"], None),
-            ],
+            yes_phase="run_4",
+            no_phase="run_3",
+            no_clears=["ss_result_3"],
+            yes_label="✓ Oui — qualification finale →",
+            extra_buttons=[("✓ Terminer sans qualification", "done", [], None)],
         )
 
-    # ── Phase : Done ─────────────────────────────────────────────────────────
+    # ── Phase : Module 4 — Qualification acquéreurs ──────────────────────────
+    elif ss_phase == "run_4":
+        _log_screening(ss_company, "sell_run_4", "qualification acquereurs")
+        _input_parts_4 = []
+        for _k4, _l4 in [("ss_result_1a", "Cartographie verticale"),
+                         ("ss_result_1b", "Cartographie horizontale"),
+                         ("ss_result_2",  "Long-list acquéreurs"),
+                         ("ss_result_3",  "Profils acquéreurs")]:
+            _v4 = st.session_state.get(_k4, "")
+            if _v4:
+                _input_parts_4.append(f"**{_l4} :**\n{_v4}")
+        _run_s5_module("sell_4_qualification_acquereurs",
+                       input_data="\n\n".join(_input_parts_4),
+                       next_phase="done", result_key="ss_result_4")
+
+    # ── Phase : Done — résumé complet ────────────────────────────────────────
     elif ss_phase == "done":
         _log_screening(ss_company, "sell_done", "mission terminee")
         st.markdown(
             '<div style="font-size:0.88rem;font-weight:700;color:#065F46;margin-bottom:12px;">✓ Mission Sell Side terminée</div>',
             unsafe_allow_html=True,
         )
-        for _res_key, _res_label, _card_key in [
-            ("ss_result_entretien",    "Rapport d'entretien",             "entretien_done"),
-            ("ss_result_plan",         "Plan de l'Information Memorandum", "plan_im_done"),
-            ("ss_result_reformulation","Reformulation",                    "reformulation_done"),
-        ]:
+
+        _ss_results = [
+            ("ss_result_1a", "Cartographie verticale",   "carto_v_done"),
+            ("ss_result_1b", "Cartographie horizontale", "carto_h_done"),
+            ("ss_result_2",  "Long-list acquéreurs",     "acquereurs_done"),
+            ("ss_result_3",  "Profils acquéreurs",       "profils_done"),
+            ("ss_result_4",  "Qualification acquéreurs", "qualification_done"),
+        ]
+        for _res_key, _res_label, _card_key in _ss_results:
             _txt = st.session_state.get(_res_key, "")
             if _txt:
                 _s5_result_card(_res_label, _txt, _card_key)
                 st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
 
-        # Slides → PPTX si disponible
-        _pptx_done = st.session_state.get("ss_pptx_bytes")
-        if _pptx_done:
+        # Export global multi-onglets
+        _ss_sheets = [(lbl, st.session_state.get(k, ""))
+                      for k, lbl, _ in _ss_results
+                      if st.session_state.get(k, "")]
+        if _ss_sheets:
+            st.markdown('<div style="height:4px"></div>', unsafe_allow_html=True)
             with st.container(border=True):
                 st.markdown(
-                    '<div style="font-size:0.7rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;'
-                    'letter-spacing:0.08em;margin-bottom:10px;">Présentation PowerPoint</div>',
+                    '<div style="font-size:0.95rem;font-weight:700;color:#111111;margin-bottom:4px;">📥 Rapport complet</div>'
+                    f'<div style="font-size:0.82rem;color:#6B7280;margin-bottom:12px;">'
+                    f'Tous les résultats en un seul fichier Excel ({len(_ss_sheets)} onglet{"s" if len(_ss_sheets)>1 else ""})</div>',
                     unsafe_allow_html=True,
                 )
+                import io as _io5b, re as _re5b
+                from openpyxl import Workbook as _WB5
+                from openpyxl.styles import (Font as _F5, PatternFill as _P5,
+                                              Alignment as _A5, Border as _B5, Side as _S5)
+                from openpyxl.utils import get_column_letter as _gcl5
+
+                _wb5 = _WB5()
+                _wb5.remove(_wb5.active)
+                _thin5 = _S5(style="thin", color="CCCCCC")
+                _bdr5  = _B5(left=_thin5, right=_thin5, top=_thin5, bottom=_thin5)
+
+                def _add_sheet5(title, text):
+                    _ws = _wb5.create_sheet(title[:31])
+                    _ws.sheet_view.showGridLines = False
+
+                    def _hc5(r, c, v):
+                        x = _ws.cell(r, c, v)
+                        x.font      = _F5(name="Arial", bold=True, color="FFFFFF", size=10)
+                        x.fill      = _P5("solid", fgColor="1F3864")
+                        x.alignment = _A5(horizontal="center", vertical="center", wrap_text=True)
+                        x.border    = _bdr5
+
+                    def _dc5(r, c, v, even=True):
+                        x = _ws.cell(r, c, v)
+                        x.font      = _F5(name="Arial", size=10, color="111111")
+                        x.fill      = _P5("solid", fgColor="EEF2F8" if even else "FFFFFF")
+                        x.alignment = _A5(horizontal="left", vertical="top", wrap_text=True)
+                        x.border    = _bdr5
+
+                    _ws.merge_cells("A1:Z1")
+                    _th = _ws.cell(1, 1, f"{ss_company} — {title}")
+                    _th.font      = _F5(name="Arial", bold=True, size=13, color="FFFFFF")
+                    _th.fill      = _P5("solid", fgColor="1F3864")
+                    _th.alignment = _A5(horizontal="left", vertical="center", indent=1)
+                    _ws.row_dimensions[1].height = 28
+
+                    _lines = [l.strip() for l in text.split("\n")]
+                    _tables5, _buf5 = [], []
+                    for _l in _lines:
+                        if _l.startswith("|"):
+                            _buf5.append(_l)
+                        else:
+                            if _buf5:
+                                _tables5.append(_buf5); _buf5 = []
+                    if _buf5:
+                        _tables5.append(_buf5)
+
+                    if _tables5:
+                        _ri = 3
+                        for _ti, _tl in enumerate(_tables5):
+                            _hrow5, _drows5 = None, []
+                            for _l in _tl:
+                                if _re5b.match(r"^\|[-| :]+\|$", _l):
+                                    continue
+                                _cells = [c.strip() for c in _l.strip("|").split("|")]
+                                if _hrow5 is None:
+                                    _hrow5 = _cells
+                                else:
+                                    _drows5.append(_cells)
+                            if not _hrow5:
+                                continue
+                            _cw = {ci: len(v)+2 for ci, v in enumerate(_hrow5, 1)}
+                            for _row in _drows5:
+                                for ci, v in enumerate(_row, 1):
+                                    _cw[ci] = max(_cw.get(ci, 10), min(len(v), 65))
+                            for ci in _cw:
+                                _cw[ci] = max(20, min(65, _cw[ci]))
+                            if _ti > 0:
+                                _ri += 2
+                            for ci, v in enumerate(_hrow5, 1):
+                                _hc5(_ri, ci, v)
+                                _ws.column_dimensions[_gcl5(ci)].width = _cw[ci]
+                            _ws.row_dimensions[_ri].height = 28
+                            _ri += 1
+                            for dr, _row in enumerate(_drows5):
+                                _ml = 1
+                                for ci, v in enumerate(_row, 1):
+                                    _cpp = max(10, int(_cw.get(ci, 20) * 1.6))
+                                    _ml = max(_ml, max(1, (len(v)+_cpp-1)//_cpp))
+                                _ws.row_dimensions[_ri].height = max(22, min(160, _ml*16+6))
+                                for ci, v in enumerate(_row, 1):
+                                    _dc5(_ri, ci, v, even=dr%2==0)
+                                _ri += 1
+                    else:
+                        _ws.column_dimensions["A"].width = 90
+                        _ri = 3
+                        for _l in _lines:
+                            if not _l:
+                                continue
+                            _ws.merge_cells(start_row=_ri, start_column=1, end_row=_ri, end_column=8)
+                            _x = _ws.cell(_ri, 1, _l)
+                            _x.font      = _F5(name="Arial", size=10)
+                            _x.alignment = _A5(wrap_text=True, vertical="top")
+                            _ws.row_dimensions[_ri].height = max(18, max(1, len(_l)//110)*16+6)
+                            _ri += 1
+
+                for _sh_title, _sh_text in _ss_sheets:
+                    _add_sheet5(_sh_title, _sh_text)
+
+                _buf5b = _io5b.BytesIO()
+                _wb5.save(_buf5b)
                 st.download_button(
-                    "📥 Télécharger la présentation PowerPoint",
-                    data=_pptx_done,
-                    file_name=f"{ss_company.replace(' ', '_')}_IM.pptx",
-                    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                    type="primary",
+                    "📥 Télécharger le rapport complet",
+                    data=_buf5b.getvalue(),
+                    file_name=f"acquereurs_{ss_company.replace(' ', '_').lower()}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     use_container_width=True,
-                    key="dl_s5_pptx_done",
+                    type="primary",
                 )
-            st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
-        elif st.session_state.get("ss_result_slides"):
-            _s5_result_card("Rédaction des slides", st.session_state["ss_result_slides"], "slides_done")
-            st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
 
         st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
         if st.button("🔄 Recommencer la mission", use_container_width=True, key="s5_restart"):
