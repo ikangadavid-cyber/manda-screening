@@ -1952,32 +1952,23 @@ with st.sidebar:
     # ── Sélection des crédits ────────────────────────────────────────────────
     if _show_packs and not _pending_pack:
         _PACKS = [
-            ("50 crédits",  50,  "15 €", "0.30 €/crédit", None),
-            ("100 crédits", 100, "25 €", "0.25 €/crédit", None),
-            ("250 crédits", 250, "55 €", "0.22 €/crédit", "Meilleur prix"),
+            ("50 crédits",  50,  "15 €", "0.30 €/crédit"),
+            ("100 crédits", 100, "25 €", "0.25 €/crédit"),
+            ("250 crédits", 250, "55 €", "0.22 €/crédit"),
         ]
-        for _pname, _pcr, _pprice, _per_cr, _badge in _PACKS:
-            _badge_html = (
-                f'<span style="background:linear-gradient(135deg,#00878E,#00C4CC);color:#fff;'
-                f'font-size:0.52rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;'
-                f'padding:2px 7px;border-radius:20px;margin-left:7px;vertical-align:middle;">{_badge}</span>'
-            ) if _badge else ""
+        for _pname, _pcr, _pprice, _per_cr in _PACKS:
             st.markdown(
-                f'<div style="background:linear-gradient(145deg,rgba(255,255,255,0.94) 0%,rgba(255,255,255,0.72) 100%);'
-                f'border:1px solid rgba(255,255,255,0.88);border-radius:18px;padding:13px 15px 11px;margin-bottom:4px;'
-                f'box-shadow:0 8px 32px rgba(0,87,94,0.13),0 1px 3px rgba(0,0,0,0.06),'
-                f'inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(0,0,0,0.04);">'
-                f'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;">'
+                f'<div style="background:linear-gradient(145deg,rgba(0,135,142,0.06) 0%,rgba(0,196,204,0.03) 100%);'
+                f'border:1px solid rgba(0,135,142,0.18);border-radius:16px;padding:10px 14px 8px;margin-bottom:2px;">'
+                f'<div style="display:flex;justify-content:space-between;align-items:center;">'
                 f'<div>'
-                f'<div style="font-family:\'Outfit\',sans-serif;font-size:1.05rem;font-weight:900;'
-                f'color:#0D1414;letter-spacing:-0.03em;line-height:1.1;">'
-                f'{_pcr}<span style="font-size:0.68rem;font-weight:600;color:#8A9494;margin-left:3px;">crédits</span>'
-                f'{_badge_html}</div>'
-                f'<div style="font-size:0.64rem;color:#9AACAC;font-family:\'Outfit\',sans-serif;'
-                f'font-weight:500;margin-top:2px;">{_per_cr}</div>'
+                f'<span style="font-family:\'Outfit\',sans-serif;font-size:0.98rem;font-weight:800;'
+                f'color:#0D1414;letter-spacing:-0.02em;">{_pcr}</span>'
+                f'<span style="font-size:0.66rem;font-weight:500;color:#8A9494;margin-left:3px;">crédits</span>'
+                f'<div style="font-size:0.62rem;color:#7AACAC;margin-top:1px;">{_per_cr}</div>'
                 f'</div>'
-                f'<div style="font-family:\'Outfit\',sans-serif;font-weight:900;font-size:1.2rem;'
-                f'color:#00878E;letter-spacing:-0.04em;line-height:1;">{_pprice}</div>'
+                f'<span style="font-family:\'Outfit\',sans-serif;font-weight:900;font-size:1.1rem;'
+                f'color:#00A8AF;letter-spacing:-0.03em;">{_pprice}</span>'
                 f'</div>'
                 f'</div>',
                 unsafe_allow_html=True,
@@ -2279,7 +2270,7 @@ if st.session_state.screen == 1:
             with card_cols_analyses[idx]:
                 deep_desc = _DEEP_DESCS.get(deliv["key"], deliv["desc"])
                 st.markdown(f"""
-                <div style="border-radius:32px;padding:24px 22px 18px;margin-bottom:10px;min-height:260px;
+                <div style="border-radius:32px;padding:24px 22px 18px;margin-bottom:10px;min-height:200px;
                             background:linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%);
                             border:1px solid rgba(255,255,255,0.85);
                             box-shadow:0 8px 32px rgba(0,87,94,0.12),0 1px 3px rgba(0,0,0,0.06),inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(0,0,0,0.04);
