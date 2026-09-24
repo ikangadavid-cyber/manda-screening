@@ -1003,19 +1003,22 @@ div[data-testid="stButton"] > button:hover {
   transform: translateY(-1px);
 }
 div[data-testid="stButton"] > button:active { transform: translateY(0); }
-div[data-testid="stButton"] > button[kind="primary"] {
-  background: var(--c-teal);
-  border: none;
-  color: #FFFFFF;
-  font-weight: 600;
-  box-shadow: var(--sh-teal);
+div[data-testid="stButton"] > button[kind="primary"],
+div[data-testid="stButton"] > button[data-testid="baseButton-primary"] {
+  background: var(--c-teal) !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+  box-shadow: var(--sh-teal) !important;
 }
-div[data-testid="stButton"] > button[kind="primary"]:hover {
-  background: var(--c-teal-d);
-  box-shadow: var(--sh-teal-lg);
+div[data-testid="stButton"] > button[kind="primary"]:hover,
+div[data-testid="stButton"] > button[data-testid="baseButton-primary"]:hover {
+  background: var(--c-teal-d) !important;
+  box-shadow: var(--sh-teal-lg) !important;
   transform: translateY(-1px);
 }
-div[data-testid="stButton"] > button[kind="primary"]:active { transform: translateY(0); }
+div[data-testid="stButton"] > button[kind="primary"]:active,
+div[data-testid="stButton"] > button[data-testid="baseButton-primary"]:active { transform: translateY(0); }
 
 div[data-testid="stDownloadButton"] > button {
   border-radius: var(--r-sm);
@@ -2098,7 +2101,7 @@ if st.session_state.screen == 1:
     st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 
     # ── Deux onglets principaux ───────────────────────────────────────────────
-    tab_screening, tab_analyses = st.tabs(["  ⚡ Screenings  ", "  🔍 Analyses  "])
+    tab_screening, tab_analyses = st.tabs(["  Screenings  ", "  Analyses  "])
 
     # ════════════════════════════════════════════════════
     # TAB 1 — SCREENINGS
@@ -2147,16 +2150,6 @@ if st.session_state.screen == 1:
             </div>
             """, unsafe_allow_html=True)
             sell_submit = st.button("Lancer le screening →", key="sell_launch", use_container_width=True, type="primary")
-
-        with st.expander("📎 Documents (facultatif)"):
-            ma_docs_upload = st.file_uploader(
-                "Documents",
-                type=["pdf", "docx", "txt", "md", "xlsx", "csv"],
-                accept_multiple_files=True,
-                label_visibility="collapsed",
-                key="ma_start_docs",
-                help="Plaquette, rapport annuel, mémo… L'IA les utilisera pendant la mission.",
-            )
 
         if buy_submit:
             if not company_input.strip():
@@ -2267,58 +2260,53 @@ if st.session_state.screen == 1:
                     st.session_state.result_text      = ""
                     st.rerun()
 
-    # Contexte optionnel (commun aux deux onglets)
-    with st.expander("💡 Informations déjà connues (optionnel)"):
-        tab_manual, tab_docs = st.tabs(["✏️ Saisie libre", "📎 Importer des documents"])
+    # ── Contexte & documents (commun aux deux onglets) ───────────────────────
+    with st.expander("💡 Contexte & documents (optionnel)"):
+        manual_context = st.text_area(
+            "Ce que vous savez déjà sur cette entreprise",
+            placeholder=(
+                "Secteur d'activité, chiffre d'affaires approximatif, "
+                "principaux clients, zone géographique, contexte de l'opération..."
+            ),
+            height=110,
+            key="context_input_field",
+            label_visibility="collapsed",
+        )
+        st.markdown(
+            '<div class="section-label" style="margin-top:10px;">Documents — PDF, Word, Excel, TXT, CSV (max 5)</div>',
+            unsafe_allow_html=True,
+        )
+        uploaded_files = st.file_uploader(
+            "Importer des documents",
+            type=["pdf", "docx", "xlsx", "xls", "txt", "md", "csv"],
+            accept_multiple_files=True,
+            label_visibility="collapsed",
+            key="doc_uploader",
+        )
 
-        with tab_manual:
-            manual_context = st.text_area(
-                "Ce que vous savez déjà sur cette entreprise",
-                placeholder=(
-                    "Exemples : secteur d'activité, chiffre d'affaires approximatif, "
-                    "principaux clients, zone géographique, contexte de l'opération..."
-                ),
-                height=130,
-                key="context_input_field",
-            )
+        doc_texts = []
+        ma_docs_upload = uploaded_files  # partagé avec screenings
+        if uploaded_files:
+            from document_extractor import extract_text
+            shown = uploaded_files[:5]
+            for uf in shown:
+                extracted = extract_text(uf)
+                char_count = len(extracted)
+                doc_texts.append(f"\n\n--- Document : {uf.name} ---\n\n{extracted}")
+                st.markdown(
+                    f'<div class="file-badge">'
+                    f'📄 <span class="file-badge-name">{uf.name}</span>'
+                    f' &nbsp;·&nbsp; {char_count:,} car.'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+            if len(uploaded_files) > 5:
+                st.caption("Seuls les 5 premiers fichiers sont pris en compte.")
 
-        with tab_docs:
-            st.markdown(
-                '<div class="section-label">Glissez jusqu\'à 5 fichiers (PDF, Word, Excel, TXT, CSV, MD)</div>',
-                unsafe_allow_html=True,
-            )
-            uploaded_files = st.file_uploader(
-                "Importer des documents",
-                type=["pdf", "docx", "xlsx", "xls", "txt", "md", "csv"],
-                accept_multiple_files=True,
-                label_visibility="collapsed",
-                key="doc_uploader",
-            )
-
-            doc_texts = []
-            if uploaded_files:
-                from document_extractor import extract_text
-                shown = uploaded_files[:5]
-                for uf in shown:
-                    extracted = extract_text(uf)
-                    char_count = len(extracted)
-                    doc_texts.append(
-                        f"\n\n--- Document : {uf.name} ---\n\n{extracted}"
-                    )
-                    st.markdown(
-                        f'<div class="file-badge">'
-                        f'📄 <span class="file-badge-name">{uf.name}</span>'
-                        f' &nbsp;·&nbsp; {char_count:,} car.'
-                        f'</div>',
-                        unsafe_allow_html=True,
-                    )
-                if len(uploaded_files) > 5:
-                    st.caption("Seuls les 5 premiers fichiers sont pris en compte.")
-
-        combined_context = manual_context
-        if doc_texts:
-            combined_context = combined_context + "".join(doc_texts)
-        st.session_state.context = combined_context
+    combined_context = manual_context if manual_context else ""
+    if doc_texts:
+        combined_context = combined_context + "".join(doc_texts)
+    st.session_state.context = combined_context
 
 
 # ══════════════════════════════════════════════════════════════════════════════
