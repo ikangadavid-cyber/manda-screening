@@ -718,49 +718,58 @@ button[data-testid="stPillsOptionButton"][aria-pressed="true"] {
   }
   disableAutocorrect();
   new MutationObserver(disableAutocorrect).observe(document.body, { childList: true, subtree: true });
-
-  // ── 3D perspective grid animation ──
-  (function(){
-    var c = document.createElement('canvas');
-    c.id = 'inspirit-grid';
-    c.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;';
-    var ctx, off = 0, running = false;
-    function resize(){ c.width = window.innerWidth; c.height = window.innerHeight; }
-    function draw(){
-      if(!ctx) return;
-      ctx.clearRect(0,0,c.width,c.height);
-      var W=c.width,H=c.height,vx=W*0.62,vy=H*0.3,spread=W*1.1,bot=H*1.05,COLS=14,ROWS=18;
-      for(var i=0;i<=COLS;i++){
-        var t=i/COLS,bx=vx-spread/2+t*spread,a=0.05+0.03*Math.sin(t*Math.PI);
-        ctx.beginPath();ctx.strokeStyle='rgba(0,135,142,'+a+')';ctx.lineWidth=0.7;
-        ctx.moveTo(vx,vy);ctx.lineTo(bx,bot);ctx.stroke();
-      }
-      for(var j=0;j<=ROWS;j++){
-        var tR=(j/ROWS+off)%1,tP=Math.pow(tR,2.4);
-        var y=vy+(bot-vy)*tP;if(y<vy)continue;
-        var lx=vx-(spread/2)*tP,rx=vx+(spread/2)*tP,a2=0.03+0.07*tP;
-        ctx.beginPath();ctx.strokeStyle='rgba(0,135,142,'+a2+')';ctx.lineWidth=0.6;
-        ctx.moveTo(lx,y);ctx.lineTo(rx,y);ctx.stroke();
-      }
-      off+=0.002;
-      requestAnimationFrame(draw);
-    }
-    function init(){
-      if(document.body && !document.getElementById('inspirit-grid')){
-        document.body.appendChild(c);
-        resize();
-        window.addEventListener('resize',resize);
-        ctx = c.getContext('2d');
-        draw();
-      } else if(!document.body){
-        setTimeout(init,100);
-      }
-    }
-    init();
-  })();
 })();
 </script>
 """, unsafe_allow_html=True)
+
+# ── 3D grid animation via components.html (seul moyen fiable d'exécuter du JS dans Streamlit) ──
+import streamlit.components.v1 as _components
+_components.html("""
+<script>
+(function(){
+  var doc = window.parent.document;
+  if(doc.getElementById('inspirit-grid')) return;
+
+  // Canvas dans le parent
+  var c = doc.createElement('canvas');
+  c.id = 'inspirit-grid';
+  c.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;';
+  doc.body.appendChild(c);
+
+  // Script injecté dans le parent pour que requestAnimationFrame tourne dans son contexte
+  var code = [
+    '(function(){',
+    '  var c=document.getElementById("inspirit-grid");',
+    '  var ctx=c.getContext("2d"),off=0;',
+    '  function resize(){c.width=window.innerWidth;c.height=window.innerHeight;}',
+    '  resize();window.addEventListener("resize",resize);',
+    '  function draw(){',
+    '    ctx.clearRect(0,0,c.width,c.height);',
+    '    var W=c.width,H=c.height,vx=W*0.62,vy=H*0.3,spread=W*1.1,bot=H*1.05,COLS=14,ROWS=18;',
+    '    for(var i=0;i<=COLS;i++){',
+    '      var t=i/COLS,bx=vx-spread/2+t*spread,a=0.05+0.03*Math.sin(t*Math.PI);',
+    '      ctx.beginPath();ctx.strokeStyle="rgba(0,135,142,"+a+")";ctx.lineWidth=0.7;',
+    '      ctx.moveTo(vx,vy);ctx.lineTo(bx,bot);ctx.stroke();',
+    '    }',
+    '    for(var j=0;j<=ROWS;j++){',
+    '      var tR=(j/ROWS+off)%1,tP=Math.pow(tR,2.4);',
+    '      var y=vy+(bot-vy)*tP;if(y<vy)continue;',
+    '      var lx=vx-(spread/2)*tP,rx=vx+(spread/2)*tP,a2=0.03+0.07*tP;',
+    '      ctx.beginPath();ctx.strokeStyle="rgba(0,135,142,"+a2+")";ctx.lineWidth=0.6;',
+    '      ctx.moveTo(lx,y);ctx.lineTo(rx,y);ctx.stroke();',
+    '    }',
+    '    off+=0.002;requestAnimationFrame(draw);',
+    '  }',
+    '  draw();',
+    '})();'
+  ].join('\\n');
+
+  var s = doc.createElement('script');
+  s.textContent = code;
+  doc.head.appendChild(s);
+})();
+</script>
+""", height=0, width=0)
 
 # ── Deliverable type definitions ──────────────────────────────────────────────
 DELIVERABLES = [
