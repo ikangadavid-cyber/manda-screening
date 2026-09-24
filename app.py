@@ -616,7 +616,7 @@ st.markdown("""
    DESIGN TOKENS
 ══════════════════════════════════════════════════════════ */
 :root {
-  --c-bg:          #ECEEF0;
+  --c-bg:          #D8E8E8;
   --c-surface:     #FFFFFF;
   --c-surface-2:   #F6F8F8;
   --c-surface-3:   #F0F3F3;
@@ -659,10 +659,10 @@ st.markdown("""
   --r-full: 9999px;
 
   /* Frosted glass */
-  --c-glass:        rgba(250,253,253,0.90);
-  --c-glass-hover:  rgba(255,255,255,0.97);
-  --c-glass-border: rgba(200,220,220,0.55);
-  --sh-glass: 0 4px 24px rgba(0,107,113,0.10), 0 1px 4px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.90);
+  --c-glass:        rgba(255,255,255,0.68);
+  --c-glass-hover:  rgba(255,255,255,0.88);
+  --c-glass-border: rgba(255,255,255,0.50);
+  --sh-glass: 0 6px 28px rgba(0,87,94,0.12), 0 1px 4px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1);
 
   /* Animation */
   --ease:      cubic-bezier(0.16, 1, 0.3, 1);
@@ -732,9 +732,8 @@ html, body, [class*="css"] {
 ══════════════════════════════════════════════════════════ */
 [data-testid="stAppViewContainer"] {
   background:
-    radial-gradient(ellipse 1100px 800px at 90% 5%,  rgba(0,135,142,0.13) 0%, transparent 60%),
-    radial-gradient(ellipse 800px 700px at 0%  100%, rgba(0,135,142,0.09) 0%, transparent 60%),
-    radial-gradient(ellipse 600px 500px at 50% 55%,  rgba(0,107,113,0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 1200px 900px at 90% 0%,   rgba(0,135,142,0.22) 0%, transparent 55%),
+    radial-gradient(ellipse 900px 800px  at 0%  100%, rgba(0,107,113,0.18) 0%, transparent 55%),
     var(--c-bg);
 }
 header[data-testid="stHeader"] {
@@ -2146,11 +2145,11 @@ if st.session_state.screen == 1:
 
         with col_buy:
             st.markdown("""
-            <div style="border:1px solid rgba(200,220,220,0.55);border-radius:26px;
+            <div style="border:1px solid rgba(255,255,255,0.50);border-radius:32px;
                         padding:28px 24px 22px;margin-bottom:12px;
-                        background:rgba(250,253,253,0.90);
+                        background:rgba(255,255,255,0.68);
                         min-height:160px;
-                        box-shadow:0 4px 24px rgba(0,107,113,0.10),0 1px 4px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.90);">
+                        box-shadow:0 6px 28px rgba(0,87,94,0.12),0 1px 4px rgba(0,0,0,0.05),inset 0 1px 0 rgba(255,255,255,1);">
                 <div style="width:48px;height:48px;border-radius:12px;background:#00878E;
                             display:flex;align-items:center;
                             justify-content:center;font-size:1.3rem;margin-bottom:16px;">💼</div>
@@ -2166,11 +2165,11 @@ if st.session_state.screen == 1:
 
         with col_sell:
             st.markdown("""
-            <div style="border:1px solid rgba(200,220,220,0.55);border-radius:26px;
+            <div style="border:1px solid rgba(255,255,255,0.50);border-radius:32px;
                         padding:28px 24px 22px;margin-bottom:12px;
-                        background:rgba(250,253,253,0.90);
+                        background:rgba(255,255,255,0.68);
                         min-height:160px;
-                        box-shadow:0 4px 24px rgba(0,107,113,0.10),0 1px 4px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.90);">
+                        box-shadow:0 6px 28px rgba(0,87,94,0.12),0 1px 4px rgba(0,0,0,0.05),inset 0 1px 0 rgba(255,255,255,1);">
                 <div style="width:48px;height:48px;border-radius:12px;background:#00878E;
                             display:flex;align-items:center;
                             justify-content:center;font-size:1.3rem;margin-bottom:16px;">📋</div>
@@ -2259,10 +2258,10 @@ if st.session_state.screen == 1:
             with card_cols_analyses[idx]:
                 deep_desc = _DEEP_DESCS.get(deliv["key"], deliv["desc"])
                 st.markdown(f"""
-                <div style="border:1px solid rgba(200,220,220,0.55);border-radius:26px;
+                <div style="border:1px solid rgba(255,255,255,0.50);border-radius:32px;
                             padding:24px 22px 18px;margin-bottom:10px;
-                            background:rgba(250,253,253,0.90);min-height:260px;
-                            box-shadow:0 4px 24px rgba(0,107,113,0.10),0 1px 4px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.90);
+                            background:rgba(255,255,255,0.68);min-height:260px;
+                            box-shadow:0 6px 28px rgba(0,87,94,0.12),0 1px 4px rgba(0,0,0,0.05),inset 0 1px 0 rgba(255,255,255,1);
                             display:flex;flex-direction:column;">
                     <div style="width:44px;height:44px;border-radius:11px;background:#00878E;
                                 display:flex;align-items:center;
