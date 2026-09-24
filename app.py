@@ -2228,14 +2228,15 @@ if st.session_state.screen == 1:
                 st.markdown(f"""
                 <div style="border:1px solid rgba(0,135,142,0.16);border-radius:16px;
                             padding:24px 22px 18px;margin-bottom:10px;
-                            background:#FFFFFF;
-                            box-shadow:0 3px 16px rgba(0,135,142,0.07);">
+                            background:#FFFFFF;min-height:260px;
+                            box-shadow:0 3px 16px rgba(0,135,142,0.07);
+                            display:flex;flex-direction:column;">
                     <div style="width:44px;height:44px;border-radius:11px;background:#00878E;
                                 display:flex;align-items:center;
-                                justify-content:center;font-size:1.2rem;margin-bottom:14px;">{deliv['icon']}</div>
+                                justify-content:center;font-size:1.2rem;margin-bottom:14px;flex-shrink:0;">{deliv['icon']}</div>
                     <div style="font-family:'Outfit',sans-serif;font-weight:900;color:#111414;
                                 font-size:1.05rem;letter-spacing:-0.03em;margin-bottom:6px;">{deliv['title']}</div>
-                    <div style="font-size:0.79rem;color:#6B7878;line-height:1.6;margin-bottom:10px;">{deep_desc}</div>
+                    <div style="font-size:0.79rem;color:#6B7878;line-height:1.6;margin-bottom:auto;padding-bottom:12px;">{deep_desc}</div>
                     <div style="font-size:0.68rem;font-weight:600;color:#00878E;letter-spacing:0.04em;">3 CRÉDITS</div>
                 </div>
                 """, unsafe_allow_html=True)
