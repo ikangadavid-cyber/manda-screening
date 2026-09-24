@@ -746,6 +746,14 @@ header[data-testid="stHeader"] {
 footer { visibility: hidden !important; }
 [data-testid="stDecoration"] { display: none !important; }
 
+[data-testid="stMainBlockContainer"] {
+  padding-top: 2.5rem !important;
+}
+section[data-testid="stSidebar"] [data-testid="stSidebarHeader"] {
+  height: 2.25rem !important;
+  margin-bottom: 0 !important;
+}
+
 /* Force tous les wrappers Streamlit à être transparents pour que le fond apparaisse */
 [data-testid="stMain"],
 [data-testid="stMainBlockContainer"],
@@ -2134,7 +2142,7 @@ if st.session_state.screen == 1:
     _log_screening("__app__", "page_view", "ouverture app")
 
     st.markdown(
-        '<div style="padding:56px 4px 4px;margin-top:8px;margin-bottom:28px;">'
+        '<div style="padding:8px 4px 4px;margin-bottom:28px;">'
         '<div class="main-title" style="margin:0;">Screening <em>M&A</em></div>'
         '<div class="main-subtitle" style="margin:4px 0 0;">Screening M&amp;A alimenté par l\'IA et les données publiques.</div>'
         '</div>',
