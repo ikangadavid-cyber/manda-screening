@@ -1953,8 +1953,8 @@ with st.sidebar:
     if _show_packs and not _pending_pack:
         _PACKS = [
             ("10 crédits",  10,  "40 €"),
+            ("20 crédits",  20,  "80 €"),
             ("50 crédits",  50,  "200 €"),
-            ("100 crédits", 100, "400 €"),
         ]
         for _pname, _pcr, _pprice in _PACKS:
             st.markdown(
