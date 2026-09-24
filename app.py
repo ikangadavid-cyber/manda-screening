@@ -627,8 +627,8 @@ html, body, [class*="css"] {
 /* ── Fond général ── */
 
 .main .block-container {
-    max-width: 860px;
-    padding-top: 2.5rem;
+    max-width: 880px;
+    padding-top: 3rem;
     padding-left: 2rem;
     padding-right: 2rem;
     margin: 0 auto;
@@ -639,44 +639,47 @@ html, body, [class*="css"] {
 /* ── Sidebar ── */
 section[data-testid="stSidebar"] {
     background: #FFFFFF;
-    border-right: 1px solid #E8ECEC;
+    border-right: 1px solid #DDE3E3;
     box-shadow: none;
 }
 section[data-testid="stSidebar"] * { color: #111414 !important; }
-section[data-testid="stSidebar"] hr { border-color: #E8ECEC !important; }
+section[data-testid="stSidebar"] hr { border-color: #EDF1F1 !important; }
 section[data-testid="stSidebar"] .sidebar-logo {
-    font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 800;
-    letter-spacing: -0.04em; color: #111414 !important;
+    font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 900;
+    letter-spacing: -0.05em; color: #111414 !important;
+}
+section[data-testid="stSidebar"] .sidebar-logo .sidebar-accent {
+    color: #00878E !important;
 }
 section[data-testid="stSidebar"] .sidebar-sources {
-    font-size: 0.8rem; line-height: 1.9; color: #8A9494 !important;
+    font-size: 0.79rem; line-height: 1.85; color: #8A9494 !important;
 }
 section[data-testid="stSidebar"] button {
     background: #FFFFFF !important;
     border: 1px solid #E2E6E6 !important;
     color: #111414 !important;
 }
-section[data-testid="stSidebar"] button:hover { background: #F5F7F7 !important; border-color:#00878E !important; }
+section[data-testid="stSidebar"] button:hover { background: rgba(0,135,142,0.05) !important; border-color:#00878E !important; color:#00878E !important; }
 
 /* ── Markdown ── */
 .stMarkdown p, .stMarkdown li, .stMarkdown td, .stMarkdown th {
     color: #111111 !important; font-size: 0.94rem; line-height: 1.75;
 }
-.stMarkdown h1 { color:#111111!important; font-size:1.4rem!important; font-weight:700!important; border-bottom:1px solid #E5E5E5; padding-bottom:8px; margin-top:24px!important; }
-.stMarkdown h2 { color:#111111!important; font-size:1.15rem!important; font-weight:700!important; margin-top:20px!important; }
-.stMarkdown h3 { color:#333333!important; font-size:1.0rem!important; font-weight:600!important; }
-.stMarkdown strong { color:#111111!important; font-weight:600!important; }
-.stMarkdown em { color:#555555!important; }
-.stMarkdown code { background:#F5F5F5!important; color:#111111!important; border-radius:4px; padding:1px 5px; }
-.stMarkdown blockquote { border-left:2px solid #111111!important; padding-left:12px; color:#555555!important; }
-.stMarkdown hr { border-color:#E5E5E5!important; margin:16px 0!important; }
+.stMarkdown h1 { color:#111414!important; font-family:'Outfit',sans-serif!important; font-size:1.5rem!important; font-weight:900!important; letter-spacing:-0.04em!important; border-bottom:2px solid #00878E; padding-bottom:8px; margin-top:28px!important; }
+.stMarkdown h2 { color:#00878E!important; font-family:'Outfit',sans-serif!important; font-size:1.1rem!important; font-weight:800!important; letter-spacing:-0.03em!important; margin-top:22px!important; }
+.stMarkdown h3 { color:#111414!important; font-family:'Outfit',sans-serif!important; font-size:0.97rem!important; font-weight:700!important; }
+.stMarkdown strong { color:#111111!important; font-weight:700!important; }
+.stMarkdown em { color:#00878E!important; font-style:normal!important; }
+.stMarkdown code { background:rgba(0,135,142,0.07)!important; color:#006B71!important; border-radius:4px; padding:2px 6px; font-size:0.88rem!important; }
+.stMarkdown blockquote { border-left:3px solid #00878E!important; padding-left:14px; color:#5A7070!important; background:rgba(0,135,142,0.04)!important; border-radius:0 6px 6px 0!important; padding-top:6px!important; padding-bottom:6px!important; }
+.stMarkdown hr { border-color:#DDE8E8!important; margin:18px 0!important; }
 
 /* ── Tableaux ── */
-.stMarkdown table { width:100%; border-collapse:collapse; margin:12px 0; }
-.stMarkdown th { background:#111111!important; color:#FFFFFF!important; font-weight:600; padding:10px 14px; text-align:left; }
-.stMarkdown td { color:#111111!important; padding:8px 14px; border-bottom:1px solid #E5E5E5; }
-.stMarkdown tr:nth-child(even) td { background:#F9F9F9!important; }
-.stMarkdown tr:hover td { background:#F3F3F3!important; }
+.stMarkdown table { width:100%; border-collapse:collapse; margin:12px 0; border-radius:10px; overflow:hidden; }
+.stMarkdown th { background:#00878E!important; color:#FFFFFF!important; font-weight:700; padding:10px 14px; text-align:left; font-family:'Outfit',sans-serif; letter-spacing:-0.01em; }
+.stMarkdown td { color:#111111!important; padding:8px 14px; border-bottom:1px solid #EDF1F1; }
+.stMarkdown tr:nth-child(even) td { background:#F5FAFA!important; }
+.stMarkdown tr:hover td { background:#EBF5F5!important; }
 
 /* ── Titre principal ── */
 .hero-eyebrow {
@@ -688,9 +691,9 @@ section[data-testid="stSidebar"] button:hover { background: #F5F7F7 !important; 
 }
 .hero-dot { display:inline-block; width:6px; height:6px; background:#00878E; border-radius:50%; animation:heroPulse 2s ease-in-out infinite; }
 @keyframes heroPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.45;transform:scale(0.7)} }
-.main-title { font-family:'Outfit',sans-serif; font-size:2.8rem; font-weight:900; color:#111414; letter-spacing:-0.06em; line-height:0.95; margin-bottom:12px; }
+.main-title { font-family:'Outfit',sans-serif; font-size:3.6rem; font-weight:900; color:#111414; letter-spacing:-0.065em; line-height:0.9; margin-bottom:16px; }
 .main-title em { font-style:normal; color:#00878E; }
-.main-subtitle { font-size:0.88rem; color:#8A9494; margin-bottom:2rem; line-height:1.6; max-width:460px; }
+.main-subtitle { font-size:0.9rem; color:#6B7878; margin-bottom:2.2rem; line-height:1.65; max-width:480px; letter-spacing:-0.01em; }
 
 /* ── Cartes livrables ── */
 .card-btn {
@@ -705,38 +708,40 @@ section[data-testid="stSidebar"] button:hover { background: #F5F7F7 !important; 
 .card-desc  { font-size:0.79rem; color:#6B7280; line-height:1.5; }
 
 /* ── Barre de progression ── */
-.progress-topbar { height:2px; background:#E5E5E5; border-radius:1px; margin-bottom:20px; overflow:hidden; }
-.progress-topbar-fill { height:100%; background:#111111; border-radius:1px; animation:progressSlide 40s linear forwards; }
+.progress-topbar { height:3px; background:#E5E5E5; border-radius:2px; margin-bottom:20px; overflow:hidden; }
+.progress-topbar-fill { height:100%; background:linear-gradient(90deg,#00878E,#00A8B0); border-radius:2px; animation:progressSlide 40s linear forwards; }
 
 .progress-container {
-    background:#FFFFFF; border:1px solid #E5E5E5; border-radius:12px;
+    background:#FFFFFF; border:1px solid #E2EDED; border-radius:14px;
     padding:24px 28px; margin:16px 0;
+    border-left:3px solid #00878E;
 }
 .progress-header  { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
-.progress-title   { font-size:1.0rem; font-weight:700; color:#111111; }
+.progress-title   { font-size:1.0rem; font-weight:700; color:#111111; font-family:'Outfit',sans-serif; }
 .progress-company { font-size:0.87rem; color:#6B7280; }
 .progress-deliverable {
-    display:inline-block; background:#F5F5F5; border:1px solid #E5E5E5;
-    color:#333333; font-weight:600; font-size:0.8rem;
+    display:inline-block; background:rgba(0,135,142,0.08); border:1px solid rgba(0,135,142,0.2);
+    color:#00878E; font-weight:600; font-size:0.78rem;
     padding:3px 10px; border-radius:20px; margin-top:2px;
 }
 .step-row           { display:flex; align-items:center; gap:10px; padding:8px 0; font-size:0.9rem; color:#6B7280; border-bottom:1px solid #F0F0F0; }
 .step-row:last-of-type { border-bottom:none; }
 .step-row.done      { color:#111111; }
-.step-row.active    { color:#111111; font-weight:600; }
+.step-row.active    { color:#00878E; font-weight:600; }
 .step-row.pending   { color:#C0C0C0; }
 .step-icon          { font-size:1.0rem; min-width:24px; }
-.pulse-dot { display:inline-block; width:7px; height:7px; background:#111111; border-radius:50%; margin-left:6px; animation:pulse 1.4s ease-in-out infinite; vertical-align:middle; }
-.searching-label { font-size:0.82rem; color:#B0B0B0; margin-top:16px; display:flex; align-items:center; gap:6px; }
+.pulse-dot { display:inline-block; width:7px; height:7px; background:#00878E; border-radius:50%; margin-left:6px; animation:pulse 1.4s ease-in-out infinite; vertical-align:middle; }
+.searching-label { font-size:0.82rem; color:#00878E; margin-top:16px; display:flex; align-items:center; gap:6px; }
 
 /* ── Résultat ── */
-.result-box { background:#FFFFFF; border:1px solid #E5E5E5; border-radius:12px; padding:28px 32px; margin-top:16px; }
-.result-header { font-size:1.0rem; font-weight:700; color:#111111; margin-bottom:14px; }
+.result-box { background:#FFFFFF; border:1px solid #E2EDED; border-radius:14px; padding:28px 32px; margin-top:16px; border-left:3px solid #00878E; }
+.result-header { font-size:1.05rem; font-weight:800; color:#111111; margin-bottom:14px; font-family:'Outfit',sans-serif; letter-spacing:-0.02em; }
 .company-badge {
     display:inline-flex; align-items:center; gap:6px;
-    background:#F5F5F5; border:1px solid #E5E5E5;
-    color:#111111; font-weight:700; font-size:1.0rem;
+    background:rgba(0,135,142,0.07); border:1px solid rgba(0,135,142,0.2);
+    color:#00878E; font-weight:700; font-size:0.95rem;
     padding:6px 14px; border-radius:8px; margin-bottom:10px;
+    font-family:'Outfit',sans-serif; letter-spacing:-0.02em;
 }
 
 /* ── Boutons Streamlit ── */
@@ -788,8 +793,9 @@ button[data-baseweb="tab"] { font-size:0.88rem!important; font-weight:600!import
 
 /* ── Labels section ── */
 .section-label {
-    font-size:0.75rem; font-weight:600; color:#9CA3AF;
-    text-transform:uppercase; letter-spacing:0.07em; margin-bottom:8px;
+    font-size:0.62rem; font-weight:700; color:#00878E;
+    text-transform:uppercase; letter-spacing:0.14em; margin-bottom:8px;
+    font-family:'Outfit',sans-serif;
 }
 
 /* ── Spinner ── */
@@ -1248,7 +1254,7 @@ if st.session_state.screen == 1:
     # ── SECTION SCREENINGS ───────────────────────────────────────────────────
     st.markdown(
         '<div style="font-size:0.59rem;font-weight:700;text-transform:uppercase;'
-        'letter-spacing:0.14em;color:#8A9494;margin:12px 0 10px 0;">Screenings complets</div>',
+        'letter-spacing:0.14em;color:#00878E;margin:12px 0 10px 0;font-family:\'Outfit\',sans-serif;">Screenings complets</div>',
         unsafe_allow_html=True,
     )
 
@@ -1257,14 +1263,14 @@ if st.session_state.screen == 1:
     # Buy Side
     with col_buy:
         st.markdown("""
-        <div style="border:1px solid rgba(0,135,142,0.18);border-radius:14px;padding:22px 20px 18px;
+        <div style="border:1px solid rgba(0,135,142,0.22);border-radius:14px;padding:22px 20px 18px;
                     margin-bottom:10px;background:#FFFFFF;
-                    min-height:115px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
-            <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,135,142,0.09);
-                        border:1px solid rgba(0,135,142,0.15);display:flex;align-items:center;
+                    min-height:115px;box-shadow:0 2px 16px rgba(0,135,142,0.08);">
+            <div style="width:36px;height:36px;border-radius:9px;background:#00878E;
+                        display:flex;align-items:center;
                         justify-content:center;font-size:1rem;margin-bottom:12px;">💼</div>
-            <div style="font-family:'Outfit',sans-serif;font-weight:800;color:#111414;font-size:1rem;
-                        letter-spacing:-0.02em;margin-bottom:6px;">Buy Side</div>
+            <div style="font-family:'Outfit',sans-serif;font-weight:900;color:#111414;font-size:1.05rem;
+                        letter-spacing:-0.03em;margin-bottom:6px;">Buy Side</div>
             <div style="font-size:0.74rem;color:#8A9494;line-height:1.55;">
                 Screening d'acquisition complet avec analyse de cible et recommandations stratégiques.
             </div>
@@ -1275,14 +1281,14 @@ if st.session_state.screen == 1:
     # Sell Side
     with col_sell:
         st.markdown("""
-        <div style="border:1px solid rgba(0,135,142,0.18);border-radius:14px;padding:22px 20px 18px;
+        <div style="border:1px solid rgba(0,135,142,0.22);border-radius:14px;padding:22px 20px 18px;
                     margin-bottom:10px;background:#FFFFFF;
-                    min-height:115px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
-            <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,135,142,0.09);
-                        border:1px solid rgba(0,135,142,0.15);display:flex;align-items:center;
+                    min-height:115px;box-shadow:0 2px 16px rgba(0,135,142,0.08);">
+            <div style="width:36px;height:36px;border-radius:9px;background:#00878E;
+                        display:flex;align-items:center;
                         justify-content:center;font-size:1rem;margin-bottom:12px;">📋</div>
-            <div style="font-family:'Outfit',sans-serif;font-weight:800;color:#111414;font-size:1rem;
-                        letter-spacing:-0.02em;margin-bottom:6px;">Sell Side</div>
+            <div style="font-family:'Outfit',sans-serif;font-weight:900;color:#111414;font-size:1.05rem;
+                        letter-spacing:-0.03em;margin-bottom:6px;">Sell Side</div>
             <div style="font-size:0.74rem;color:#8A9494;line-height:1.55;">
                 Cartographie du marché, identification et qualification des acquéreurs potentiels.
             </div>
@@ -1351,7 +1357,7 @@ if st.session_state.screen == 1:
     # ── SECTION ANALYSES RAPIDES ─────────────────────────────────────────────
     st.markdown(
         '<div style="font-size:0.59rem;font-weight:700;text-transform:uppercase;'
-        'letter-spacing:0.14em;color:#8A9494;margin:16px 0 10px 0;">Analyses rapides</div>',
+        'letter-spacing:0.14em;color:#00878E;margin:16px 0 10px 0;font-family:\'Outfit\',sans-serif;">Analyses rapides</div>',
         unsafe_allow_html=True,
     )
 
@@ -1365,15 +1371,15 @@ if st.session_state.screen == 1:
     for idx, deliv in enumerate(DELIVERABLES):
         with card_cols[idx]:
             st.markdown(f"""
-            <div style="border:1px solid rgba(0,135,142,0.16);border-radius:14px;
+            <div style="border:1px solid rgba(0,135,142,0.18);border-radius:14px;
                         padding:18px 18px 14px;margin-bottom:8px;
                         background:#FFFFFF;
-                        box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-                <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,135,142,0.08);
-                            border:1px solid rgba(0,135,142,0.13);display:flex;align-items:center;
+                        box-shadow:0 2px 14px rgba(0,135,142,0.07);">
+                <div style="width:32px;height:32px;border-radius:8px;background:#00878E;
+                            display:flex;align-items:center;
                             justify-content:center;font-size:0.95rem;margin-bottom:10px;">{deliv['icon']}</div>
-                <div style="font-family:'Outfit',sans-serif;font-weight:800;color:#111414;
-                            font-size:0.9rem;letter-spacing:-0.02em;margin-bottom:5px;">{deliv['title']}</div>
+                <div style="font-family:'Outfit',sans-serif;font-weight:900;color:#111414;
+                            font-size:0.9rem;letter-spacing:-0.03em;margin-bottom:5px;">{deliv['title']}</div>
                 <div style="font-size:0.73rem;color:#8A9494;line-height:1.5;">{deliv['desc']}</div>
             </div>
             """, unsafe_allow_html=True)
