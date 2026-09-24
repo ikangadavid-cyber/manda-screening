@@ -718,6 +718,46 @@ button[data-testid="stPillsOptionButton"][aria-pressed="true"] {
   }
   disableAutocorrect();
   new MutationObserver(disableAutocorrect).observe(document.body, { childList: true, subtree: true });
+
+  // ── 3D perspective grid animation ──
+  (function(){
+    var c = document.createElement('canvas');
+    c.id = 'inspirit-grid';
+    c.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;';
+    var ctx, off = 0, running = false;
+    function resize(){ c.width = window.innerWidth; c.height = window.innerHeight; }
+    function draw(){
+      if(!ctx) return;
+      ctx.clearRect(0,0,c.width,c.height);
+      var W=c.width,H=c.height,vx=W*0.62,vy=H*0.3,spread=W*1.1,bot=H*1.05,COLS=14,ROWS=18;
+      for(var i=0;i<=COLS;i++){
+        var t=i/COLS,bx=vx-spread/2+t*spread,a=0.05+0.03*Math.sin(t*Math.PI);
+        ctx.beginPath();ctx.strokeStyle='rgba(0,135,142,'+a+')';ctx.lineWidth=0.7;
+        ctx.moveTo(vx,vy);ctx.lineTo(bx,bot);ctx.stroke();
+      }
+      for(var j=0;j<=ROWS;j++){
+        var tR=(j/ROWS+off)%1,tP=Math.pow(tR,2.4);
+        var y=vy+(bot-vy)*tP;if(y<vy)continue;
+        var lx=vx-(spread/2)*tP,rx=vx+(spread/2)*tP,a2=0.03+0.07*tP;
+        ctx.beginPath();ctx.strokeStyle='rgba(0,135,142,'+a2+')';ctx.lineWidth=0.6;
+        ctx.moveTo(lx,y);ctx.lineTo(rx,y);ctx.stroke();
+      }
+      off+=0.002;
+      requestAnimationFrame(draw);
+    }
+    function init(){
+      if(document.body && !document.getElementById('inspirit-grid')){
+        document.body.appendChild(c);
+        resize();
+        window.addEventListener('resize',resize);
+        ctx = c.getContext('2d');
+        draw();
+      } else if(!document.body){
+        setTimeout(init,100);
+      }
+    }
+    init();
+  })();
 })();
 </script>
 """, unsafe_allow_html=True)
@@ -1024,52 +1064,12 @@ with st.sidebar:
 if st.session_state.screen == 1:
     _log_screening("__app__", "page_view", "ouverture app")
 
-    # Grille 3D perspective animée
-    st.markdown("""
-<canvas id="inspirit-grid"></canvas>
-<script>
-(function(){
-  var c=document.getElementById('inspirit-grid');
-  if(!c)return;
-  var ctx=c.getContext('2d');
-  var off=0;
-  function resize(){c.width=window.innerWidth;c.height=window.innerHeight;}
-  resize();
-  window.addEventListener('resize',resize);
-  function draw(){
-    ctx.clearRect(0,0,c.width,c.height);
-    var W=c.width,H=c.height;
-    var vx=W*0.62,vy=H*0.32,spread=W*1.1,bot=H*1.05,COLS=14,ROWS=18;
-    for(var i=0;i<=COLS;i++){
-      var t=i/COLS,bx=vx-spread/2+t*spread,a=0.05+0.035*Math.sin(t*Math.PI);
-      ctx.beginPath();ctx.strokeStyle='rgba(0,135,142,'+a+')';ctx.lineWidth=0.7;
-      ctx.moveTo(vx,vy);ctx.lineTo(bx,bot);ctx.stroke();
-    }
-    for(var j=0;j<=ROWS;j++){
-      var tR=(j/ROWS+off)%1,tP=Math.pow(tR,2.4);
-      var y=vy+(bot-vy)*tP;if(y<vy)continue;
-      var lx=vx-(spread/2)*tP,rx=vx+(spread/2)*tP,a2=0.03+0.07*tP;
-      ctx.beginPath();ctx.strokeStyle='rgba(0,135,142,'+a2+')';ctx.lineWidth=0.6;
-      ctx.moveTo(lx,y);ctx.lineTo(rx,y);ctx.stroke();
-    }
-    off+=0.002;
-    requestAnimationFrame(draw);
-  }
-  draw();
-})();
-</script>
-""", unsafe_allow_html=True)
-
     st.markdown(
-        '<div class="hero-eyebrow"><span class="hero-dot"></span>Inspirit Partners · IA M&A</div>',
+        '<div class="main-title" style="margin-top:8px;">Screening <em>M&A</em></div>',
         unsafe_allow_html=True,
     )
     st.markdown(
-        '<div class="main-title">Screening<br><em>M&A</em></div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        '<div class="main-subtitle">Analysez une entreprise en profondeur grâce à l\'intelligence artificielle et aux données publiques.</div>',
+        '<div class="main-subtitle">Analysez une entreprise grâce à l\'intelligence artificielle et aux données publiques.</div>',
         unsafe_allow_html=True,
     )
 
@@ -1084,7 +1084,7 @@ if st.session_state.screen == 1:
     # ── SECTION SCREENINGS ───────────────────────────────────────────────────
     st.markdown(
         '<div style="font-size:0.59rem;font-weight:700;text-transform:uppercase;'
-        'letter-spacing:0.14em;color:#8A9494;margin:22px 0 14px 0;">Screenings complets</div>',
+        'letter-spacing:0.14em;color:#8A9494;margin:12px 0 10px 0;">Screenings complets</div>',
         unsafe_allow_html=True,
     )
 
@@ -1179,7 +1179,7 @@ if st.session_state.screen == 1:
     # ── SECTION ANALYSES RAPIDES ─────────────────────────────────────────────
     st.markdown(
         '<div style="font-size:0.59rem;font-weight:700;text-transform:uppercase;'
-        'letter-spacing:0.14em;color:#8A9494;margin:28px 0 14px 0;">Analyses rapides</div>',
+        'letter-spacing:0.14em;color:#8A9494;margin:16px 0 10px 0;">Analyses rapides</div>',
         unsafe_allow_html=True,
     )
 
