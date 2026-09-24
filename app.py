@@ -738,12 +738,20 @@ html, body, [class*="css"] {
     var(--c-bg);
 }
 header[data-testid="stHeader"] {
-  background: var(--c-bg) !important;
+  background: transparent !important;
   box-shadow: none !important;
   border-bottom: none !important;
 }
 footer { visibility: hidden !important; }
 [data-testid="stDecoration"] { display: none !important; }
+
+/* Force tous les wrappers Streamlit à être transparents pour que le fond apparaisse */
+[data-testid="stMain"],
+[data-testid="stMainBlockContainer"],
+[data-testid="stBottom"],
+section.main > div {
+  background: transparent !important;
+}
 
 .main .block-container {
   max-width: 900px;
@@ -2138,9 +2146,11 @@ if st.session_state.screen == 1:
 
         with col_buy:
             st.markdown("""
-            <div style="border:1px solid rgba(0,135,142,0.2);border-radius:16px;
-                        padding:28px 24px 22px;margin-bottom:12px;background:#FFFFFF;
-                        min-height:160px;box-shadow:0 4px 20px rgba(0,135,142,0.09);">
+            <div style="border:1px solid rgba(200,220,220,0.55);border-radius:26px;
+                        padding:28px 24px 22px;margin-bottom:12px;
+                        background:rgba(250,253,253,0.90);
+                        min-height:160px;
+                        box-shadow:0 4px 24px rgba(0,107,113,0.10),0 1px 4px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.90);">
                 <div style="width:48px;height:48px;border-radius:12px;background:#00878E;
                             display:flex;align-items:center;
                             justify-content:center;font-size:1.3rem;margin-bottom:16px;">💼</div>
@@ -2156,9 +2166,11 @@ if st.session_state.screen == 1:
 
         with col_sell:
             st.markdown("""
-            <div style="border:1px solid rgba(0,135,142,0.2);border-radius:16px;
-                        padding:28px 24px 22px;margin-bottom:12px;background:#FFFFFF;
-                        min-height:160px;box-shadow:0 4px 20px rgba(0,135,142,0.09);">
+            <div style="border:1px solid rgba(200,220,220,0.55);border-radius:26px;
+                        padding:28px 24px 22px;margin-bottom:12px;
+                        background:rgba(250,253,253,0.90);
+                        min-height:160px;
+                        box-shadow:0 4px 24px rgba(0,107,113,0.10),0 1px 4px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.90);">
                 <div style="width:48px;height:48px;border-radius:12px;background:#00878E;
                             display:flex;align-items:center;
                             justify-content:center;font-size:1.3rem;margin-bottom:16px;">📋</div>
@@ -2247,10 +2259,10 @@ if st.session_state.screen == 1:
             with card_cols_analyses[idx]:
                 deep_desc = _DEEP_DESCS.get(deliv["key"], deliv["desc"])
                 st.markdown(f"""
-                <div style="border:1px solid rgba(0,135,142,0.16);border-radius:16px;
+                <div style="border:1px solid rgba(200,220,220,0.55);border-radius:26px;
                             padding:24px 22px 18px;margin-bottom:10px;
-                            background:#FFFFFF;min-height:260px;
-                            box-shadow:0 3px 16px rgba(0,135,142,0.07);
+                            background:rgba(250,253,253,0.90);min-height:260px;
+                            box-shadow:0 4px 24px rgba(0,107,113,0.10),0 1px 4px rgba(0,0,0,0.04),inset 0 1px 0 rgba(255,255,255,0.90);
                             display:flex;flex-direction:column;">
                     <div style="width:44px;height:44px;border-radius:11px;background:#00878E;
                                 display:flex;align-items:center;
