@@ -1952,11 +1952,11 @@ with st.sidebar:
     # ── Sélection des crédits ────────────────────────────────────────────────
     if _show_packs and not _pending_pack:
         _PACKS = [
-            ("50 crédits",  50,  "15 €", "0.30 €/crédit"),
-            ("100 crédits", 100, "25 €", "0.25 €/crédit"),
-            ("250 crédits", 250, "55 €", "0.22 €/crédit"),
+            ("50 crédits",  50,  "200 €"),
+            ("100 crédits", 100, "400 €"),
+            ("250 crédits", 250, "1 000 €"),
         ]
-        for _pname, _pcr, _pprice, _per_cr in _PACKS:
+        for _pname, _pcr, _pprice in _PACKS:
             st.markdown(
                 f'<div style="background:linear-gradient(145deg,rgba(0,135,142,0.06) 0%,rgba(0,196,204,0.03) 100%);'
                 f'border:1px solid rgba(0,135,142,0.18);border-radius:16px;padding:10px 14px 8px;margin-bottom:2px;">'
@@ -1965,7 +1965,6 @@ with st.sidebar:
                 f'<span style="font-family:\'Outfit\',sans-serif;font-size:0.98rem;font-weight:800;'
                 f'color:#0D1414;letter-spacing:-0.02em;">{_pcr}</span>'
                 f'<span style="font-size:0.66rem;font-weight:500;color:#8A9494;margin-left:3px;">crédits</span>'
-                f'<div style="font-size:0.62rem;color:#7AACAC;margin-top:1px;">{_per_cr}</div>'
                 f'</div>'
                 f'<span style="font-family:\'Outfit\',sans-serif;font-weight:900;font-size:1.1rem;'
                 f'color:#00A8AF;letter-spacing:-0.03em;">{_pprice}</span>'
