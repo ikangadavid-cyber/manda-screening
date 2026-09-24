@@ -466,7 +466,8 @@ def _add_credits(sid: str, amount: int) -> int:
         urllib.request.urlopen(_req2, timeout=5)
         return _new
     except Exception:
-        return 20
+        import streamlit as _st2
+        return _st2.session_state.get("credits", 0) + amount
 
 def _save_history(sid: str, company: str, analysis_type: str, credits_used: int, result_text: str):
     """Save analysis result to history table."""
@@ -1068,6 +1069,8 @@ def init_state():
         "credits":          20,
         "session_id":       "",
         "show_add_credits": False,
+        "_pending_pack":    None,
+        "_purchase_success": None,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -1098,44 +1101,107 @@ with st.sidebar:
     # ── Credits block ──────────────────────────────────────────────────────────
     _credits_now = st.session_state.credits
     st.markdown(
-        f'<div style="background:rgba(0,135,142,0.07);border:1px solid rgba(0,135,142,0.2);'
-        f'border-radius:12px;padding:14px 16px 12px;margin-bottom:4px;">'
-        f'<div style="font-size:0.62rem;font-weight:700;text-transform:uppercase;'
-        f'letter-spacing:0.12em;color:#8A9494;margin-bottom:4px;">Crédits restants</div>'
-        f'<div style="font-family:\'Outfit\',sans-serif;font-weight:900;font-size:2.2rem;'
-        f'color:#00878E;line-height:1;">{_credits_now}</div>'
-        f'<div style="font-size:0.71rem;color:#8A9494;margin-top:3px;">'
-        f'Analyses rapides : 3 cr. · Screenings : 10 cr.</div>'
+        f'<div style="background:rgba(0,135,142,0.07);border:1px solid rgba(0,135,142,0.22);'
+        f'border-radius:12px;padding:14px 16px 14px;margin-bottom:6px;">'
+        f'<div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;'
+        f'letter-spacing:0.13em;color:#00878E;margin-bottom:6px;font-family:\'Outfit\',sans-serif;">Crédits</div>'
+        f'<div style="font-family:\'Outfit\',sans-serif;font-weight:900;font-size:2.6rem;'
+        f'color:#00878E;line-height:1;letter-spacing:-0.04em;">{_credits_now}</div>'
+        f'<div style="font-size:0.69rem;color:#8A9494;margin-top:5px;line-height:1.5;">'
+        f'Analyse rapide : <strong style="color:#111414;">3 cr.</strong> &nbsp;·&nbsp; '
+        f'Screening : <strong style="color:#111414;">10 cr.</strong></div>'
         f'</div>',
         unsafe_allow_html=True,
     )
-    if st.button("+ Ajouter des crédits", use_container_width=True, key="toggle_add_credits"):
-        st.session_state.show_add_credits = not st.session_state.get("show_add_credits", False)
 
-    if st.session_state.get("show_add_credits", False):
+    # Bouton toggle achat
+    _show_packs = st.session_state.get("show_add_credits", False)
+    _pending_pack = st.session_state.get("_pending_pack", None)
+
+    if not _show_packs and not _pending_pack:
+        if st.button("＋ Recharger les crédits", use_container_width=True, key="toggle_add_credits"):
+            st.session_state.show_add_credits = True
+            st.rerun()
+
+    # ── Sélection du pack ────────────────────────────────────────────────────
+    if _show_packs and not _pending_pack:
         st.markdown(
-            '<div style="background:#FFFFFF;border:1px solid rgba(0,135,142,0.15);'
-            'border-radius:10px;padding:12px 14px;margin-top:6px;">'
-            '<div style="font-size:0.72rem;font-weight:700;color:#111414;margin-bottom:8px;">'
-            'Choisir un pack</div>',
+            '<div style="font-size:0.7rem;font-weight:700;color:#111414;margin:8px 0 6px 0;'
+            'font-family:\'Outfit\',sans-serif;">Choisir un pack</div>',
             unsafe_allow_html=True,
         )
-        _packs = [("Pack Starter", 50, "5 €"), ("Pack Pro", 100, "9 €"), ("Pack Premium", 250, "19 €")]
-        for _pack_name, _pack_credits, _pack_price in _packs:
-            col_pack, col_btn = st.columns([3, 2])
-            with col_pack:
-                st.markdown(
-                    f'<div style="font-size:0.78rem;font-weight:600;color:#111414;">{_pack_name}</div>'
-                    f'<div style="font-size:0.68rem;color:#8A9494;">{_pack_credits} crédits · {_pack_price}</div>',
-                    unsafe_allow_html=True,
-                )
-            with col_btn:
-                if st.button("Acheter", key=f"buy_pack_{_pack_credits}", use_container_width=True):
-                    _new_bal = _add_credits(st.session_state.session_id, _pack_credits)
-                    st.session_state.credits = _new_bal
-                    st.session_state.show_add_credits = False
-                    st.rerun()
+        _PACKS = [
+            ("Starter",  50,  "5 €",  "~16 analyses rapides"),
+            ("Pro",     100,  "9 €",  "~33 analyses rapides"),
+            ("Premium", 250, "19 €",  "~83 analyses · usage intensif"),
+        ]
+        for _pname, _pcr, _pprice, _pdesc in _PACKS:
+            st.markdown(
+                f'<div style="background:#FFFFFF;border:1px solid rgba(0,135,142,0.18);'
+                f'border-radius:10px;padding:10px 12px 8px;margin-bottom:6px;">'
+                f'<div style="display:flex;justify-content:space-between;align-items:center;">'
+                f'<span style="font-family:\'Outfit\',sans-serif;font-weight:800;font-size:0.85rem;'
+                f'color:#111414;letter-spacing:-0.02em;">{_pname}</span>'
+                f'<span style="font-family:\'Outfit\',sans-serif;font-weight:900;font-size:0.95rem;'
+                f'color:#00878E;">{_pprice}</span></div>'
+                f'<div style="font-size:0.68rem;color:#8A9494;margin-top:2px;">'
+                f'{_pcr} crédits · {_pdesc}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+            if st.button(f"Choisir {_pname}", key=f"select_pack_{_pcr}", use_container_width=True):
+                st.session_state["_pending_pack"] = (_pname, _pcr, _pprice)
+                st.session_state.show_add_credits = False
+                st.rerun()
+        if st.button("Annuler", key="cancel_packs", use_container_width=True):
+            st.session_state.show_add_credits = False
+            st.rerun()
+
+    # ── Confirmation d'achat ─────────────────────────────────────────────────
+    if _pending_pack:
+        _pname, _pcr, _pprice = _pending_pack
+        st.markdown(
+            f'<div style="background:#FFFFFF;border:1.5px solid #00878E;border-radius:12px;'
+            f'padding:14px 14px 12px;margin:4px 0 8px;">'
+            f'<div style="font-size:0.62rem;font-weight:700;text-transform:uppercase;'
+            f'letter-spacing:0.1em;color:#00878E;font-family:\'Outfit\',sans-serif;margin-bottom:8px;">'
+            f'Confirmer l\'achat</div>'
+            f'<div style="font-family:\'Outfit\',sans-serif;font-weight:900;font-size:1.05rem;'
+            f'color:#111414;letter-spacing:-0.03em;margin-bottom:4px;">'
+            f'Pack {_pname} · {_pprice}</div>'
+            f'<div style="font-size:0.74rem;color:#8A9494;margin-bottom:12px;">'
+            f'+{_pcr} crédits ajoutés à votre solde</div>',
+            unsafe_allow_html=True,
+        )
+        if st.button(f"✓ Confirmer — {_pprice}", key="confirm_purchase", use_container_width=True, type="primary"):
+            _new_bal = _add_credits(st.session_state.session_id, _pcr)
+            st.session_state.credits = _new_bal
+            st.session_state["_pending_pack"] = None
+            st.session_state["_purchase_success"] = _pname
+            st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
+        if st.button("← Retour", key="cancel_confirm", use_container_width=True):
+            st.session_state["_pending_pack"] = None
+            st.session_state.show_add_credits = True
+            st.rerun()
+
+    # ── Succès achat ─────────────────────────────────────────────────────────
+    if st.session_state.get("_purchase_success"):
+        _sname = st.session_state["_purchase_success"]
+        st.markdown(
+            f'<div style="background:rgba(0,135,142,0.08);border:1px solid rgba(0,135,142,0.25);'
+            f'border-radius:10px;padding:10px 12px;margin-bottom:4px;text-align:center;">'
+            f'<div style="font-size:1rem;">✓</div>'
+            f'<div style="font-size:0.76rem;font-weight:700;color:#00878E;margin-top:2px;">'
+            f'Pack {_sname} activé !</div>'
+            f'<div style="font-size:0.68rem;color:#8A9494;margin-top:2px;">'
+            f'Solde mis à jour : {st.session_state.credits} crédits</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+        if st.button("OK", key="dismiss_success", use_container_width=True):
+            st.session_state["_purchase_success"] = None
+            st.rerun()
 
     st.markdown("---")
 
