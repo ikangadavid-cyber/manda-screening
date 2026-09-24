@@ -468,11 +468,11 @@ tavily_key    = get_key("TAVILY_API_KEY")
 st.markdown("""
 <style>
 /* ── Fonts ── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap');
 
 html, body, [class*="css"] {
-    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
-    color: #111111;
+    font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+    color: #111414;
 }
 
 /* ── Animations ── */
@@ -495,24 +495,24 @@ html, body, [class*="css"] {
 /* ── Sidebar ── */
 section[data-testid="stSidebar"] {
     background: #FFFFFF;
-    border-right: 1px solid #E5E5E5;
+    border-right: 1px solid #E8ECEC;
     box-shadow: none;
 }
-section[data-testid="stSidebar"] * { color: #111111 !important; }
-section[data-testid="stSidebar"] hr { border-color: #E5E5E5 !important; }
+section[data-testid="stSidebar"] * { color: #111414 !important; }
+section[data-testid="stSidebar"] hr { border-color: #E8ECEC !important; }
 section[data-testid="stSidebar"] .sidebar-logo {
-    font-size: 1.2rem; font-weight: 700; letter-spacing: -0.3px;
-    color: #111111 !important;
+    font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 800;
+    letter-spacing: -0.04em; color: #111414 !important;
 }
 section[data-testid="stSidebar"] .sidebar-sources {
-    font-size: 0.82rem; line-height: 1.9; color: #6B7280 !important;
+    font-size: 0.8rem; line-height: 1.9; color: #8A9494 !important;
 }
 section[data-testid="stSidebar"] button {
     background: #FFFFFF !important;
-    border: 1px solid #E5E5E5 !important;
-    color: #111111 !important;
+    border: 1px solid #E2E6E6 !important;
+    color: #111414 !important;
 }
-section[data-testid="stSidebar"] button:hover { background: #F0F0F0 !important; }
+section[data-testid="stSidebar"] button:hover { background: #F5F7F7 !important; border-color:#00878E !important; }
 
 /* ── Markdown ── */
 .stMarkdown p, .stMarkdown li, .stMarkdown td, .stMarkdown th {
@@ -535,9 +535,18 @@ section[data-testid="stSidebar"] button:hover { background: #F0F0F0 !important; 
 .stMarkdown tr:hover td { background:#F3F3F3!important; }
 
 /* ── Titre principal ── */
-.main-title { font-size:2rem; font-weight:700; color:#111111; letter-spacing:-0.5px; margin-bottom:0.2rem; }
-.main-title span { color:#111111; }
-.main-subtitle { font-size:0.95rem; color:#6B7280; margin-bottom:2rem; line-height:1.6; }
+.hero-eyebrow {
+    display:inline-flex; align-items:center; gap:8px;
+    background:rgba(0,135,142,0.08); border:1px solid rgba(0,135,142,0.2);
+    border-radius:100px; padding:5px 14px 5px 10px;
+    font-size:0.63rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+    color:#00878E; margin-bottom:16px;
+}
+.hero-dot { display:inline-block; width:6px; height:6px; background:#00878E; border-radius:50%; animation:heroPulse 2s ease-in-out infinite; }
+@keyframes heroPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.45;transform:scale(0.7)} }
+.main-title { font-family:'Outfit',sans-serif; font-size:2.8rem; font-weight:900; color:#111414; letter-spacing:-0.06em; line-height:0.95; margin-bottom:12px; }
+.main-title em { font-style:normal; color:#00878E; }
+.main-subtitle { font-size:0.88rem; color:#8A9494; margin-bottom:2rem; line-height:1.6; max-width:460px; }
 
 /* ── Cartes livrables ── */
 .card-btn {
@@ -590,11 +599,11 @@ section[data-testid="stSidebar"] button:hover { background: #F0F0F0 !important; 
 div[data-testid="stButton"] > button {
     border-radius:8px; font-weight:500; font-size:0.88rem;
     transition:all 0.15s ease;
-    background:#FFFFFF; border:1px solid #E5E5E5; color:#111111;
+    background:#FFFFFF; border:1px solid #E2E6E6; color:#111414;
 }
-div[data-testid="stButton"] > button:hover { border-color:#111111; }
-div[data-testid="stButton"] > button[kind="primary"] { background:#111111; border:none; color:#FFFFFF; }
-div[data-testid="stButton"] > button[kind="primary"]:hover { background:#333333; }
+div[data-testid="stButton"] > button:hover { border-color:#00878E; color:#00878E; }
+div[data-testid="stButton"] > button[kind="primary"] { background:#00878E; border:none; color:#FFFFFF; box-shadow:0 4px 14px rgba(0,135,142,0.25); }
+div[data-testid="stButton"] > button[kind="primary"]:hover { background:#006B71; box-shadow:0 6px 20px rgba(0,135,142,0.38); }
 div[data-testid="stDownloadButton"] > button {
     border-radius:8px; font-size:0.88rem; font-weight:500;
     background:#FFFFFF; border:1px solid #E5E5E5; color:#111111;
@@ -608,11 +617,11 @@ details summary { font-weight:600!important; color:#111111!important; }
 
 /* ── Inputs ── */
 div[data-testid="stTextInput"] input, div[data-testid="stTextArea"] textarea {
-    background:#FFFFFF!important; border:1px solid #E5E5E5!important;
-    border-radius:8px!important; color:#111111!important;
+    background:#FFFFFF!important; border:1.5px solid #E2E6E6!important;
+    border-radius:10px!important; color:#111414!important; font-size:0.92rem!important;
 }
 div[data-testid="stTextInput"] input:focus, div[data-testid="stTextArea"] textarea:focus {
-    border-color:#111111!important; box-shadow:0 0 0 2px rgba(0,0,0,0.08)!important;
+    border-color:#00878E!important; box-shadow:0 0 0 4px rgba(0,135,142,0.1)!important;
 }
 
 /* ── File uploader ── */
@@ -621,8 +630,8 @@ div[data-testid="stFileUploader"] {
 }
 
 /* ── Tabs ── */
-div[data-testid="stTabs"] button { color:#6B7280!important; font-weight:500!important; }
-div[data-testid="stTabs"] button[aria-selected="true"] { color:#111111!important; font-weight:700!important; border-bottom:2px solid #111111!important; }
+div[data-testid="stTabs"] button { color:#8A9494!important; font-weight:500!important; }
+div[data-testid="stTabs"] button[aria-selected="true"] { color:#111414!important; font-weight:700!important; border-bottom:2px solid #00878E!important; }
 button[data-baseweb="tab"] { font-size:0.88rem!important; font-weight:600!important; }
 
 /* ── Badges fichiers ── */
@@ -662,11 +671,17 @@ footer { visibility:hidden!important; }
 .q-optional-badge { font-size:0.72rem; font-weight:400; color:#9CA3AF; margin-left:8px; text-transform:uppercase; letter-spacing:0.05em; }
 
 /* ── Fond général ── */
-[data-testid="stAppViewContainer"] { background: #D0D0D0; }
+[data-testid="stAppViewContainer"] { background: #EEF0F0; }
 
 /* ── Header ── */
 header[data-testid="stHeader"] {
-    background:#D0D0D0!important; box-shadow:none!important; border-bottom:none!important;
+    background:#EEF0F0!important; box-shadow:none!important; border-bottom:none!important;
+}
+
+/* ── Grille 3D canvas ── */
+#inspirit-grid {
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    pointer-events:none; z-index:0;
 }
 
 /* ── Cacher la barre décorative Streamlit ── */
@@ -685,7 +700,7 @@ button[data-testid="stPillsOptionButton"]:hover {
     border-color:#555555!important;
 }
 button[data-testid="stPillsOptionButton"][aria-pressed="true"] {
-    background:#111111!important; border-color:#111111!important; color:#FFFFFF!important;
+    background:#00878E!important; border-color:#00878E!important; color:#FFFFFF!important;
 }
 
 /* ── Question card label ── */
@@ -1009,8 +1024,48 @@ with st.sidebar:
 if st.session_state.screen == 1:
     _log_screening("__app__", "page_view", "ouverture app")
 
+    # Grille 3D perspective animée
+    st.markdown("""
+<canvas id="inspirit-grid"></canvas>
+<script>
+(function(){
+  var c=document.getElementById('inspirit-grid');
+  if(!c)return;
+  var ctx=c.getContext('2d');
+  var off=0;
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight;}
+  resize();
+  window.addEventListener('resize',resize);
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    var W=c.width,H=c.height;
+    var vx=W*0.62,vy=H*0.32,spread=W*1.1,bot=H*1.05,COLS=14,ROWS=18;
+    for(var i=0;i<=COLS;i++){
+      var t=i/COLS,bx=vx-spread/2+t*spread,a=0.05+0.035*Math.sin(t*Math.PI);
+      ctx.beginPath();ctx.strokeStyle='rgba(0,135,142,'+a+')';ctx.lineWidth=0.7;
+      ctx.moveTo(vx,vy);ctx.lineTo(bx,bot);ctx.stroke();
+    }
+    for(var j=0;j<=ROWS;j++){
+      var tR=(j/ROWS+off)%1,tP=Math.pow(tR,2.4);
+      var y=vy+(bot-vy)*tP;if(y<vy)continue;
+      var lx=vx-(spread/2)*tP,rx=vx+(spread/2)*tP,a2=0.03+0.07*tP;
+      ctx.beginPath();ctx.strokeStyle='rgba(0,135,142,'+a2+')';ctx.lineWidth=0.6;
+      ctx.moveTo(lx,y);ctx.lineTo(rx,y);ctx.stroke();
+    }
+    off+=0.002;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+""", unsafe_allow_html=True)
+
     st.markdown(
-        '<div class="main-title">Screening <span>M&A</span></div>',
+        '<div class="hero-eyebrow"><span class="hero-dot"></span>Inspirit Partners · IA M&A</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="main-title">Screening<br><em>M&A</em></div>',
         unsafe_allow_html=True,
     )
     st.markdown(
@@ -1028,8 +1083,8 @@ if st.session_state.screen == 1:
 
     # ── SECTION SCREENINGS ───────────────────────────────────────────────────
     st.markdown(
-        '<div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;'
-        'letter-spacing:0.1em;color:#9CA3AF;margin:22px 0 10px 0;">Screenings</div>',
+        '<div style="font-size:0.59rem;font-weight:700;text-transform:uppercase;'
+        'letter-spacing:0.14em;color:#8A9494;margin:22px 0 14px 0;">Screenings complets</div>',
         unsafe_allow_html=True,
     )
 
@@ -1038,10 +1093,15 @@ if st.session_state.screen == 1:
     # Buy Side
     with col_buy:
         st.markdown("""
-        <div style="border:1px solid #E5E5E5;border-left:3px solid #111111;
-                    border-radius:10px;padding:16px 18px;margin-bottom:10px;background:#FAFAFA;min-height:115px;">
-            <div style="font-weight:700;color:#111111;font-size:0.95rem;">💼 Buy Side</div>
-            <div style="font-size:0.78rem;color:#6B7280;margin-top:5px;line-height:1.4;">
+        <div style="border:1px solid rgba(0,135,142,0.15);border-radius:14px;padding:22px 20px 18px;
+                    margin-bottom:10px;background:rgba(255,255,255,0.82);backdrop-filter:blur(12px);
+                    min-height:115px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+            <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,135,142,0.09);
+                        border:1px solid rgba(0,135,142,0.15);display:flex;align-items:center;
+                        justify-content:center;font-size:1rem;margin-bottom:12px;">💼</div>
+            <div style="font-family:'Outfit',sans-serif;font-weight:800;color:#111414;font-size:1rem;
+                        letter-spacing:-0.02em;margin-bottom:6px;">Buy Side</div>
+            <div style="font-size:0.74rem;color:#8A9494;line-height:1.55;">
                 Screening d'acquisition complet avec analyse de cible et recommandations stratégiques.
             </div>
         </div>
@@ -1051,10 +1111,15 @@ if st.session_state.screen == 1:
     # Sell Side
     with col_sell:
         st.markdown("""
-        <div style="border:1px solid #E5E5E5;border-left:3px solid #111111;
-                    border-radius:10px;padding:16px 18px;margin-bottom:10px;background:#FAFAFA;min-height:115px;">
-            <div style="font-weight:700;color:#111111;font-size:0.95rem;">📋 Sell Side</div>
-            <div style="font-size:0.78rem;color:#6B7280;margin-top:5px;line-height:1.4;">
+        <div style="border:1px solid rgba(0,135,142,0.15);border-radius:14px;padding:22px 20px 18px;
+                    margin-bottom:10px;background:rgba(255,255,255,0.82);backdrop-filter:blur(12px);
+                    min-height:115px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+            <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,135,142,0.09);
+                        border:1px solid rgba(0,135,142,0.15);display:flex;align-items:center;
+                        justify-content:center;font-size:1rem;margin-bottom:12px;">📋</div>
+            <div style="font-family:'Outfit',sans-serif;font-weight:800;color:#111414;font-size:1rem;
+                        letter-spacing:-0.02em;margin-bottom:6px;">Sell Side</div>
+            <div style="font-size:0.74rem;color:#8A9494;line-height:1.55;">
                 Cartographie du marché, identification et qualification des acquéreurs potentiels.
             </div>
         </div>
@@ -1113,8 +1178,8 @@ if st.session_state.screen == 1:
 
     # ── SECTION ANALYSES RAPIDES ─────────────────────────────────────────────
     st.markdown(
-        '<div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;'
-        'letter-spacing:0.1em;color:#9CA3AF;margin:28px 0 10px 0;">Analyses rapides</div>',
+        '<div style="font-size:0.59rem;font-weight:700;text-transform:uppercase;'
+        'letter-spacing:0.14em;color:#8A9494;margin:28px 0 14px 0;">Analyses rapides</div>',
         unsafe_allow_html=True,
     )
 
@@ -1128,11 +1193,16 @@ if st.session_state.screen == 1:
     for idx, deliv in enumerate(DELIVERABLES):
         with card_cols[idx]:
             st.markdown(f"""
-            <div style="border:1px solid #E5E5E5;border-left:3px solid #111111;
-                        border-radius:10px;padding:16px 18px;margin-bottom:8px;background:#FAFAFA;">
-                <span style="font-size:1.4rem;">{deliv['icon']}</span>
-                <div style="font-weight:700;color:#111111;font-size:0.92rem;margin:5px 0 3px 0;">{deliv['title']}</div>
-                <div style="font-size:0.76rem;color:#6B7280;line-height:1.4;">{deliv['desc']}</div>
+            <div style="border:1px solid rgba(0,135,142,0.13);border-radius:14px;
+                        padding:18px 18px 14px;margin-bottom:8px;
+                        background:rgba(255,255,255,0.82);backdrop-filter:blur(12px);
+                        box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,135,142,0.08);
+                            border:1px solid rgba(0,135,142,0.13);display:flex;align-items:center;
+                            justify-content:center;font-size:0.95rem;margin-bottom:10px;">{deliv['icon']}</div>
+                <div style="font-family:'Outfit',sans-serif;font-weight:800;color:#111414;
+                            font-size:0.9rem;letter-spacing:-0.02em;margin-bottom:5px;">{deliv['title']}</div>
+                <div style="font-size:0.73rem;color:#8A9494;line-height:1.5;">{deliv['desc']}</div>
             </div>
             """, unsafe_allow_html=True)
             if st.button("Sélectionner", key=f"card_{deliv['key']}", use_container_width=True):
