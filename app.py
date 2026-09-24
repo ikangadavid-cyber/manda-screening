@@ -516,6 +516,86 @@ def _get_history(sid: str) -> list:
     except Exception:
         return []
 
+PROSPECT_STATUSES = ["À contacter", "Contacté", "Relancé", "Intéressé", "Refus"]
+
+
+def _sb_request(path: str, method: str = "GET", payload=None, prefer: str = ""):
+    import urllib.request, json as _j
+    import streamlit as _st
+    _url = _st.secrets.get("SUPABASE_URL", "").rstrip("/")
+    _key = _st.secrets.get("SUPABASE_KEY", "")
+    if not _url or not _key:
+        raise RuntimeError("Supabase non configuré")
+    headers = {"apikey": _key, "Authorization": f"Bearer {_key}",
+               "Accept": "application/json", "Content-Type": "application/json"}
+    if prefer:
+        headers["Prefer"] = prefer
+    data = _j.dumps(payload).encode() if payload is not None else None
+    req = urllib.request.Request(f"{_url}/rest/v1/{path}", data=data, headers=headers, method=method)
+    with urllib.request.urlopen(req, timeout=8) as resp:
+        body = resp.read().decode()
+        return _j.loads(body) if body else None
+
+
+def _get_prospects(sid: str):
+    """Liste des prospects de la session, ou None si la table est inaccessible."""
+    try:
+        return _sb_request(f"prospects?sid=eq.{sid}&order=created_at.asc") or []
+    except Exception:
+        return None
+
+
+def _add_prospects(sid: str, rows: list) -> bool:
+    try:
+        _sb_request(
+            "prospects?on_conflict=sid,source_company,name", method="POST",
+            payload=[{**r, "sid": sid} for r in rows],
+            prefer="resolution=ignore-duplicates,return=minimal",
+        )
+        return True
+    except Exception:
+        return False
+
+
+def _update_prospect(sid: str, prospect_id, fields: dict) -> bool:
+    import datetime
+    try:
+        _sb_request(
+            f"prospects?id=eq.{prospect_id}&sid=eq.{sid}", method="PATCH",
+            payload={**fields, "updated_at": datetime.datetime.utcnow().isoformat()},
+            prefer="return=minimal",
+        )
+        return True
+    except Exception:
+        return False
+
+
+def _extract_companies(result_text: str, analysis_type: str, api_key: str) -> list:
+    """Extrait la long-list (cibles ou acquéreurs) d'un screening terminé."""
+    import anthropic as _ant, json as _j, re as _re
+    kind = "acquéreurs potentiels" if analysis_type == "sell_side" else "cibles d'acquisition"
+    prompt = (
+        f"Voici le résultat d'un screening M&A. Extrais la liste des {kind} identifiés "
+        "(long-list, profils, qualification). Ignore les exemples cités dans les cartographies "
+        "de catégories/segments. Une entrée par société, sans doublon.\n\n"
+        'Réponds UNIQUEMENT avec un tableau JSON : [{"societe": "...", "pays": "...", '
+        '"info": "une phrase : métier / catégorie / pourquoi elle est pertinente"}]\n\n'
+        f"Texte :\n{result_text[:50000]}"
+    )
+    resp = _ant.Anthropic(api_key=api_key).messages.create(
+        model="claude-haiku-4-5-20251001", max_tokens=8000,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    m = _re.search(r"\[.*\]", resp.content[0].text, _re.DOTALL)
+    if not m:
+        return []
+    try:
+        rows = _j.loads(m.group())
+    except Exception:
+        return []
+    return [r for r in rows if isinstance(r, dict) and str(r.get("societe", "")).strip()]
+
+
 st.set_page_config(
     page_title="Screening M&A",
     page_icon="🔍",
@@ -794,6 +874,38 @@ section[data-testid="stSidebar"] .sidebar-logo {
   color: var(--c-text) !important;
 }
 section[data-testid="stSidebar"] .sidebar-accent { color: var(--c-teal) !important; }
+section[data-testid="stSidebar"] .cr-card {
+  position: relative; overflow: hidden;
+  border-radius: 20px; padding: 16px 16px 14px; margin-bottom: 8px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(0,135,142,0.16) 0%, transparent 55%),
+    linear-gradient(145deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.72) 100%);
+  border: 1px solid rgba(255,255,255,0.88);
+  box-shadow: 0 8px 32px rgba(0,87,94,0.13), 0 1px 3px rgba(0,0,0,0.06),
+              inset 0 1.5px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.04);
+}
+section[data-testid="stSidebar"] .cr-label {
+  font-family: 'Outfit', sans-serif; font-size: 0.6rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.14em; color: var(--c-teal) !important;
+}
+section[data-testid="stSidebar"] .cr-balance { display: flex; align-items: baseline; gap: 6px; margin: 4px 0 12px; }
+section[data-testid="stSidebar"] .cr-num {
+  font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 2.9rem; line-height: 1;
+  letter-spacing: -0.05em; color: var(--c-teal) !important;
+}
+section[data-testid="stSidebar"] .cr-unit { font-size: 0.78rem; font-weight: 600; color: #8A9494 !important; }
+section[data-testid="stSidebar"] .cr-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+section[data-testid="stSidebar"] .cr-chip {
+  display: flex; flex-direction: column; gap: 1px;
+  padding: 9px 10px; border-radius: 12px;
+  background: rgba(0,135,142,0.07); border: 1px solid rgba(0,135,142,0.14);
+}
+section[data-testid="stSidebar"] .cr-chip-n {
+  font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.15rem; line-height: 1.1;
+  color: var(--c-text) !important;
+}
+section[data-testid="stSidebar"] .cr-chip-l { font-size: 0.68rem; font-weight: 600; color: var(--c-text) !important; }
+section[data-testid="stSidebar"] .cr-chip-c { font-size: 0.6rem; color: #8A9494 !important; }
 section[data-testid="stSidebar"] .sidebar-sources {
   font-size: 0.77rem;
   line-height: 1.9;
@@ -1946,14 +2058,16 @@ with st.sidebar:
     # ── Credits block ──────────────────────────────────────────────────────────
     _credits_now = st.session_state.credits
     st.markdown(
-        f'<div style="{_GLASS}border-radius:18px;padding:14px 16px 14px;margin-bottom:6px;">'
-        f'<div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;'
-        f'letter-spacing:0.13em;color:#00878E;margin-bottom:6px;font-family:\'Outfit\',sans-serif;">Crédits</div>'
-        f'<div style="font-family:\'Outfit\',sans-serif;font-weight:900;font-size:2.6rem;'
-        f'color:#00878E;line-height:1;letter-spacing:-0.04em;">{_credits_now}</div>'
-        f'<div style="font-size:0.69rem;color:#8A9494;margin-top:5px;line-height:1.5;">'
-        f'Analyse rapide : <strong style="color:#111414;">3 cr.</strong> &nbsp;·&nbsp; '
-        f'Screening : <strong style="color:#111414;">10 cr.</strong></div>'
+        f'<div class="cr-card">'
+        f'<div class="cr-label">Crédits</div>'
+        f'<div class="cr-balance"><span class="cr-num">{_credits_now}</span>'
+        f'<span class="cr-unit">crédits</span></div>'
+        f'<div class="cr-chips">'
+        f'<div class="cr-chip"><span class="cr-chip-n">{_credits_now // 3}</span>'
+        f'<span class="cr-chip-l">analyses rapides</span><span class="cr-chip-c">3 cr. l\'une</span></div>'
+        f'<div class="cr-chip"><span class="cr-chip-n">{_credits_now // 10}</span>'
+        f'<span class="cr-chip-l">screenings</span><span class="cr-chip-c">10 cr. l\'un</span></div>'
+        f'</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -2160,7 +2274,7 @@ if st.session_state.screen == 1:
     st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 
     # ── Deux onglets principaux ───────────────────────────────────────────────
-    tab_screening, tab_analyses = st.tabs(["  Screenings  ", "  Analyses  "])
+    tab_screening, tab_analyses, tab_prospections = st.tabs(["  Screenings  ", "  Analyses  ", "  Prospections  "])
 
     # ════════════════════════════════════════════════════
     # TAB 1 — SCREENINGS
@@ -2364,6 +2478,137 @@ if st.session_state.screen == 1:
                 )
             if len(uploaded_files) > 5:
                 st.caption("Seuls les 5 premiers fichiers sont pris en compte.")
+
+    # ════════════════════════════════════════════════════
+    # TAB 3 — PROSPECTIONS
+    # ════════════════════════════════════════════════════
+    with tab_prospections:
+        import pandas as _pd
+        _psid = st.session_state.session_id
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+
+        # ── Import depuis un screening ─────────────────────────────────────
+        st.markdown('<div class="section-label">Importer depuis un screening</div>', unsafe_allow_html=True)
+        _p_hist = [h for h in _get_history(_psid) if h.get("analysis_type") in ("buy_side", "sell_side")]
+        if not _p_hist:
+            st.info("Aucun screening terminé pour l'instant. Les cibles (Buy Side) et les acquéreurs (Sell Side) de vos screenings apparaîtront ici.")
+        else:
+            _p_idx = st.selectbox(
+                "Screening", options=range(len(_p_hist)), label_visibility="collapsed",
+                format_func=lambda i: (
+                    f"{_p_hist[i].get('company', '')} — "
+                    f"{'Acquéreurs (Sell Side)' if _p_hist[i].get('analysis_type') == 'sell_side' else 'Cibles (Buy Side)'} — "
+                    f"{str(_p_hist[i].get('created_at', ''))[:10]}"
+                ),
+                key="pros_hist_select",
+            )
+            _p_h = _p_hist[_p_idx]
+            _p_src = _p_h.get("company", "")
+            _p_key = f"_pros_extract_{_p_h.get('id', _p_h.get('created_at', _p_idx))}"
+
+            if _p_key not in st.session_state:
+                if st.button("Extraire les sociétés de ce screening", type="primary", key=f"{_p_key}_btn"):
+                    with st.spinner("Extraction des sociétés…"):
+                        try:
+                            st.session_state[_p_key] = _extract_companies(
+                                _p_h.get("result_text", ""), _p_h.get("analysis_type", ""), anthropic_key)
+                        except Exception as _pe:
+                            st.error(f"❌ Extraction impossible : {_pe}")
+                    if _p_key in st.session_state:
+                        st.rerun()
+            else:
+                _p_rows = st.session_state[_p_key]
+                if not _p_rows:
+                    st.warning("Aucune société trouvée dans ce screening.")
+                else:
+                    _p_df = _pd.DataFrame([{
+                        "Ajouter": False,
+                        "Société": r.get("societe", ""),
+                        "Pays": r.get("pays", ""),
+                        "Info": r.get("info", ""),
+                    } for r in _p_rows])
+                    _p_edit = st.data_editor(
+                        _p_df, hide_index=True, use_container_width=True,
+                        disabled=["Société", "Pays", "Info"],
+                        column_config={"Ajouter": st.column_config.CheckboxColumn(width="small")},
+                        key=f"{_p_key}_editor",
+                    )
+                    _p_chosen = _p_edit[_p_edit["Ajouter"]]
+                    if st.button(
+                        f"Ajouter {len(_p_chosen)} société(s) à la prospection",
+                        type="primary", disabled=_p_chosen.empty, key=f"{_p_key}_add",
+                    ):
+                        _p_ok = _add_prospects(_psid, [{
+                            "source_company": _p_src,
+                            "source_type": _p_h.get("analysis_type", ""),
+                            "name": row["Société"],
+                            "pays": row["Pays"],
+                            "info": row["Info"],
+                            "status": PROSPECT_STATUSES[0],
+                        } for _, row in _p_chosen.iterrows()])
+                        if _p_ok:
+                            st.success(f"{len(_p_chosen)} société(s) ajoutée(s).")
+                            st.rerun()
+                        else:
+                            st.error("❌ Enregistrement impossible : la table « prospects » est-elle créée dans Supabase ?")
+
+        # ── Suivi ──────────────────────────────────────────────────────────
+        st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+        st.markdown('<div class="section-label">Suivi des prospections</div>', unsafe_allow_html=True)
+        _p_list = _get_prospects(_psid)
+        if _p_list is None:
+            st.warning("Suivi indisponible : la table « prospects » est introuvable dans Supabase.")
+        elif not _p_list:
+            st.caption("Aucune société en prospection. Importez-en depuis un screening ci-dessus.")
+        else:
+            _p_counts = {stt: sum(1 for p in _p_list if p.get("status") == stt) for stt in PROSPECT_STATUSES}
+            st.markdown(
+                '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' + "".join(
+                    f'<span style="font-size:0.75rem;padding:4px 10px;border-radius:20px;'
+                    f'background:var(--c-teal-a);color:var(--c-text);">{stt} <b>{n}</b></span>'
+                    for stt, n in _p_counts.items()
+                ) + '</div>',
+                unsafe_allow_html=True,
+            )
+            _p_track = _pd.DataFrame([{
+                "id": p.get("id"),
+                "Société": p.get("name", ""),
+                "Source": p.get("source_company", ""),
+                "Pays": p.get("pays", "") or "",
+                "Statut": p.get("status") if p.get("status") in PROSPECT_STATUSES else PROSPECT_STATUSES[0],
+                "Contact": p.get("contact", "") or "",
+                "Notes": p.get("notes", "") or "",
+            } for p in _p_list])
+            _p_track_edit = st.data_editor(
+                _p_track, hide_index=True, use_container_width=True,
+                disabled=["Société", "Source", "Pays"],
+                column_config={
+                    "id": None,
+                    "Statut": st.column_config.SelectboxColumn(options=PROSPECT_STATUSES, required=True),
+                    "Contact": st.column_config.TextColumn(help="Nom, email ou téléphone du contact"),
+                },
+                key="pros_track_editor",
+            )
+            _p_c1, _p_c2 = st.columns(2)
+            with _p_c1:
+                if st.button("Enregistrer les modifications", type="primary", use_container_width=True, key="pros_save"):
+                    _p_fail = 0
+                    _p_orig = _p_track.set_index("id")
+                    for _, row in _p_track_edit.iterrows():
+                        o = _p_orig.loc[row["id"]]
+                        _changes = {f: row[c] for c, f in (("Statut", "status"), ("Contact", "contact"), ("Notes", "notes"))
+                                    if row[c] != o[c]}
+                        if _changes and not _update_prospect(_psid, row["id"], _changes):
+                            _p_fail += 1
+                    if _p_fail:
+                        st.error(f"❌ {_p_fail} ligne(s) non enregistrée(s).")
+                    else:
+                        st.rerun()
+            with _p_c2:
+                st.button(
+                    "Trouver les contacts", use_container_width=True, disabled=True, key="pros_enrich",
+                    help="API de contacts non branchée pour l'instant (dirigeants, emails, téléphones).",
+                )
 
     combined_context = manual_context if manual_context else ""
     if doc_texts:
