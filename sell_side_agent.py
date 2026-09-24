@@ -77,11 +77,12 @@ def _load_prompt(module_key: str, variables: dict) -> str:
     replacements = {
         "[SOCIÉTÉ CONCERNÉE]":                    company,
         "[CA SOCIÉTÉ CONCERNÉE]":                  variables.get("ca", "ND"),
-        "[EBITDA SOCIÉTÉ CONCERNÉE]":              variables.get("ebitda", "ND"),
+        "[EBITDA SOCIÉTÉ CONCERNÉE]":              "ND",
         "[PAYS DU SIÈGE]":                         variables.get("pays", "ND"),
         "[ZONES GÉOGRAPHIQUES DES ACQUÉREURS]":    variables.get("zones", "France et Europe"),
         "[CATÉGORIES DU MAPPING RETENUES]":        variables.get("categories", "ND"),
-        "[NOMBRE D'ACQUÉREURS ATTENDUS]":           str(variables.get("nb_acquereurs", 30)),
+        "[NOMBRE D'ACQUÉREURS ATTENDUS]":           str(variables.get("nb_acquereurs", 50)),
+        "[ACTIONNARIAT]":                          variables.get("actionnariat", "ND"),
         "[TYPOLOGIE RECHERCHÉE]":                  variables.get("typologie", "industriels et financiers"),
         "[SOCIÉTÉS EXCLUES PAR LE CÉDANT]":        variables.get("exclusions", "Aucune"),
         "[ACTIVITÉ CŒUR]":                         variables.get("activite", company),
@@ -131,14 +132,13 @@ def run_sell_side_module(
         user_parts.append(f"Activité cœur : {variables['activite']}")
     if variables.get("ca"):
         user_parts.append(f"CA : {variables['ca']}")
-    if variables.get("ebitda"):
-        user_parts.append(f"EBITDA : {variables['ebitda']}")
+    if variables.get("actionnariat"):
+        user_parts.append(f"Actionnariat : {variables['actionnariat']}")
     if variables.get("pays"):
         user_parts.append(f"Pays du siège : {variables['pays']}")
     if variables.get("zones"):
         user_parts.append(f"Zones acquéreurs : {variables['zones']}")
-    if variables.get("nb_acquereurs"):
-        user_parts.append(f"Nombre d'acquéreurs attendus : {variables['nb_acquereurs']}")
+    user_parts.append(f"Nombre d'acquéreurs attendus : {variables.get('nb_acquereurs', 50)}")
     if variables.get("typologie"):
         user_parts.append(f"Typologie : {variables['typologie']}")
     if variables.get("exclusions"):

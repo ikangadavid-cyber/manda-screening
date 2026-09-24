@@ -4014,19 +4014,20 @@ elif st.session_state.screen == 5:
             {"key": "activite",       "label": "Activité cœur de la société",
              "type": "text_input",    "hint": "Ex : Maintenance industrielle, logiciels de gestion RH…"},
             {"key": "ca",             "label": "Chiffre d'affaires (dernier exercice)",
-             "type": "chips_single",  "options": ["< 5 M€", "5–15 M€", "15–50 M€", "50–150 M€", "> 150 M€"]},
-            {"key": "ebitda",         "label": "EBITDA (dernier exercice)",
-             "type": "chips_single",  "options": ["< 1 M€", "1–5 M€", "5–15 M€", "15–30 M€", "> 30 M€"]},
-            {"key": "pays",           "label": "Pays du siège",
-             "type": "chips_single",  "options": ["France", "Belgique", "Suisse", "Luxembourg"]},
+             "type": "chips_multi",   "options": ["< 5 M€", "5–15 M€", "15–50 M€", "50–150 M€", "> 150 M€"]},
+            {"key": "actionnariat",   "label": "Structure actionnariale actuelle",
+             "type": "chips_single",  "options": ["Familial / fondateur", "PE-backed", "Filiale de groupe", "Coté en bourse"]},
+            {"key": "pays",           "label": "Pays du siège social",
+             "type": "chips_multi",   "options": ["France", "Belgique", "Suisse", "Luxembourg", "Allemagne", "Pays-Bas", "Royaume-Uni", "Espagne", "Italie"]},
             {"key": "zones",          "label": "Zones géographiques des acquéreurs",
              "type": "chips_multi",   "options": ["France", "Europe", "USA / Amérique du Nord", "Monde entier"]},
-            {"key": "nb_acquereurs",  "label": "Nombre d'acquéreurs à identifier",
-             "type": "chips_single",  "options": ["20", "30", "40", "50"]},
             {"key": "typologie",      "label": "Typologie d'acquéreurs",
              "type": "chips_single",  "options": ["Industriels uniquement", "Financiers uniquement", "Les deux"]},
-            {"key": "categories",     "label": "Catégories du mapping à retenir (optionnel)",
-             "type": "textarea",      "hint": "Laissez vide pour laisser l'IA choisir. Sinon : une catégorie par ligne."},
+            {"key": "categories",     "label": "Catégories du mapping",
+             "type": "chips_multi",   "options": ["Concurrents directs", "Acteurs adjacents", "Consolidateurs sectoriels",
+                                                   "Fonds PE / LBO", "Fonds Infrastructure", "Fonds VC / Growth",
+                                                   "Groupes internationaux", "Acteurs de la chaîne de valeur",
+                                                   "Nouveaux entrants"]},
             {"key": "exclusions",     "label": "Entreprises à exclure (optionnel)",
              "type": "textarea",      "hint": "Laissez vide si aucune. Une société par ligne."},
         ]
@@ -4152,6 +4153,35 @@ elif st.session_state.screen == 5:
             no_phase="run_2",
             no_clears=["ss_result_2"],
             yes_label="✓ Oui — profils détaillés →",
+            extra_buttons=[
+                ("✓ Terminer la mission", "done", [], None),
+                ("＋ 50 acquéreurs supplémentaires", "run_2b", [], None),
+            ],
+        )
+
+    elif ss_phase == "run_2b":
+        _log_screening(ss_company, "sell_run_2b", "recherche acquereurs supplementaires")
+        _input_parts_2b = []
+        for _k2b, _l2b in [("ss_result_1a", "Cartographie verticale"),
+                            ("ss_result_1b", "Cartographie horizontale"),
+                            ("ss_result_2",  "Acquéreurs déjà identifiés (ne pas répéter)")]:
+            _v2b = st.session_state.get(_k2b, "")
+            if _v2b:
+                _input_parts_2b.append(f"**{_l2b} :**\n{_v2b}")
+        _input_parts_2b.append("**Instruction :** Identifie 50 acquéreurs supplémentaires, différents de ceux déjà listés ci-dessus.")
+        _run_s5_module("sell_2_recherche_acquereurs",
+                       input_data="\n\n".join(_input_parts_2b),
+                       next_phase="check_2b", result_key="ss_result_2b")
+
+    elif ss_phase == "check_2b":
+        _log_screening(ss_company, "sell_check_2b", "")
+        _s5_result_card("Long-list acquéreurs supplémentaires", st.session_state.get("ss_result_2b", ""), "acquereurs_supp")
+        st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
+        _s5_satisfaction(
+            yes_phase="run_3",
+            no_phase="run_2b",
+            no_clears=["ss_result_2b"],
+            yes_label="✓ Oui — profils détaillés →",
             extra_buttons=[("✓ Terminer la mission", "done", [], None)],
         )
 
@@ -4162,6 +4192,10 @@ elif st.session_state.screen == 5:
         for _k3, _l3 in [("ss_result_1a", "Cartographie verticale"),
                          ("ss_result_1b", "Cartographie horizontale"),
                          ("ss_result_2",  "Long-list acquéreurs")]:
+            _v3 = st.session_state.get(_k3, "")
+            if _v3:
+                _input_parts_3.append(f"**{_l3} :**\n{_v3}")
+        for _k3, _l3 in [("ss_result_2b", "Long-list acquéreurs supplémentaires")]:
             _v3 = st.session_state.get(_k3, "")
             if _v3:
                 _input_parts_3.append(f"**{_l3} :**\n{_v3}")
@@ -4188,6 +4222,7 @@ elif st.session_state.screen == 5:
         for _k4, _l4 in [("ss_result_1a", "Cartographie verticale"),
                          ("ss_result_1b", "Cartographie horizontale"),
                          ("ss_result_2",  "Long-list acquéreurs"),
+                         ("ss_result_2b", "Long-list acquéreurs supplémentaires"),
                          ("ss_result_3",  "Profils acquéreurs")]:
             _v4 = st.session_state.get(_k4, "")
             if _v4:
@@ -4204,6 +4239,7 @@ elif st.session_state.screen == 5:
                 st.session_state.get("ss_result_1a", ""),
                 st.session_state.get("ss_result_1b", ""),
                 st.session_state.get("ss_result_2", ""),
+                st.session_state.get("ss_result_2b", ""),
                 st.session_state.get("ss_result_3", ""),
                 st.session_state.get("ss_result_4", ""),
             ]))
@@ -4215,11 +4251,12 @@ elif st.session_state.screen == 5:
         )
 
         _ss_results = [
-            ("ss_result_1a", "Cartographie verticale",   "carto_v_done"),
-            ("ss_result_1b", "Cartographie horizontale", "carto_h_done"),
-            ("ss_result_2",  "Long-list acquéreurs",     "acquereurs_done"),
-            ("ss_result_3",  "Profils acquéreurs",       "profils_done"),
-            ("ss_result_4",  "Qualification acquéreurs", "qualification_done"),
+            ("ss_result_1a", "Cartographie verticale",              "carto_v_done"),
+            ("ss_result_1b", "Cartographie horizontale",            "carto_h_done"),
+            ("ss_result_2",  "Long-list acquéreurs",                "acquereurs_done"),
+            ("ss_result_2b", "Long-list acquéreurs supplémentaires","acquereurs_supp_done"),
+            ("ss_result_3",  "Profils acquéreurs",                  "profils_done"),
+            ("ss_result_4",  "Qualification acquéreurs",            "qualification_done"),
         ]
         for _res_key, _res_label, _card_key in _ss_results:
             _txt = st.session_state.get(_res_key, "")
