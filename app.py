@@ -731,7 +731,12 @@ html, body, [class*="css"] {
    LAYOUT
 ══════════════════════════════════════════════════════════ */
 [data-testid="stAppViewContainer"] {
-  background: var(--c-bg);
+  background:
+    radial-gradient(ellipse 70% 55% at 12% 38%, rgba(0,135,142,0.11) 0%, transparent 68%),
+    radial-gradient(ellipse 55% 65% at 88% 14%, rgba(0,196,204,0.07) 0%, transparent 58%),
+    radial-gradient(ellipse 50% 60% at 62% 88%, rgba(0,135,142,0.08) 0%, transparent 62%),
+    radial-gradient(ellipse 40% 40% at 45% 45%, rgba(236,238,240,0.6) 0%, transparent 80%),
+    #ECEEF0;
 }
 header[data-testid="stHeader"] {
   background: transparent !important;
@@ -951,32 +956,30 @@ section[data-testid="stSidebar"] button:hover {
    CARDS — Elevated with subtle 3D hover
 ══════════════════════════════════════════════════════════ */
 .card-premium {
-  background: var(--c-glass);
-  border: 1px solid var(--c-glass-border);
+  background: linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.70) 100%);
+  border: 1px solid rgba(255,255,255,0.85);
   border-radius: var(--r-2xl);
   padding: 20px;
-  box-shadow: var(--sh-glass);
-  transition: transform var(--t-base) var(--ease),
-              box-shadow var(--t-base) var(--ease),
-              background var(--t-base) var(--ease);
-  perspective: 1000px;
-  will-change: transform;
+  box-shadow: 0 8px 32px rgba(0,87,94,0.12), 0 1px 3px rgba(0,0,0,0.06),
+              inset 0 1.5px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.04);
+  transition: transform var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease);
 }
 .card-premium:hover {
-  background: var(--c-glass-hover);
-  transform: translateY(-3px) perspective(1000px) rotateX(0.5deg);
-  box-shadow: 0 8px 32px rgba(0,107,113,0.14), 0 2px 6px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 40px rgba(0,87,94,0.16), 0 2px 6px rgba(0,0,0,0.06),
+              inset 0 1.5px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.04);
 }
 
 .card-btn {
-  background: var(--c-glass);
-  border: 1px solid var(--c-glass-border);
+  background: linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%);
+  border: 1px solid rgba(255,255,255,0.85);
   border-radius: var(--r-xl);
   padding: 18px 20px;
   cursor: pointer;
   transition: all var(--t-base) var(--ease);
   width: 100%; text-align: left;
-  box-shadow: var(--sh-glass);
+  box-shadow: 0 8px 32px rgba(0,87,94,0.12), 0 1px 3px rgba(0,0,0,0.06),
+              inset 0 1.5px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.04);
 }
 .card-btn:hover {
   background: var(--c-glass-hover);
@@ -1103,11 +1106,12 @@ button[data-baseweb="tab"] { font-size: 0.86rem !important; font-weight: 600 !im
    EXPANDER
 ══════════════════════════════════════════════════════════ */
 details {
-  border: 1px solid var(--c-glass-border) !important;
+  background: linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%) !important;
+  border: 1px solid rgba(255,255,255,0.85) !important;
   border-radius: var(--r-xl) !important;
   margin-bottom: 10px !important;
-  background: var(--c-glass) !important;
-  box-shadow: var(--sh-glass) !important;
+  box-shadow: 0 8px 32px rgba(0,87,94,0.12), 0 1px 3px rgba(0,0,0,0.06),
+              inset 0 1.5px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.04) !important;
 }
 details summary {
   font-weight: 600 !important;
@@ -1117,10 +1121,11 @@ details summary {
 
 /* Streamlit bordered containers — result cards, wizard steps */
 div[data-testid="stVerticalBlockBorderWrapper"] {
-  background: var(--c-glass) !important;
-  border: 1px solid var(--c-glass-border) !important;
+  background: linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%) !important;
+  border: 1px solid rgba(255,255,255,0.85) !important;
   border-radius: var(--r-xl) !important;
-  box-shadow: var(--sh-glass) !important;
+  box-shadow: 0 8px 32px rgba(0,87,94,0.12), 0 1px 3px rgba(0,0,0,0.06),
+              inset 0 1.5px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.04) !important;
   overflow: hidden;
 }
 
@@ -1674,6 +1679,20 @@ div[data-testid="stSpinner"] > div { font-size: 0.87rem; color: var(--c-text-3);
 """, unsafe_allow_html=True)
 
 # ── Deliverable type definitions ──────────────────────────────────────────────
+# Style glass réutilisable — gradient diagonal + reflets inset (pas de backdrop-filter)
+_GLASS = (
+    "background:linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%);"
+    "border:1px solid rgba(255,255,255,0.85);"
+    "box-shadow:0 8px 32px rgba(0,87,94,0.12),0 1px 3px rgba(0,0,0,0.06),"
+    "inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(0,0,0,0.04);"
+)
+_GLASS_SM = (  # pour petits éléments (options recharge, etc.)
+    "background:linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%);"
+    "border:1px solid rgba(255,255,255,0.85);"
+    "box-shadow:0 4px 16px rgba(0,87,94,0.09),0 1px 2px rgba(0,0,0,0.05),"
+    "inset 0 1px 0 rgba(255,255,255,1);"
+)
+
 DELIVERABLES = [
     {
         "key":   "fiche",
@@ -1907,8 +1926,7 @@ with st.sidebar:
     # ── Credits block ──────────────────────────────────────────────────────────
     _credits_now = st.session_state.credits
     st.markdown(
-        f'<div style="background:rgba(0,135,142,0.07);border:1px solid rgba(0,135,142,0.22);'
-        f'border-radius:12px;padding:14px 16px 14px;margin-bottom:6px;">'
+        f'<div style="{_GLASS}border-radius:18px;padding:14px 16px 14px;margin-bottom:6px;">'
         f'<div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;'
         f'letter-spacing:0.13em;color:#00878E;margin-bottom:6px;font-family:\'Outfit\',sans-serif;">Crédits</div>'
         f'<div style="font-family:\'Outfit\',sans-serif;font-weight:900;font-size:2.6rem;'
@@ -1932,23 +1950,37 @@ with st.sidebar:
     # ── Sélection des crédits ────────────────────────────────────────────────
     if _show_packs and not _pending_pack:
         _PACKS = [
-            ("50 crédits",  50,  "15 €"),
-            ("100 crédits", 100, "25 €"),
-            ("250 crédits", 250, "55 €"),
+            ("50 crédits",  50,  "15 €", "0.30 €/crédit", None),
+            ("100 crédits", 100, "25 €", "0.25 €/crédit", None),
+            ("250 crédits", 250, "55 €", "0.22 €/crédit", "Meilleur prix"),
         ]
-        for _pname, _pcr, _pprice in _PACKS:
+        for _pname, _pcr, _pprice, _per_cr, _badge in _PACKS:
+            _badge_html = (
+                f'<span style="background:linear-gradient(135deg,#00878E,#00C4CC);color:#fff;'
+                f'font-size:0.52rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;'
+                f'padding:2px 7px;border-radius:20px;margin-left:7px;vertical-align:middle;">{_badge}</span>'
+            ) if _badge else ""
             st.markdown(
-                f'<div style="background:rgba(255,255,255,0.68);border:1px solid rgba(255,255,255,0.50);'
-                f'border-radius:14px;padding:10px 14px;margin-bottom:6px;">'
-                f'<div style="display:flex;justify-content:space-between;align-items:center;">'
-                f'<span style="font-family:\'Outfit\',sans-serif;font-weight:800;font-size:0.85rem;'
-                f'color:#111414;letter-spacing:-0.02em;">{_pname}</span>'
-                f'<span style="font-family:\'Outfit\',sans-serif;font-weight:900;font-size:0.95rem;'
-                f'color:#00878E;">{_pprice}</span></div>'
+                f'<div style="background:linear-gradient(145deg,rgba(255,255,255,0.94) 0%,rgba(255,255,255,0.72) 100%);'
+                f'border:1px solid rgba(255,255,255,0.88);border-radius:18px;padding:13px 15px 11px;margin-bottom:4px;'
+                f'box-shadow:0 8px 32px rgba(0,87,94,0.13),0 1px 3px rgba(0,0,0,0.06),'
+                f'inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(0,0,0,0.04);">'
+                f'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;">'
+                f'<div>'
+                f'<div style="font-family:\'Outfit\',sans-serif;font-size:1.05rem;font-weight:900;'
+                f'color:#0D1414;letter-spacing:-0.03em;line-height:1.1;">'
+                f'{_pcr}<span style="font-size:0.68rem;font-weight:600;color:#8A9494;margin-left:3px;">crédits</span>'
+                f'{_badge_html}</div>'
+                f'<div style="font-size:0.64rem;color:#9AACAC;font-family:\'Outfit\',sans-serif;'
+                f'font-weight:500;margin-top:2px;">{_per_cr}</div>'
+                f'</div>'
+                f'<div style="font-family:\'Outfit\',sans-serif;font-weight:900;font-size:1.2rem;'
+                f'color:#00878E;letter-spacing:-0.04em;line-height:1;">{_pprice}</div>'
+                f'</div>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
-            if st.button(f"Recharger — {_pprice}", key=f"select_pack_{_pcr}", use_container_width=True):
+            if st.button(f"Recharger — {_pprice}", key=f"select_pack_{_pcr}", use_container_width=True, type="primary"):
                 st.session_state["_pending_pack"] = (_pname, _pcr, _pprice)
                 st.session_state.show_add_credits = False
                 st.rerun()
@@ -2100,11 +2132,13 @@ if st.session_state.screen == 1:
     _log_screening("__app__", "page_view", "ouverture app")
 
     st.markdown(
-        '<div class="main-title" style="margin-top:8px;">Screening <em>M&A</em></div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        '<div class="main-subtitle">Screening M&amp;A alimenté par l\'IA et les données publiques.</div>',
+        '<div style="display:inline-block;border-radius:20px;padding:18px 28px 14px;margin-top:8px;margin-bottom:4px;'
+        'background:linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%);'
+        'border:1px solid rgba(255,255,255,0.85);'
+        'box-shadow:0 8px 32px rgba(0,87,94,0.12),0 1px 3px rgba(0,0,0,0.06),inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(0,0,0,0.04);">'
+        '<div class="main-title" style="margin:0;">Screening <em>M&A</em></div>'
+        '<div class="main-subtitle" style="margin:4px 0 0;">Screening M&amp;A alimenté par l\'IA et les données publiques.</div>'
+        '</div>',
         unsafe_allow_html=True,
     )
 
@@ -2135,13 +2169,10 @@ if st.session_state.screen == 1:
 
         with col_buy:
             st.markdown("""
-            <div style="border:1px solid rgba(255,255,255,0.60);border-radius:32px;
-                        padding:28px 24px 22px;margin-bottom:12px;
-                        background:rgba(255,255,255,0.52);
-                        backdrop-filter:blur(18px) saturate(1.6);
-                        -webkit-backdrop-filter:blur(18px) saturate(1.6);
-                        min-height:160px;
-                        box-shadow:0 6px 28px rgba(0,87,94,0.12),0 1px 4px rgba(0,0,0,0.05),inset 0 1px 0 rgba(255,255,255,1);">
+            <div style="border-radius:32px;padding:28px 24px 22px;margin-bottom:12px;min-height:160px;
+                        background:linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%);
+                        border:1px solid rgba(255,255,255,0.85);
+                        box-shadow:0 8px 32px rgba(0,87,94,0.12),0 1px 3px rgba(0,0,0,0.06),inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(0,0,0,0.04);">
                 <div style="width:48px;height:48px;border-radius:12px;background:#00878E;
                             display:flex;align-items:center;
                             justify-content:center;font-size:1.3rem;margin-bottom:16px;">💼</div>
@@ -2157,13 +2188,10 @@ if st.session_state.screen == 1:
 
         with col_sell:
             st.markdown("""
-            <div style="border:1px solid rgba(255,255,255,0.60);border-radius:32px;
-                        padding:28px 24px 22px;margin-bottom:12px;
-                        background:rgba(255,255,255,0.52);
-                        backdrop-filter:blur(18px) saturate(1.6);
-                        -webkit-backdrop-filter:blur(18px) saturate(1.6);
-                        min-height:160px;
-                        box-shadow:0 6px 28px rgba(0,87,94,0.12),0 1px 4px rgba(0,0,0,0.05),inset 0 1px 0 rgba(255,255,255,1);">
+            <div style="border-radius:32px;padding:28px 24px 22px;margin-bottom:12px;min-height:160px;
+                        background:linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%);
+                        border:1px solid rgba(255,255,255,0.85);
+                        box-shadow:0 8px 32px rgba(0,87,94,0.12),0 1px 3px rgba(0,0,0,0.06),inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(0,0,0,0.04);">
                 <div style="width:48px;height:48px;border-radius:12px;background:#00878E;
                             display:flex;align-items:center;
                             justify-content:center;font-size:1.3rem;margin-bottom:16px;">📋</div>
@@ -2252,12 +2280,10 @@ if st.session_state.screen == 1:
             with card_cols_analyses[idx]:
                 deep_desc = _DEEP_DESCS.get(deliv["key"], deliv["desc"])
                 st.markdown(f"""
-                <div style="border:1px solid rgba(255,255,255,0.60);border-radius:32px;
-                            padding:24px 22px 18px;margin-bottom:10px;
-                            background:rgba(255,255,255,0.52);min-height:260px;
-                            backdrop-filter:blur(18px) saturate(1.6);
-                            -webkit-backdrop-filter:blur(18px) saturate(1.6);
-                            box-shadow:0 6px 28px rgba(0,87,94,0.12),0 1px 4px rgba(0,0,0,0.05),inset 0 1px 0 rgba(255,255,255,1);
+                <div style="border-radius:32px;padding:24px 22px 18px;margin-bottom:10px;min-height:260px;
+                            background:linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%);
+                            border:1px solid rgba(255,255,255,0.85);
+                            box-shadow:0 8px 32px rgba(0,87,94,0.12),0 1px 3px rgba(0,0,0,0.06),inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(0,0,0,0.04);
                             display:flex;flex-direction:column;">
                     <div style="width:44px;height:44px;border-radius:11px;background:#00878E;
                                 display:flex;align-items:center;
