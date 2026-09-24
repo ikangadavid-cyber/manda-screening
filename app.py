@@ -1131,9 +1131,9 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
         _PACKS = [
-            ("Starter",  50,  "5 €",  "~16 analyses rapides"),
-            ("Pro",     100,  "9 €",  "~33 analyses rapides"),
-            ("Premium", 250, "19 €",  "~83 analyses · usage intensif"),
+            ("50 crédits",  50,  "15 €", "~16 analyses rapides"),
+            ("100 crédits", 100, "25 €", "~33 analyses rapides"),
+            ("250 crédits", 250, "55 €", "~83 analyses · usage intensif"),
         ]
         for _pname, _pcr, _pprice, _pdesc in _PACKS:
             st.markdown(
@@ -1283,7 +1283,7 @@ with st.sidebar:
         "<strong style='color:#CCCCCC;'>M&A Screening IA</strong><br>"
         "Outil d'intelligence économique alimenté par l'IA pour les professionnels du M&A.<br><br>"
         "Analyse d'entreprises, cartographie concurrentielle, actualités sectorielle et prise de contact — en quelques minutes.<br><br>"
-        "<a href='mailto:contact@screening-ma.fr' style='color:#9CA3AF;'>contact@screening-ma.fr</a>"
+        "<a href='mailto:admin@citadeve.com' style='color:#9CA3AF;'>admin@citadeve.com</a>"
         "</div>",
         unsafe_allow_html=True,
     )
