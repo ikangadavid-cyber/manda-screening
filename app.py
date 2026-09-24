@@ -2095,160 +2095,179 @@ if st.session_state.screen == 1:
         key="company_input_field",
     )
 
-    # ── SECTION SCREENINGS ───────────────────────────────────────────────────
-    st.markdown(
-        '<div style="font-size:0.59rem;font-weight:700;text-transform:uppercase;'
-        'letter-spacing:0.14em;color:#00878E;margin:12px 0 10px 0;font-family:\'Outfit\',sans-serif;">Screenings complets</div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 
-    col_buy, col_sell = st.columns(2)
+    # ── Deux onglets principaux ───────────────────────────────────────────────
+    tab_screening, tab_analyses = st.tabs(["  ⚡ Screenings  ", "  🔍 Analyses  "])
 
-    # Buy Side
-    with col_buy:
-        st.markdown("""
-        <div style="border:1px solid rgba(0,135,142,0.22);border-radius:14px;padding:22px 20px 18px;
-                    margin-bottom:10px;background:#FFFFFF;
-                    min-height:115px;box-shadow:0 2px 16px rgba(0,135,142,0.08);">
-            <div style="width:36px;height:36px;border-radius:9px;background:#00878E;
-                        display:flex;align-items:center;
-                        justify-content:center;font-size:1rem;margin-bottom:12px;">💼</div>
-            <div style="font-family:'Outfit',sans-serif;font-weight:900;color:#111414;font-size:1.05rem;
-                        letter-spacing:-0.03em;margin-bottom:6px;">Buy Side</div>
-            <div style="font-size:0.74rem;color:#8A9494;line-height:1.55;">
-                Screening d'acquisition complet avec analyse de cible et recommandations stratégiques.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        buy_submit = st.button("Lancer →", key="buy_launch", use_container_width=True, type="primary")
-
-    # Sell Side
-    with col_sell:
-        st.markdown("""
-        <div style="border:1px solid rgba(0,135,142,0.22);border-radius:14px;padding:22px 20px 18px;
-                    margin-bottom:10px;background:#FFFFFF;
-                    min-height:115px;box-shadow:0 2px 16px rgba(0,135,142,0.08);">
-            <div style="width:36px;height:36px;border-radius:9px;background:#00878E;
-                        display:flex;align-items:center;
-                        justify-content:center;font-size:1rem;margin-bottom:12px;">📋</div>
-            <div style="font-family:'Outfit',sans-serif;font-weight:900;color:#111414;font-size:1.05rem;
-                        letter-spacing:-0.03em;margin-bottom:6px;">Sell Side</div>
-            <div style="font-size:0.74rem;color:#8A9494;line-height:1.55;">
-                Cartographie du marché, identification et qualification des acquéreurs potentiels.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        sell_submit = st.button("Lancer →", key="sell_launch", use_container_width=True, type="primary")
-
-    # Docs upload Buy Side (hors colonnes pour ne pas casser la symétrie des hauteurs)
-    with st.expander("Documents (facultatif)"):
-        ma_docs_upload = st.file_uploader(
-            "Documents",
-            type=["pdf", "docx", "txt", "md", "xlsx", "csv"],
-            accept_multiple_files=True,
-            label_visibility="collapsed",
-            key="ma_start_docs",
-            help="Plaquette, rapport annuel, mémo… L'IA les utilisera pendant la mission.",
+    # ════════════════════════════════════════════════════
+    # TAB 1 — SCREENINGS
+    # ════════════════════════════════════════════════════
+    with tab_screening:
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+        st.markdown(
+            '<div class="section-label">Screenings complets — 10 crédits</div>',
+            unsafe_allow_html=True,
         )
 
-    if buy_submit:
-        if not company_input.strip():
-            st.warning("Entrez le nom de l'entreprise.")
-        elif not anthropic_key or not tavily_key:
-            st.error("Clés API manquantes.")
-        elif st.session_state.credits < 10:
-            st.error(f"Crédits insuffisants. Ce screening coûte 10 crédits (solde : {st.session_state.credits}).")
-        else:
-            if _deduct_credits(st.session_state.session_id, 10):
-                st.session_state.credits -= 10
-                docs_text = ""
-                if ma_docs_upload:
-                    from document_extractor import extract_text as _ext_start
-                    for uf in ma_docs_upload:
-                        extracted = _ext_start(uf)
-                        if extracted.strip():
-                            docs_text += f"\n\n--- Document fourni : {uf.name} ---\n{extracted}"
-                st.session_state["ma_context_docs"] = docs_text
-                for k in list(st.session_state.keys()):
-                    if k.startswith("q_ma_buy_wizard") or k.startswith("q_idx_ma_buy_wizard"):
-                        del st.session_state[k]
-                st.session_state.ma_universe    = "buy"
-                st.session_state.ma_company     = company_input.strip()
-                st.session_state.ma_sector      = ""
-                st.session_state.ma_step_result = {}
-                st.session_state.screen         = 4
-                st.rerun()
+        col_buy, col_sell = st.columns(2)
 
-    if sell_submit:
-        if not company_input.strip():
-            st.warning("Entrez le nom de l'entreprise.")
-        elif not anthropic_key:
-            st.error("Clé API manquante.")
-        elif st.session_state.credits < 10:
-            st.error(f"Crédits insuffisants. Ce screening coûte 10 crédits (solde : {st.session_state.credits}).")
-        else:
-            if _deduct_credits(st.session_state.session_id, 10):
-                st.session_state.credits -= 10
-                for k in list(st.session_state.keys()):
-                    if k.startswith("ss_"):
-                        del st.session_state[k]
-                st.session_state.ss_company   = company_input.strip()
-                st.session_state.ss_variables = {"company": company_input.strip()}
-                st.session_state.ss_phase     = "run_1a"
-                st.session_state.screen       = 5
-                st.rerun()
-
-    # ── SECTION ANALYSES RAPIDES ─────────────────────────────────────────────
-    st.markdown(
-        '<div style="font-size:0.59rem;font-weight:700;text-transform:uppercase;'
-        'letter-spacing:0.14em;color:#00878E;margin:16px 0 10px 0;font-family:\'Outfit\',sans-serif;">Analyses rapides</div>',
-        unsafe_allow_html=True,
-    )
-
-    col_a, col_b = st.columns(2)
-    col_c, col_d = st.columns(2)
-    card_cols = [col_a, col_b, col_c, col_d]
-
-    error_zone = st.empty()
-    clicked_key = None
-
-    for idx, deliv in enumerate(DELIVERABLES):
-        with card_cols[idx]:
-            st.markdown(f"""
-            <div style="border:1px solid rgba(0,135,142,0.18);border-radius:14px;
-                        padding:18px 18px 14px;margin-bottom:8px;
-                        background:#FFFFFF;
-                        box-shadow:0 2px 14px rgba(0,135,142,0.07);">
-                <div style="width:32px;height:32px;border-radius:8px;background:#00878E;
+        with col_buy:
+            st.markdown("""
+            <div style="border:1px solid rgba(0,135,142,0.2);border-radius:16px;
+                        padding:28px 24px 22px;margin-bottom:12px;background:#FFFFFF;
+                        min-height:160px;box-shadow:0 4px 20px rgba(0,135,142,0.09);">
+                <div style="width:48px;height:48px;border-radius:12px;background:#00878E;
                             display:flex;align-items:center;
-                            justify-content:center;font-size:0.95rem;margin-bottom:10px;">{deliv['icon']}</div>
-                <div style="font-family:'Outfit',sans-serif;font-weight:900;color:#111414;
-                            font-size:0.9rem;letter-spacing:-0.03em;margin-bottom:5px;">{deliv['title']}</div>
-                <div style="font-size:0.73rem;color:#8A9494;line-height:1.5;">{deliv['desc']}</div>
+                            justify-content:center;font-size:1.3rem;margin-bottom:16px;">💼</div>
+                <div style="font-family:'Outfit',sans-serif;font-weight:900;color:#111414;font-size:1.2rem;
+                            letter-spacing:-0.04em;margin-bottom:8px;">Buy Side</div>
+                <div style="font-size:0.84rem;color:#6B7878;line-height:1.6;">
+                    Analyse complète d'une cible d'acquisition — chaîne de valeur, concurrents,
+                    cibles de consolidation et recommandations stratégiques.
+                </div>
             </div>
             """, unsafe_allow_html=True)
-            if st.button("Sélectionner", key=f"card_{deliv['key']}", use_container_width=True):
-                clicked_key = deliv["key"]
+            buy_submit = st.button("Lancer le screening →", key="buy_launch", use_container_width=True, type="primary")
 
-    if clicked_key:
-        if not company_input.strip():
-            error_zone.warning("Veuillez entrer le nom d'une entreprise avant de choisir un type d'analyse.")
-        elif not anthropic_key or not tavily_key:
-            error_zone.error("Clés API manquantes. Contactez l'administrateur.")
-        elif st.session_state.credits < 3:
-            error_zone.error(f"Crédits insuffisants. Cette analyse coûte 3 crédits (solde : {st.session_state.credits}).")
-        else:
-            if _deduct_credits(st.session_state.session_id, 3):
-                st.session_state.credits         -= 3
-                st.session_state.company          = company_input.strip()
-                st.session_state.deliverable_type = clicked_key
-                st.session_state.screen           = 2
-                st.session_state.steps_done       = []
-                st.session_state.current_step     = ""
-                st.session_state.result_text      = ""
-                st.rerun()
+        with col_sell:
+            st.markdown("""
+            <div style="border:1px solid rgba(0,135,142,0.2);border-radius:16px;
+                        padding:28px 24px 22px;margin-bottom:12px;background:#FFFFFF;
+                        min-height:160px;box-shadow:0 4px 20px rgba(0,135,142,0.09);">
+                <div style="width:48px;height:48px;border-radius:12px;background:#00878E;
+                            display:flex;align-items:center;
+                            justify-content:center;font-size:1.3rem;margin-bottom:16px;">📋</div>
+                <div style="font-family:'Outfit',sans-serif;font-weight:900;color:#111414;font-size:1.2rem;
+                            letter-spacing:-0.04em;margin-bottom:8px;">Sell Side</div>
+                <div style="font-size:0.84rem;color:#6B7878;line-height:1.6;">
+                    Cartographie exhaustive des acquéreurs potentiels — identification,
+                    qualification et priorisation des acheteurs stratégiques et financiers.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            sell_submit = st.button("Lancer le screening →", key="sell_launch", use_container_width=True, type="primary")
 
-    # Contexte optionnel pour les analyses rapides
+        with st.expander("📎 Documents (facultatif)"):
+            ma_docs_upload = st.file_uploader(
+                "Documents",
+                type=["pdf", "docx", "txt", "md", "xlsx", "csv"],
+                accept_multiple_files=True,
+                label_visibility="collapsed",
+                key="ma_start_docs",
+                help="Plaquette, rapport annuel, mémo… L'IA les utilisera pendant la mission.",
+            )
+
+        if buy_submit:
+            if not company_input.strip():
+                st.warning("Entrez le nom de l'entreprise.")
+            elif not anthropic_key or not tavily_key:
+                st.error("Clés API manquantes.")
+            elif st.session_state.credits < 10:
+                st.error(f"Crédits insuffisants. Ce screening coûte 10 crédits (solde : {st.session_state.credits}).")
+            else:
+                if _deduct_credits(st.session_state.session_id, 10):
+                    st.session_state.credits -= 10
+                    docs_text = ""
+                    if ma_docs_upload:
+                        from document_extractor import extract_text as _ext_start
+                        for uf in ma_docs_upload:
+                            extracted = _ext_start(uf)
+                            if extracted.strip():
+                                docs_text += f"\n\n--- Document fourni : {uf.name} ---\n{extracted}"
+                    st.session_state["ma_context_docs"] = docs_text
+                    for k in list(st.session_state.keys()):
+                        if k.startswith("q_ma_buy_wizard") or k.startswith("q_idx_ma_buy_wizard"):
+                            del st.session_state[k]
+                    st.session_state.ma_universe    = "buy"
+                    st.session_state.ma_company     = company_input.strip()
+                    st.session_state.ma_sector      = ""
+                    st.session_state.ma_step_result = {}
+                    st.session_state.screen         = 4
+                    st.rerun()
+
+        if sell_submit:
+            if not company_input.strip():
+                st.warning("Entrez le nom de l'entreprise.")
+            elif not anthropic_key:
+                st.error("Clé API manquante.")
+            elif st.session_state.credits < 10:
+                st.error(f"Crédits insuffisants. Ce screening coûte 10 crédits (solde : {st.session_state.credits}).")
+            else:
+                if _deduct_credits(st.session_state.session_id, 10):
+                    st.session_state.credits -= 10
+                    for k in list(st.session_state.keys()):
+                        if k.startswith("ss_"):
+                            del st.session_state[k]
+                    st.session_state.ss_company   = company_input.strip()
+                    st.session_state.ss_variables = {"company": company_input.strip()}
+                    st.session_state.ss_phase     = "run_1a"
+                    st.session_state.screen       = 5
+                    st.rerun()
+
+    # ════════════════════════════════════════════════════
+    # TAB 2 — ANALYSES
+    # ════════════════════════════════════════════════════
+    with tab_analyses:
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+        st.markdown(
+            '<div class="section-label">Analyses ciblées — 3 crédits · Rapport détaillé par dimension</div>',
+            unsafe_allow_html=True,
+        )
+
+        _DEEP_DESCS = {
+            "fiche":     "Rapport complet sur l'entreprise — identité juridique, modèle économique, CA, effectifs, clients, actionnariat, positionnement et stratégie.",
+            "benchmark": "Analyse approfondie du marché concurrentiel — fiches standardisées par acteur, parts de marché, différenciateurs et forces en présence.",
+            "manda":     "Note sectorielle M&A — transactions récentes avec montants et multiples, acquéreurs actifs, fédérations professionnelles, salons et dynamiques de consolidation.",
+            "geo":       "Étude géographique détaillée — opportunités d'expansion par marché, acteurs locaux dominants, barrières à l'entrée et recommandations de ciblage.",
+        }
+
+        col_a, col_b = st.columns(2)
+        col_c, col_d = st.columns(2)
+        card_cols_analyses = [col_a, col_b, col_c, col_d]
+
+        error_zone = st.empty()
+        clicked_key = None
+
+        for idx, deliv in enumerate(DELIVERABLES):
+            with card_cols_analyses[idx]:
+                deep_desc = _DEEP_DESCS.get(deliv["key"], deliv["desc"])
+                st.markdown(f"""
+                <div style="border:1px solid rgba(0,135,142,0.16);border-radius:16px;
+                            padding:24px 22px 18px;margin-bottom:10px;
+                            background:#FFFFFF;
+                            box-shadow:0 3px 16px rgba(0,135,142,0.07);">
+                    <div style="width:44px;height:44px;border-radius:11px;background:#00878E;
+                                display:flex;align-items:center;
+                                justify-content:center;font-size:1.2rem;margin-bottom:14px;">{deliv['icon']}</div>
+                    <div style="font-family:'Outfit',sans-serif;font-weight:900;color:#111414;
+                                font-size:1.05rem;letter-spacing:-0.03em;margin-bottom:6px;">{deliv['title']}</div>
+                    <div style="font-size:0.79rem;color:#6B7878;line-height:1.6;margin-bottom:10px;">{deep_desc}</div>
+                    <div style="font-size:0.68rem;font-weight:600;color:#00878E;letter-spacing:0.04em;">3 CRÉDITS</div>
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button("Lancer l'analyse →", key=f"card_{deliv['key']}", use_container_width=True):
+                    clicked_key = deliv["key"]
+
+        if clicked_key:
+            if not company_input.strip():
+                error_zone.warning("Veuillez entrer le nom de l'entreprise en haut de page.")
+            elif not anthropic_key or not tavily_key:
+                error_zone.error("Clés API manquantes. Contactez l'administrateur.")
+            elif st.session_state.credits < 3:
+                error_zone.error(f"Crédits insuffisants. Cette analyse coûte 3 crédits (solde : {st.session_state.credits}).")
+            else:
+                if _deduct_credits(st.session_state.session_id, 3):
+                    st.session_state.credits         -= 3
+                    st.session_state.company          = company_input.strip()
+                    st.session_state.deliverable_type = clicked_key
+                    st.session_state.screen           = 2
+                    st.session_state.steps_done       = []
+                    st.session_state.current_step     = ""
+                    st.session_state.result_text      = ""
+                    st.rerun()
+
+    # Contexte optionnel (commun aux deux onglets)
     with st.expander("💡 Informations déjà connues (optionnel)"):
         tab_manual, tab_docs = st.tabs(["✏️ Saisie libre", "📎 Importer des documents"])
 
