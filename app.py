@@ -1078,6 +1078,16 @@ div[data-testid="stTextArea"] textarea:focus {
   outline: none !important;
 }
 
+/* Barre de recherche principale — bordure teal permanente */
+.st-key-company_input_field div[data-testid="stTextInput"] input {
+  border: 2px solid var(--c-teal) !important;
+  box-shadow: 0 0 0 4px var(--c-teal-a), 0 6px 20px rgba(0,87,94,0.10) !important;
+}
+.st-key-company_input_field div[data-testid="stTextInput"] input:focus {
+  border-color: var(--c-teal) !important;
+  box-shadow: 0 0 0 5px var(--c-teal-b), 0 8px 24px rgba(0,87,94,0.14) !important;
+}
+
 div[data-testid="stFileUploader"] {
   background: var(--c-surface-2) !important;
   border: 1.5px dashed var(--c-border) !important;
@@ -2124,7 +2134,7 @@ if st.session_state.screen == 1:
     _log_screening("__app__", "page_view", "ouverture app")
 
     st.markdown(
-        '<div style="padding:18px 4px 4px;margin-top:8px;margin-bottom:4px;">'
+        '<div style="padding:56px 4px 4px;margin-top:8px;margin-bottom:28px;">'
         '<div class="main-title" style="margin:0;">Screening <em>M&A</em></div>'
         '<div class="main-subtitle" style="margin:4px 0 0;">Screening M&amp;A alimenté par l\'IA et les données publiques.</div>'
         '</div>',
