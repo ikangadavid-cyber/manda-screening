@@ -747,15 +747,15 @@ _components.html("""
     '    ctx.clearRect(0,0,c.width,c.height);',
     '    var W=c.width,H=c.height,vx=W*0.62,vy=H*0.3,spread=W*1.1,bot=H*1.05,COLS=14,ROWS=18;',
     '    for(var i=0;i<=COLS;i++){',
-    '      var t=i/COLS,bx=vx-spread/2+t*spread,a=0.05+0.03*Math.sin(t*Math.PI);',
-    '      ctx.beginPath();ctx.strokeStyle="rgba(0,135,142,"+a+")";ctx.lineWidth=0.7;',
+    '      var t=i/COLS,bx=vx-spread/2+t*spread,a=0.13+0.09*Math.sin(t*Math.PI);',
+    '      ctx.beginPath();ctx.strokeStyle="rgba(0,135,142,"+a+")";ctx.lineWidth=1;',
     '      ctx.moveTo(vx,vy);ctx.lineTo(bx,bot);ctx.stroke();',
     '    }',
     '    for(var j=0;j<=ROWS;j++){',
     '      var tR=(j/ROWS+off)%1,tP=Math.pow(tR,2.4);',
     '      var y=vy+(bot-vy)*tP;if(y<vy)continue;',
-    '      var lx=vx-(spread/2)*tP,rx=vx+(spread/2)*tP,a2=0.03+0.07*tP;',
-    '      ctx.beginPath();ctx.strokeStyle="rgba(0,135,142,"+a2+")";ctx.lineWidth=0.6;',
+    '      var lx=vx-(spread/2)*tP,rx=vx+(spread/2)*tP,a2=0.07+0.18*tP;',
+    '      ctx.beginPath();ctx.strokeStyle="rgba(0,135,142,"+a2+")";ctx.lineWidth=0.9;',
     '      ctx.moveTo(lx,y);ctx.lineTo(rx,y);ctx.stroke();',
     '    }',
     '    off+=0.002;requestAnimationFrame(draw);',
@@ -1102,9 +1102,9 @@ if st.session_state.screen == 1:
     # Buy Side
     with col_buy:
         st.markdown("""
-        <div style="border:1px solid rgba(0,135,142,0.15);border-radius:14px;padding:22px 20px 18px;
-                    margin-bottom:10px;background:rgba(255,255,255,0.82);backdrop-filter:blur(12px);
-                    min-height:115px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+        <div style="border:1px solid rgba(0,135,142,0.18);border-radius:14px;padding:22px 20px 18px;
+                    margin-bottom:10px;background:#FFFFFF;
+                    min-height:115px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
             <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,135,142,0.09);
                         border:1px solid rgba(0,135,142,0.15);display:flex;align-items:center;
                         justify-content:center;font-size:1rem;margin-bottom:12px;">💼</div>
@@ -1120,9 +1120,9 @@ if st.session_state.screen == 1:
     # Sell Side
     with col_sell:
         st.markdown("""
-        <div style="border:1px solid rgba(0,135,142,0.15);border-radius:14px;padding:22px 20px 18px;
-                    margin-bottom:10px;background:rgba(255,255,255,0.82);backdrop-filter:blur(12px);
-                    min-height:115px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+        <div style="border:1px solid rgba(0,135,142,0.18);border-radius:14px;padding:22px 20px 18px;
+                    margin-bottom:10px;background:#FFFFFF;
+                    min-height:115px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
             <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,135,142,0.09);
                         border:1px solid rgba(0,135,142,0.15);display:flex;align-items:center;
                         justify-content:center;font-size:1rem;margin-bottom:12px;">📋</div>
@@ -1202,10 +1202,10 @@ if st.session_state.screen == 1:
     for idx, deliv in enumerate(DELIVERABLES):
         with card_cols[idx]:
             st.markdown(f"""
-            <div style="border:1px solid rgba(0,135,142,0.13);border-radius:14px;
+            <div style="border:1px solid rgba(0,135,142,0.16);border-radius:14px;
                         padding:18px 18px 14px;margin-bottom:8px;
-                        background:rgba(255,255,255,0.82);backdrop-filter:blur(12px);
-                        box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                        background:#FFFFFF;
+                        box-shadow:0 2px 10px rgba(0,0,0,0.05);">
                 <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,135,142,0.08);
                             border:1px solid rgba(0,135,142,0.13);display:flex;align-items:center;
                             justify-content:center;font-size:0.95rem;margin-bottom:10px;">{deliv['icon']}</div>
