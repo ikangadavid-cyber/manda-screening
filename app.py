@@ -658,11 +658,11 @@ st.markdown("""
   --r-2xl: 26px;
   --r-full: 9999px;
 
-  /* Glassmorphism */
-  --c-glass:        rgba(255,255,255,0.66);
-  --c-glass-hover:  rgba(255,255,255,0.82);
-  --c-glass-border: rgba(255,255,255,0.38);
-  --blur:           blur(16px) saturate(1.5);
+  /* Frosted glass */
+  --c-glass:        rgba(250,253,253,0.90);
+  --c-glass-hover:  rgba(255,255,255,0.97);
+  --c-glass-border: rgba(200,220,220,0.55);
+  --sh-glass: 0 4px 24px rgba(0,107,113,0.10), 0 1px 4px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.90);
 
   /* Animation */
   --ease:      cubic-bezier(0.16, 1, 0.3, 1);
@@ -732,8 +732,9 @@ html, body, [class*="css"] {
 ══════════════════════════════════════════════════════════ */
 [data-testid="stAppViewContainer"] {
   background:
-    radial-gradient(ellipse 900px 700px at 85% 10%, rgba(0,135,142,0.07) 0%, transparent 65%),
-    radial-gradient(ellipse 700px 600px at 5% 95%,  rgba(0,135,142,0.05) 0%, transparent 65%),
+    radial-gradient(ellipse 1100px 800px at 90% 5%,  rgba(0,135,142,0.13) 0%, transparent 60%),
+    radial-gradient(ellipse 800px 700px at 0%  100%, rgba(0,135,142,0.09) 0%, transparent 60%),
+    radial-gradient(ellipse 600px 500px at 50% 55%,  rgba(0,107,113,0.04) 0%, transparent 70%),
     var(--c-bg);
 }
 header[data-testid="stHeader"] {
@@ -947,12 +948,10 @@ section[data-testid="stSidebar"] button:hover {
 ══════════════════════════════════════════════════════════ */
 .card-premium {
   background: var(--c-glass);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
   border: 1px solid var(--c-glass-border);
   border-radius: var(--r-2xl);
   padding: 20px;
-  box-shadow: var(--sh-2), inset 0 1px 0 rgba(255,255,255,0.55);
+  box-shadow: var(--sh-glass);
   transition: transform var(--t-base) var(--ease),
               box-shadow var(--t-base) var(--ease),
               background var(--t-base) var(--ease);
@@ -962,31 +961,29 @@ section[data-testid="stSidebar"] button:hover {
 .card-premium:hover {
   background: var(--c-glass-hover);
   transform: translateY(-3px) perspective(1000px) rotateX(0.5deg);
-  box-shadow: var(--sh-3), inset 0 1px 0 rgba(255,255,255,0.7);
+  box-shadow: 0 8px 32px rgba(0,107,113,0.14), 0 2px 6px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1);
 }
 
 .card-btn {
   background: var(--c-glass);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
   border: 1px solid var(--c-glass-border);
   border-radius: var(--r-xl);
   padding: 18px 20px;
   cursor: pointer;
   transition: all var(--t-base) var(--ease);
   width: 100%; text-align: left;
-  box-shadow: var(--sh-1), inset 0 1px 0 rgba(255,255,255,0.5);
+  box-shadow: var(--sh-glass);
 }
 .card-btn:hover {
   background: var(--c-glass-hover);
-  border-color: rgba(0,135,142,0.3);
-  box-shadow: var(--sh-teal), inset 0 1px 0 rgba(255,255,255,0.6);
+  border-color: rgba(0,135,142,0.25);
+  box-shadow: 0 6px 24px rgba(0,107,113,0.12), inset 0 1px 0 rgba(255,255,255,1);
   transform: translateY(-2px);
 }
 .card-btn.selected {
-  background: rgba(0,135,142,0.08);
-  border: 1.5px solid rgba(0,135,142,0.3);
-  box-shadow: 0 0 0 3px var(--c-teal-a);
+  background: rgba(236,250,250,0.95);
+  border: 1.5px solid rgba(0,135,142,0.28);
+  box-shadow: 0 0 0 3px var(--c-teal-a), inset 0 1px 0 rgba(255,255,255,0.9);
 }
 .card-icon  { font-size: 1.4rem; display: block; margin-bottom: 8px; }
 .card-title { font-size: 0.93rem; font-weight: 700; color: var(--c-text); display: block; margin-bottom: 4px; font-family: var(--f-display); letter-spacing: -0.02em; }
@@ -1106,9 +1103,7 @@ details {
   border-radius: var(--r-xl) !important;
   margin-bottom: 10px !important;
   background: var(--c-glass) !important;
-  backdrop-filter: var(--blur) !important;
-  -webkit-backdrop-filter: var(--blur) !important;
-  box-shadow: var(--sh-1), inset 0 1px 0 rgba(255,255,255,0.5) !important;
+  box-shadow: var(--sh-glass) !important;
 }
 details summary {
   font-weight: 600 !important;
@@ -1119,11 +1114,9 @@ details summary {
 /* Streamlit bordered containers — result cards, wizard steps */
 div[data-testid="stVerticalBlockBorderWrapper"] {
   background: var(--c-glass) !important;
-  backdrop-filter: var(--blur) !important;
-  -webkit-backdrop-filter: var(--blur) !important;
   border: 1px solid var(--c-glass-border) !important;
   border-radius: var(--r-xl) !important;
-  box-shadow: var(--sh-2), inset 0 1px 0 rgba(255,255,255,0.5) !important;
+  box-shadow: var(--sh-glass) !important;
   overflow: hidden;
 }
 
