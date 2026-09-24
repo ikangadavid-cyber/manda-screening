@@ -756,7 +756,7 @@ section.main > div {
   padding-right: 2rem;
   margin: 0 auto;
   background: transparent;
-  animation: fadeSlide var(--t-slow) var(--ease) both;
+  /* pas d'animation ici — elle créait un stacking context bloquant backdrop-filter */
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -2135,9 +2135,11 @@ if st.session_state.screen == 1:
 
         with col_buy:
             st.markdown("""
-            <div style="border:1px solid rgba(255,255,255,0.50);border-radius:32px;
+            <div style="border:1px solid rgba(255,255,255,0.60);border-radius:32px;
                         padding:28px 24px 22px;margin-bottom:12px;
-                        background:rgba(255,255,255,0.68);
+                        background:rgba(255,255,255,0.52);
+                        backdrop-filter:blur(18px) saturate(1.6);
+                        -webkit-backdrop-filter:blur(18px) saturate(1.6);
                         min-height:160px;
                         box-shadow:0 6px 28px rgba(0,87,94,0.12),0 1px 4px rgba(0,0,0,0.05),inset 0 1px 0 rgba(255,255,255,1);">
                 <div style="width:48px;height:48px;border-radius:12px;background:#00878E;
@@ -2155,9 +2157,11 @@ if st.session_state.screen == 1:
 
         with col_sell:
             st.markdown("""
-            <div style="border:1px solid rgba(255,255,255,0.50);border-radius:32px;
+            <div style="border:1px solid rgba(255,255,255,0.60);border-radius:32px;
                         padding:28px 24px 22px;margin-bottom:12px;
-                        background:rgba(255,255,255,0.68);
+                        background:rgba(255,255,255,0.52);
+                        backdrop-filter:blur(18px) saturate(1.6);
+                        -webkit-backdrop-filter:blur(18px) saturate(1.6);
                         min-height:160px;
                         box-shadow:0 6px 28px rgba(0,87,94,0.12),0 1px 4px rgba(0,0,0,0.05),inset 0 1px 0 rgba(255,255,255,1);">
                 <div style="width:48px;height:48px;border-radius:12px;background:#00878E;
@@ -2248,9 +2252,11 @@ if st.session_state.screen == 1:
             with card_cols_analyses[idx]:
                 deep_desc = _DEEP_DESCS.get(deliv["key"], deliv["desc"])
                 st.markdown(f"""
-                <div style="border:1px solid rgba(255,255,255,0.50);border-radius:32px;
+                <div style="border:1px solid rgba(255,255,255,0.60);border-radius:32px;
                             padding:24px 22px 18px;margin-bottom:10px;
-                            background:rgba(255,255,255,0.68);min-height:260px;
+                            background:rgba(255,255,255,0.52);min-height:260px;
+                            backdrop-filter:blur(18px) saturate(1.6);
+                            -webkit-backdrop-filter:blur(18px) saturate(1.6);
                             box-shadow:0 6px 28px rgba(0,87,94,0.12),0 1px 4px rgba(0,0,0,0.05),inset 0 1px 0 rgba(255,255,255,1);
                             display:flex;flex-direction:column;">
                     <div style="width:44px;height:44px;border-radius:11px;background:#00878E;
