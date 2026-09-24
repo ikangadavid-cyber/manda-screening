@@ -616,7 +616,7 @@ st.markdown("""
    DESIGN TOKENS
 ══════════════════════════════════════════════════════════ */
 :root {
-  --c-bg:          #D8E8E8;
+  --c-bg:          #ECEEF0;
   --c-surface:     #FFFFFF;
   --c-surface-2:   #F6F8F8;
   --c-surface-3:   #F0F3F3;
@@ -731,10 +731,7 @@ html, body, [class*="css"] {
    LAYOUT
 ══════════════════════════════════════════════════════════ */
 [data-testid="stAppViewContainer"] {
-  background:
-    radial-gradient(ellipse 1200px 900px at 90% 0%,   rgba(0,135,142,0.22) 0%, transparent 55%),
-    radial-gradient(ellipse 900px 800px  at 0%  100%, rgba(0,107,113,0.18) 0%, transparent 55%),
-    var(--c-bg);
+  background: var(--c-bg);
 }
 header[data-testid="stHeader"] {
   background: transparent !important;
@@ -1932,33 +1929,26 @@ with st.sidebar:
             st.session_state.show_add_credits = True
             st.rerun()
 
-    # ── Sélection du pack ────────────────────────────────────────────────────
+    # ── Sélection des crédits ────────────────────────────────────────────────
     if _show_packs and not _pending_pack:
-        st.markdown(
-            '<div style="font-size:0.7rem;font-weight:700;color:#111414;margin:8px 0 6px 0;'
-            'font-family:\'Outfit\',sans-serif;">Choisir un pack</div>',
-            unsafe_allow_html=True,
-        )
         _PACKS = [
-            ("50 crédits",  50,  "15 €", "~16 analyses rapides"),
-            ("100 crédits", 100, "25 €", "~33 analyses rapides"),
-            ("250 crédits", 250, "55 €", "~83 analyses · usage intensif"),
+            ("50 crédits",  50,  "15 €"),
+            ("100 crédits", 100, "25 €"),
+            ("250 crédits", 250, "55 €"),
         ]
-        for _pname, _pcr, _pprice, _pdesc in _PACKS:
+        for _pname, _pcr, _pprice in _PACKS:
             st.markdown(
-                f'<div style="background:#FFFFFF;border:1px solid rgba(0,135,142,0.18);'
-                f'border-radius:10px;padding:10px 12px 8px;margin-bottom:6px;">'
+                f'<div style="background:rgba(255,255,255,0.68);border:1px solid rgba(255,255,255,0.50);'
+                f'border-radius:14px;padding:10px 14px;margin-bottom:6px;">'
                 f'<div style="display:flex;justify-content:space-between;align-items:center;">'
                 f'<span style="font-family:\'Outfit\',sans-serif;font-weight:800;font-size:0.85rem;'
                 f'color:#111414;letter-spacing:-0.02em;">{_pname}</span>'
                 f'<span style="font-family:\'Outfit\',sans-serif;font-weight:900;font-size:0.95rem;'
                 f'color:#00878E;">{_pprice}</span></div>'
-                f'<div style="font-size:0.68rem;color:#8A9494;margin-top:2px;">'
-                f'{_pcr} crédits · {_pdesc}</div>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
-            if st.button(f"Choisir {_pname}", key=f"select_pack_{_pcr}", use_container_width=True):
+            if st.button(f"Recharger — {_pprice}", key=f"select_pack_{_pcr}", use_container_width=True):
                 st.session_state["_pending_pack"] = (_pname, _pcr, _pprice)
                 st.session_state.show_add_credits = False
                 st.rerun()
@@ -1970,14 +1960,14 @@ with st.sidebar:
     if _pending_pack:
         _pname, _pcr, _pprice = _pending_pack
         st.markdown(
-            f'<div style="background:#FFFFFF;border:1.5px solid #00878E;border-radius:12px;'
+            f'<div style="background:rgba(255,255,255,0.68);border:1.5px solid #00878E;border-radius:14px;'
             f'padding:14px 14px 12px;margin:4px 0 8px;">'
             f'<div style="font-size:0.62rem;font-weight:700;text-transform:uppercase;'
             f'letter-spacing:0.1em;color:#00878E;font-family:\'Outfit\',sans-serif;margin-bottom:8px;">'
             f'Confirmer l\'achat</div>'
             f'<div style="font-family:\'Outfit\',sans-serif;font-weight:900;font-size:1.05rem;'
             f'color:#111414;letter-spacing:-0.03em;margin-bottom:4px;">'
-            f'Pack {_pname} · {_pprice}</div>'
+            f'{_pname} · {_pprice}</div>'
             f'<div style="font-size:0.74rem;color:#8A9494;margin-bottom:12px;">'
             f'+{_pcr} crédits ajoutés à votre solde</div>',
             unsafe_allow_html=True,
@@ -2002,7 +1992,7 @@ with st.sidebar:
             f'border-radius:10px;padding:10px 12px;margin-bottom:4px;text-align:center;">'
             f'<div style="font-size:1rem;">✓</div>'
             f'<div style="font-size:0.76rem;font-weight:700;color:#00878E;margin-top:2px;">'
-            f'Pack {_sname} activé !</div>'
+            f'{_sname} activés !</div>'
             f'<div style="font-size:0.68rem;color:#8A9494;margin-top:2px;">'
             f'Solde mis à jour : {st.session_state.credits} crédits</div>'
             f'</div>',
