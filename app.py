@@ -371,6 +371,150 @@ def _log_screening(company: str, phase: str, detail: str = ""):
     except Exception:
         pass
 
+def _init_session(sid: str) -> int:
+    """Get or create user_sessions row. Returns credit balance."""
+    try:
+        import urllib.request, json as _j
+        import streamlit as _st
+        _url = _st.secrets.get("SUPABASE_URL", "").rstrip("/")
+        _key = _st.secrets.get("SUPABASE_KEY", "")
+        if not _url or not _key:
+            return 20
+        _req = urllib.request.Request(
+            f"{_url}/rest/v1/user_sessions?sid=eq.{sid}&select=credits",
+            headers={"apikey": _key, "Authorization": f"Bearer {_key}", "Accept": "application/json"},
+            method="GET",
+        )
+        with urllib.request.urlopen(_req, timeout=5) as _resp:
+            _rows = _j.loads(_resp.read().decode())
+        if _rows:
+            return int(_rows[0]["credits"])
+        _payload = _j.dumps({"sid": sid, "credits": 20}).encode()
+        _req2 = urllib.request.Request(
+            f"{_url}/rest/v1/user_sessions",
+            data=_payload,
+            headers={"apikey": _key, "Authorization": f"Bearer {_key}",
+                     "Content-Type": "application/json", "Prefer": "return=representation"},
+            method="POST",
+        )
+        with urllib.request.urlopen(_req2, timeout=5) as _resp2:
+            _rows2 = _j.loads(_resp2.read().decode())
+        return int(_rows2[0]["credits"]) if _rows2 else 20
+    except Exception:
+        return 20
+
+def _deduct_credits(sid: str, amount: int) -> bool:
+    """Deduct credits. Returns True if successful, False if insufficient."""
+    try:
+        import urllib.request, json as _j
+        import streamlit as _st
+        _url = _st.secrets.get("SUPABASE_URL", "").rstrip("/")
+        _key = _st.secrets.get("SUPABASE_KEY", "")
+        if not _url or not _key:
+            return True
+        _req = urllib.request.Request(
+            f"{_url}/rest/v1/user_sessions?sid=eq.{sid}&select=credits",
+            headers={"apikey": _key, "Authorization": f"Bearer {_key}", "Accept": "application/json"},
+            method="GET",
+        )
+        with urllib.request.urlopen(_req, timeout=5) as _resp:
+            _rows = _j.loads(_resp.read().decode())
+        if not _rows:
+            return True
+        _current = int(_rows[0]["credits"])
+        if _current < amount:
+            return False
+        _payload = _j.dumps({"credits": _current - amount}).encode()
+        _req2 = urllib.request.Request(
+            f"{_url}/rest/v1/user_sessions?sid=eq.{sid}",
+            data=_payload,
+            headers={"apikey": _key, "Authorization": f"Bearer {_key}",
+                     "Content-Type": "application/json", "Prefer": "return=minimal"},
+            method="PATCH",
+        )
+        urllib.request.urlopen(_req2, timeout=5)
+        return True
+    except Exception:
+        return True
+
+def _add_credits(sid: str, amount: int) -> int:
+    """Add credits and return new balance."""
+    try:
+        import urllib.request, json as _j
+        import streamlit as _st
+        _url = _st.secrets.get("SUPABASE_URL", "").rstrip("/")
+        _key = _st.secrets.get("SUPABASE_KEY", "")
+        if not _url or not _key:
+            return 20 + amount
+        _req = urllib.request.Request(
+            f"{_url}/rest/v1/user_sessions?sid=eq.{sid}&select=credits",
+            headers={"apikey": _key, "Authorization": f"Bearer {_key}", "Accept": "application/json"},
+            method="GET",
+        )
+        with urllib.request.urlopen(_req, timeout=5) as _resp:
+            _rows = _j.loads(_resp.read().decode())
+        _current = int(_rows[0]["credits"]) if _rows else 0
+        _new = _current + amount
+        _payload = _j.dumps({"credits": _new}).encode()
+        _req2 = urllib.request.Request(
+            f"{_url}/rest/v1/user_sessions?sid=eq.{sid}",
+            data=_payload,
+            headers={"apikey": _key, "Authorization": f"Bearer {_key}",
+                     "Content-Type": "application/json", "Prefer": "return=minimal"},
+            method="PATCH",
+        )
+        urllib.request.urlopen(_req2, timeout=5)
+        return _new
+    except Exception:
+        return 20
+
+def _save_history(sid: str, company: str, analysis_type: str, credits_used: int, result_text: str):
+    """Save analysis result to history table."""
+    try:
+        import urllib.request, json as _j, datetime
+        import streamlit as _st
+        _url = _st.secrets.get("SUPABASE_URL", "").rstrip("/")
+        _key = _st.secrets.get("SUPABASE_KEY", "")
+        if not _url or not _key:
+            return
+        _payload = _j.dumps({
+            "sid": sid,
+            "company": company,
+            "analysis_type": analysis_type,
+            "credits_used": credits_used,
+            "result_text": result_text[:50000],
+            "created_at": datetime.datetime.utcnow().isoformat(),
+        }).encode()
+        _req = urllib.request.Request(
+            f"{_url}/rest/v1/history",
+            data=_payload,
+            headers={"apikey": _key, "Authorization": f"Bearer {_key}",
+                     "Content-Type": "application/json", "Prefer": "return=minimal"},
+            method="POST",
+        )
+        urllib.request.urlopen(_req, timeout=5)
+    except Exception:
+        pass
+
+def _get_history(sid: str) -> list:
+    """Fetch history records for this session, newest first."""
+    try:
+        import urllib.request, json as _j
+        import streamlit as _st
+        _url = _st.secrets.get("SUPABASE_URL", "").rstrip("/")
+        _key = _st.secrets.get("SUPABASE_KEY", "")
+        if not _url or not _key:
+            return []
+        _req = urllib.request.Request(
+            f"{_url}/rest/v1/history?sid=eq.{sid}&order=created_at.desc&limit=50",
+            headers={"apikey": _key, "Authorization": f"Bearer {_key}", "Accept": "application/json"},
+            method="GET",
+        )
+        with urllib.request.urlopen(_req, timeout=5) as _resp:
+            return _j.loads(_resp.read().decode())
+    except Exception:
+        return []
+
 st.set_page_config(
     page_title="Screening M&A",
     page_icon="🔍",
@@ -678,12 +822,6 @@ header[data-testid="stHeader"] {
     background:#EEF0F0!important; box-shadow:none!important; border-bottom:none!important;
 }
 
-/* ── Grille 3D canvas ── */
-#inspirit-grid {
-    position:fixed; top:0; left:0; width:100%; height:100%;
-    pointer-events:none; z-index:0;
-}
-
 /* ── Cacher la barre décorative Streamlit ── */
 [data-testid="stDecoration"] { display:none!important; }
 
@@ -721,55 +859,6 @@ button[data-testid="stPillsOptionButton"][aria-pressed="true"] {
 })();
 </script>
 """, unsafe_allow_html=True)
-
-# ── 3D grid animation via components.html (seul moyen fiable d'exécuter du JS dans Streamlit) ──
-import streamlit.components.v1 as _components
-_components.html("""
-<script>
-(function(){
-  var doc = window.parent.document;
-  if(doc.getElementById('inspirit-grid')) return;
-
-  // Canvas dans le parent
-  var c = doc.createElement('canvas');
-  c.id = 'inspirit-grid';
-  c.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:-1;';
-  doc.body.appendChild(c);
-
-  // Script injecté dans le parent pour que requestAnimationFrame tourne dans son contexte
-  var code = [
-    '(function(){',
-    '  var c=document.getElementById("inspirit-grid");',
-    '  var ctx=c.getContext("2d"),off=0;',
-    '  function resize(){c.width=window.innerWidth;c.height=window.innerHeight;}',
-    '  resize();window.addEventListener("resize",resize);',
-    '  function draw(){',
-    '    ctx.clearRect(0,0,c.width,c.height);',
-    '    var W=c.width,H=c.height,vx=W*0.62,vy=H*0.05,spread=W*1.1,bot=H*1.05,COLS=14,ROWS=18;',
-    '    for(var i=0;i<=COLS;i++){',
-    '      var t=i/COLS,bx=vx-spread/2+t*spread,a=0.13+0.09*Math.sin(t*Math.PI);',
-    '      ctx.beginPath();ctx.strokeStyle="rgba(0,135,142,"+a+")";ctx.lineWidth=1;',
-    '      ctx.moveTo(vx,vy);ctx.lineTo(bx,bot);ctx.stroke();',
-    '    }',
-    '    for(var j=0;j<=ROWS;j++){',
-    '      var tR=(j/ROWS+off)%1,tP=Math.pow(tR,2.4);',
-    '      var y=vy+(bot-vy)*tP;if(y<vy)continue;',
-    '      var lx=vx-(spread/2)*tP,rx=vx+(spread/2)*tP,a2=0.07+0.18*tP;',
-    '      ctx.beginPath();ctx.strokeStyle="rgba(0,135,142,"+a2+")";ctx.lineWidth=0.9;',
-    '      ctx.moveTo(lx,y);ctx.lineTo(rx,y);ctx.stroke();',
-    '    }',
-    '    off+=0.002;requestAnimationFrame(draw);',
-    '  }',
-    '  draw();',
-    '})();'
-  ].join('\\n');
-
-  var s = doc.createElement('script');
-  s.textContent = code;
-  doc.head.appendChild(s);
-})();
-</script>
-""", height=0, width=0)
 
 # ── Deliverable type definitions ──────────────────────────────────────────────
 DELIVERABLES = [
@@ -969,6 +1058,10 @@ def init_state():
         "ma_sector":        "",   # secteur d'activité — contexte clé pour les recherches
         "ma_step_result":   {},   # dict: step_key -> result text
         "ma_running":       False,
+        # Credits & session
+        "credits":          20,
+        "session_id":       "",
+        "show_add_credits": False,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -976,12 +1069,74 @@ def init_state():
 
 init_state()
 
+# ── Session ID & credits persistence via URL ──────────────────────────────────
+import uuid as _uuid
+if not st.session_state.session_id:
+    _sid_from_url = st.query_params.get("sid", "")
+    if _sid_from_url:
+        st.session_state.session_id = _sid_from_url
+    else:
+        _new_sid = str(_uuid.uuid4())
+        st.session_state.session_id = _new_sid
+        st.query_params["sid"] = _new_sid
+    st.session_state.credits = _init_session(st.session_state.session_id)
+
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown(
         '<div class="sidebar-logo">🔍 M&A <span class="sidebar-accent">Screening</span></div>',
         unsafe_allow_html=True,
     )
+    st.markdown("---")
+
+    # ── Credits block ──────────────────────────────────────────────────────────
+    _credits_now = st.session_state.credits
+    st.markdown(
+        f'<div style="background:rgba(0,135,142,0.07);border:1px solid rgba(0,135,142,0.2);'
+        f'border-radius:12px;padding:14px 16px 12px;margin-bottom:4px;">'
+        f'<div style="font-size:0.62rem;font-weight:700;text-transform:uppercase;'
+        f'letter-spacing:0.12em;color:#8A9494;margin-bottom:4px;">Crédits restants</div>'
+        f'<div style="font-family:\'Outfit\',sans-serif;font-weight:900;font-size:2.2rem;'
+        f'color:#00878E;line-height:1;">{_credits_now}</div>'
+        f'<div style="font-size:0.71rem;color:#8A9494;margin-top:3px;">'
+        f'Analyses rapides : 3 cr. · Screenings : 10 cr.</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+    if st.button("+ Ajouter des crédits", use_container_width=True, key="toggle_add_credits"):
+        st.session_state.show_add_credits = not st.session_state.get("show_add_credits", False)
+
+    if st.session_state.get("show_add_credits", False):
+        st.markdown(
+            '<div style="background:#FFFFFF;border:1px solid rgba(0,135,142,0.15);'
+            'border-radius:10px;padding:12px 14px;margin-top:6px;">'
+            '<div style="font-size:0.72rem;font-weight:700;color:#111414;margin-bottom:8px;">'
+            'Choisir un pack</div>',
+            unsafe_allow_html=True,
+        )
+        _packs = [("Pack Starter", 50, "5 €"), ("Pack Pro", 100, "9 €"), ("Pack Premium", 250, "19 €")]
+        for _pack_name, _pack_credits, _pack_price in _packs:
+            col_pack, col_btn = st.columns([3, 2])
+            with col_pack:
+                st.markdown(
+                    f'<div style="font-size:0.78rem;font-weight:600;color:#111414;">{_pack_name}</div>'
+                    f'<div style="font-size:0.68rem;color:#8A9494;">{_pack_credits} crédits · {_pack_price}</div>',
+                    unsafe_allow_html=True,
+                )
+            with col_btn:
+                if st.button("Acheter", key=f"buy_pack_{_pack_credits}", use_container_width=True):
+                    _new_bal = _add_credits(st.session_state.session_id, _pack_credits)
+                    st.session_state.credits = _new_bal
+                    st.session_state.show_add_credits = False
+                    st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    if st.button("📋 Historique", use_container_width=True, key="goto_history"):
+        st.session_state.screen = 6
+        st.rerun()
+
     st.markdown("---")
     st.markdown('<div class="section-label">Sources utilisées</div>', unsafe_allow_html=True)
     st.markdown(
@@ -1151,39 +1306,47 @@ if st.session_state.screen == 1:
             st.warning("Entrez le nom de l'entreprise.")
         elif not anthropic_key or not tavily_key:
             st.error("Clés API manquantes.")
+        elif st.session_state.credits < 10:
+            st.error(f"Crédits insuffisants. Ce screening coûte 10 crédits (solde : {st.session_state.credits}).")
         else:
-            docs_text = ""
-            if ma_docs_upload:
-                from document_extractor import extract_text as _ext_start
-                for uf in ma_docs_upload:
-                    extracted = _ext_start(uf)
-                    if extracted.strip():
-                        docs_text += f"\n\n--- Document fourni : {uf.name} ---\n{extracted}"
-            st.session_state["ma_context_docs"] = docs_text
-            for k in list(st.session_state.keys()):
-                if k.startswith("q_ma_buy_wizard") or k.startswith("q_idx_ma_buy_wizard"):
-                    del st.session_state[k]
-            st.session_state.ma_universe    = "buy"
-            st.session_state.ma_company     = company_input.strip()
-            st.session_state.ma_sector      = ""
-            st.session_state.ma_step_result = {}
-            st.session_state.screen         = 4
-            st.rerun()
+            if _deduct_credits(st.session_state.session_id, 10):
+                st.session_state.credits -= 10
+                docs_text = ""
+                if ma_docs_upload:
+                    from document_extractor import extract_text as _ext_start
+                    for uf in ma_docs_upload:
+                        extracted = _ext_start(uf)
+                        if extracted.strip():
+                            docs_text += f"\n\n--- Document fourni : {uf.name} ---\n{extracted}"
+                st.session_state["ma_context_docs"] = docs_text
+                for k in list(st.session_state.keys()):
+                    if k.startswith("q_ma_buy_wizard") or k.startswith("q_idx_ma_buy_wizard"):
+                        del st.session_state[k]
+                st.session_state.ma_universe    = "buy"
+                st.session_state.ma_company     = company_input.strip()
+                st.session_state.ma_sector      = ""
+                st.session_state.ma_step_result = {}
+                st.session_state.screen         = 4
+                st.rerun()
 
     if sell_submit:
         if not company_input.strip():
             st.warning("Entrez le nom de l'entreprise.")
         elif not anthropic_key:
             st.error("Clé API manquante.")
+        elif st.session_state.credits < 10:
+            st.error(f"Crédits insuffisants. Ce screening coûte 10 crédits (solde : {st.session_state.credits}).")
         else:
-            for k in list(st.session_state.keys()):
-                if k.startswith("ss_"):
-                    del st.session_state[k]
-            st.session_state.ss_company   = company_input.strip()
-            st.session_state.ss_variables = {"company": company_input.strip()}
-            st.session_state.ss_phase     = "run_1a"
-            st.session_state.screen       = 5
-            st.rerun()
+            if _deduct_credits(st.session_state.session_id, 10):
+                st.session_state.credits -= 10
+                for k in list(st.session_state.keys()):
+                    if k.startswith("ss_"):
+                        del st.session_state[k]
+                st.session_state.ss_company   = company_input.strip()
+                st.session_state.ss_variables = {"company": company_input.strip()}
+                st.session_state.ss_phase     = "run_1a"
+                st.session_state.screen       = 5
+                st.rerun()
 
     # ── SECTION ANALYSES RAPIDES ─────────────────────────────────────────────
     st.markdown(
@@ -1222,14 +1385,18 @@ if st.session_state.screen == 1:
             error_zone.warning("Veuillez entrer le nom d'une entreprise avant de choisir un type d'analyse.")
         elif not anthropic_key or not tavily_key:
             error_zone.error("Clés API manquantes. Contactez l'administrateur.")
+        elif st.session_state.credits < 3:
+            error_zone.error(f"Crédits insuffisants. Cette analyse coûte 3 crédits (solde : {st.session_state.credits}).")
         else:
-            st.session_state.company          = company_input.strip()
-            st.session_state.deliverable_type = clicked_key
-            st.session_state.screen           = 2
-            st.session_state.steps_done       = []
-            st.session_state.current_step     = ""
-            st.session_state.result_text      = ""
-            st.rerun()
+            if _deduct_credits(st.session_state.session_id, 3):
+                st.session_state.credits         -= 3
+                st.session_state.company          = company_input.strip()
+                st.session_state.deliverable_type = clicked_key
+                st.session_state.screen           = 2
+                st.session_state.steps_done       = []
+                st.session_state.current_step     = ""
+                st.session_state.result_text      = ""
+                st.rerun()
 
     # Contexte optionnel pour les analyses rapides
     with st.expander("💡 Informations déjà connues (optionnel)"):
@@ -1465,6 +1632,7 @@ elif st.session_state.screen == 2:
         st.session_state.steps_done  = final_steps_done
         st.session_state.screen      = 3
         _log_screening(company, "resultat_analyse", deliv_key)
+        _save_history(st.session_state.session_id, company, deliv_key, 3, result)
         st.rerun()
     except Exception as e:
         st.error(f"Erreur lors de l'analyse : {e}")
@@ -2568,6 +2736,10 @@ elif st.session_state.screen == 4:
         result_v = st.session_state.get("ma_result_buy_01_carto_verticale", "")
         result_h = st.session_state.get("ma_result_buy_02_carto_horizontale", "")
         _log_screening(ma_company, "done", f"mission terminee - {len(cibles_results)} categorie(s)")
+        if not st.session_state.get("_buy_history_saved"):
+            _combined = "\n\n".join(filter(None, [result_v, result_h] + list(cibles_results.values())))
+            _save_history(st.session_state.session_id, ma_company, "buy_side", 10, _combined)
+            st.session_state["_buy_history_saved"] = True
         st.markdown('<div style="font-size:0.88rem;font-weight:700;color:#065F46;margin-bottom:12px;">✓ Mission terminée</div>', unsafe_allow_html=True)
 
         if result_v:
@@ -3169,6 +3341,16 @@ elif st.session_state.screen == 5:
     # ── Phase : Done — résumé complet ────────────────────────────────────────
     elif ss_phase == "done":
         _log_screening(ss_company, "sell_done", "mission terminee")
+        if not st.session_state.get("_sell_history_saved"):
+            _ss_combined = "\n\n".join(filter(None, [
+                st.session_state.get("ss_result_1a", ""),
+                st.session_state.get("ss_result_1b", ""),
+                st.session_state.get("ss_result_2", ""),
+                st.session_state.get("ss_result_3", ""),
+                st.session_state.get("ss_result_4", ""),
+            ]))
+            _save_history(st.session_state.session_id, ss_company, "sell_side", 10, _ss_combined)
+            st.session_state["_sell_history_saved"] = True
         st.markdown(
             '<div style="font-size:0.88rem;font-weight:700;color:#065F46;margin-bottom:12px;">✓ Mission Sell Side terminée</div>',
             unsafe_allow_html=True,
@@ -3314,3 +3496,96 @@ elif st.session_state.screen == 5:
         if st.button("🔄 Recommencer la mission", use_container_width=True, key="s5_restart"):
             _s5_quit()
             st.rerun()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SCREEN 6 — HISTORIQUE
+# ══════════════════════════════════════════════════════════════════════════════
+elif st.session_state.screen == 6:
+    st.markdown(
+        '<div class="main-title" style="margin-top:8px;">Historique <em>des analyses</em></div>',
+        unsafe_allow_html=True,
+    )
+
+    _LABEL_MAP = {
+        "fiche":              "Fiche entreprise",
+        "actualites":         "Actualités M&A",
+        "mapping_concurrentiel": "Mapping concurrentiel",
+        "prospection":        "Email de prospection",
+        "buy_side":           "Screening Buy Side",
+        "sell_side":          "Screening Sell Side",
+    }
+
+    _history_items = _get_history(st.session_state.session_id)
+
+    if not _history_items:
+        st.markdown(
+            '<div style="text-align:center;padding:48px 0;color:#8A9494;font-size:0.9rem;">'
+            'Aucune analyse enregistrée pour le moment.<br><br>'
+            'Lancez votre première analyse pour la retrouver ici.</div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        _selected_item = st.session_state.get("_history_selected", None)
+
+        if _selected_item is not None:
+            # ── Detail view ─────────────────────────────────────────────────
+            _item = _history_items[_selected_item]
+            _label = _LABEL_MAP.get(_item.get("analysis_type", ""), _item.get("analysis_type", "Analyse"))
+            _company_h = _item.get("company", "")
+            _date_raw = _item.get("created_at", "")
+            try:
+                import datetime as _dt
+                _date_fmt = _dt.datetime.fromisoformat(_date_raw.replace("Z", "+00:00")).strftime("%d/%m/%Y %H:%M")
+            except Exception:
+                _date_fmt = _date_raw[:10]
+
+            col_back, col_title = st.columns([1, 5])
+            with col_back:
+                if st.button("← Retour", key="hist_back"):
+                    st.session_state["_history_selected"] = None
+                    st.rerun()
+            with col_title:
+                st.markdown(
+                    f'<div style="font-family:\'Outfit\',sans-serif;font-weight:800;font-size:1.1rem;'
+                    f'color:#111414;">{_company_h} · {_label}</div>'
+                    f'<div style="font-size:0.75rem;color:#8A9494;">{_date_fmt} · {_item.get("credits_used",0)} crédits</div>',
+                    unsafe_allow_html=True,
+                )
+            st.markdown("---")
+            st.markdown(_item.get("result_text", ""), unsafe_allow_html=False)
+
+        else:
+            # ── List view ────────────────────────────────────────────────────
+            for _i, _item in enumerate(_history_items):
+                _label = _LABEL_MAP.get(_item.get("analysis_type", ""), _item.get("analysis_type", "Analyse"))
+                _company_h = _item.get("company", "—")
+                _date_raw = _item.get("created_at", "")
+                try:
+                    import datetime as _dt2
+                    _date_fmt = _dt2.datetime.fromisoformat(_date_raw.replace("Z", "+00:00")).strftime("%d/%m/%Y %H:%M")
+                except Exception:
+                    _date_fmt = _date_raw[:10]
+                _credits_used = _item.get("credits_used", 0)
+
+                col_info, col_btn = st.columns([5, 1])
+                with col_info:
+                    st.markdown(
+                        f'<div style="padding:12px 4px 10px;">'
+                        f'<div style="font-family:\'Outfit\',sans-serif;font-weight:800;'
+                        f'color:#111414;font-size:0.95rem;">{_company_h}</div>'
+                        f'<div style="font-size:0.75rem;color:#8A9494;margin-top:2px;">'
+                        f'{_label} · {_date_fmt} · {_credits_used} cr.</div>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+                with col_btn:
+                    if st.button("Voir →", key=f"hist_view_{_i}", use_container_width=True):
+                        st.session_state["_history_selected"] = _i
+                        st.rerun()
+                st.markdown('<div style="height:1px;background:rgba(0,0,0,0.06);margin:0;"></div>', unsafe_allow_html=True)
+
+    st.markdown('<div style="height:24px"></div>', unsafe_allow_html=True)
+    if st.button("← Retour à l'accueil", use_container_width=True, key="hist_home"):
+        st.session_state.screen = 1
+        st.rerun()
