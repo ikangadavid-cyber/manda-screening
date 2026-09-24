@@ -792,20 +792,22 @@ section[data-testid="stSidebar"] .sidebar-sources {
   color: var(--c-text-3) !important;
 }
 section[data-testid="stSidebar"] button {
-  background: transparent !important;
-  border: 1px solid var(--c-border) !important;
+  background: linear-gradient(145deg,rgba(255,255,255,0.90) 0%,rgba(255,255,255,0.65) 100%) !important;
+  border: 1px solid rgba(255,255,255,0.82) !important;
   color: var(--c-text) !important;
   border-radius: var(--r-sm) !important;
   font-size: 0.84rem !important;
   font-weight: 500 !important;
-  transition: background var(--t-fast) var(--ease-std),
-              border-color var(--t-fast) var(--ease-std),
-              color var(--t-fast) var(--ease-std) !important;
+  box-shadow: 0 4px 14px rgba(0,87,94,0.09), 0 1px 2px rgba(0,0,0,0.05),
+              inset 0 1px 0 rgba(255,255,255,1) !important;
+  transition: all var(--t-fast) var(--ease-std) !important;
 }
 section[data-testid="stSidebar"] button:hover {
-  background: var(--c-teal-a) !important;
-  border-color: var(--c-teal) !important;
+  background: linear-gradient(145deg,rgba(255,255,255,0.98) 0%,rgba(255,255,255,0.82) 100%) !important;
+  border-color: rgba(0,135,142,0.30) !important;
   color: var(--c-teal) !important;
+  box-shadow: 0 6px 20px rgba(0,87,94,0.13), 0 1px 3px rgba(0,0,0,0.06),
+              inset 0 1px 0 rgba(255,255,255,1) !important;
 }
 .section-label {
   font-family: var(--f-display);
@@ -1980,7 +1982,7 @@ with st.sidebar:
                 f'</div>',
                 unsafe_allow_html=True,
             )
-            if st.button(f"Recharger — {_pprice}", key=f"select_pack_{_pcr}", use_container_width=True, type="primary"):
+            if st.button(f"Recharger  {_pprice}", key=f"select_pack_{_pcr}", use_container_width=True):
                 st.session_state["_pending_pack"] = (_pname, _pcr, _pprice)
                 st.session_state.show_add_credits = False
                 st.rerun()
@@ -2132,10 +2134,7 @@ if st.session_state.screen == 1:
     _log_screening("__app__", "page_view", "ouverture app")
 
     st.markdown(
-        '<div style="display:inline-block;border-radius:20px;padding:18px 28px 14px;margin-top:8px;margin-bottom:4px;'
-        'background:linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%);'
-        'border:1px solid rgba(255,255,255,0.85);'
-        'box-shadow:0 8px 32px rgba(0,87,94,0.12),0 1px 3px rgba(0,0,0,0.06),inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(0,0,0,0.04);">'
+        '<div style="padding:18px 4px 4px;margin-top:8px;margin-bottom:4px;">'
         '<div class="main-title" style="margin:0;">Screening <em>M&A</em></div>'
         '<div class="main-subtitle" style="margin:4px 0 0;">Screening M&amp;A alimenté par l\'IA et les données publiques.</div>'
         '</div>',
