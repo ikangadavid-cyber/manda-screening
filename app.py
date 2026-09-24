@@ -2273,7 +2273,7 @@ if st.session_state.screen == 1:
                     <div style="font-size:0.68rem;font-weight:600;color:#00878E;letter-spacing:0.04em;">3 CRÉDITS</div>
                 </div>
                 """, unsafe_allow_html=True)
-                if st.button("Lancer l'analyse →", key=f"card_{deliv['key']}", use_container_width=True):
+                if st.button("Lancer l'analyse →", key=f"card_{deliv['key']}", use_container_width=True, type="primary"):
                     clicked_key = deliv["key"]
 
         if clicked_key:
