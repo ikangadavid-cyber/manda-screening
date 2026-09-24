@@ -2238,7 +2238,7 @@ if st.session_state.screen == 1:
                             del st.session_state[k]
                     st.session_state.ss_company   = company_input.strip()
                     st.session_state.ss_variables = {"company": company_input.strip()}
-                    st.session_state.ss_phase     = "run_1a"
+                    st.session_state.ss_phase     = "choose_carto"
                     st.session_state.screen       = 5
                     st.rerun()
 
@@ -2280,7 +2280,7 @@ if st.session_state.screen == 1:
                                 justify-content:center;font-size:1.2rem;margin-bottom:14px;flex-shrink:0;">{deliv['icon']}</div>
                     <div style="font-family:'Outfit',sans-serif;font-weight:900;color:#111414;
                                 font-size:1.05rem;letter-spacing:-0.03em;margin-bottom:6px;">{deliv['title']}</div>
-                    <div style="font-size:0.79rem;color:#6B7878;line-height:1.6;margin-bottom:auto;padding-bottom:12px;">{deep_desc}</div>
+                    <div style="font-size:0.79rem;color:#6B7878;line-height:1.6;min-height:calc(4.8em + 12px);margin-bottom:auto;padding-bottom:12px;">{deep_desc}</div>
                     <div style="font-size:0.68rem;font-weight:600;color:#00878E;letter-spacing:0.04em;">3 CRÉDITS</div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -3800,7 +3800,7 @@ elif st.session_state.screen == 5:
     from sell_side_agent import run_sell_side_module, MODULE_LABELS, MODULE_ESTIMATED_SECONDS
 
     ss_company   = st.session_state.get("ss_company", "")
-    ss_phase     = st.session_state.get("ss_phase", "run_1a")
+    ss_phase     = st.session_state.get("ss_phase", "choose_carto")
     ss_variables = st.session_state.get("ss_variables", {"company": ss_company})
 
     os.environ["ANTHROPIC_API_KEY"] = anthropic_key
@@ -3970,8 +3970,29 @@ elif st.session_state.screen == 5:
     # PHASES
     # ────────────────────────────────────────────────────────────────────────
 
-    # ── Phase : Module 1a — Cartographie verticale ───────────────────────────
-    if ss_phase == "run_1a":
+    # ── Phase : Choix des cartographies ──────────────────────────────────────
+    if ss_phase == "choose_carto":
+        with st.container(border=True):
+            st.markdown(
+                '<div style="font-size:0.92rem;font-weight:600;color:#111111;margin-bottom:6px;">'
+                'Quelles cartographies lancer ?</div>'
+                '<div style="font-size:0.83rem;color:#555555;">La cartographie horizontale est optionnelle. '
+                'Si vous choisissez les deux, elles tournent en même temps.</div>',
+                unsafe_allow_html=True,
+            )
+            st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+            _cc1, _cc2 = st.columns(2)
+            with _cc1:
+                if st.button("Verticale + horizontale", type="primary", use_container_width=True, key="carto_both"):
+                    st.session_state.ss_phase = "run_1ab"
+                    st.rerun()
+            with _cc2:
+                if st.button("Verticale seule", use_container_width=True, key="carto_v_only"):
+                    st.session_state.ss_phase = "run_1a"
+                    st.rerun()
+
+    # ── Phase : Module 1a seul — Cartographie verticale ──────────────────────
+    elif ss_phase == "run_1a":
         _log_screening(ss_company, "sell_run_1a", "cartographie verticale")
         _run_s5_module("sell_1a_cartographie_verticale", input_data="",
                        next_phase="check_1a", result_key="ss_result_1a")
@@ -3981,46 +4002,69 @@ elif st.session_state.screen == 5:
         _s5_result_card("Cartographie verticale", st.session_state.get("ss_result_1a", ""), "carto_v")
         st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
         _s5_satisfaction(
-            yes_phase="ask_1b",
+            yes_phase="wizard_params",
             no_phase="run_1a",
             no_clears=["ss_result_1a"],
-            yes_label="✓ Oui — cartographie horizontale →",
+            yes_label="✓ Oui — identifier les acquéreurs →",
         )
 
-    # ── Phase : Proposition cartographie horizontale ─────────────────────────
-    elif ss_phase == "ask_1b":
-        with st.container(border=True):
-            st.markdown(
-                '<div style="font-size:0.92rem;font-weight:600;color:#111111;margin-bottom:6px;">'
-                'Souhaitez-vous lancer la cartographie horizontale ?</div>'
-                '<div style="font-size:0.83rem;color:#555555;">Optionnel — cartographie des segments concurrentiels.</div>',
-                unsafe_allow_html=True,
-            )
-            st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
-            _c1, _c2 = st.columns(2)
-            with _c1:
-                if st.button("Oui, la lancer", type="primary", use_container_width=True, key="ask_1b_yes"):
-                    st.session_state.ss_phase = "run_1b"
-                    st.rerun()
-            with _c2:
-                if st.button("Non, identifier les acquéreurs →", use_container_width=True, key="ask_1b_no"):
-                    st.session_state.ss_phase = "wizard_params"
-                    st.rerun()
+    # ── Phase : Modules 1a + 1b en parallèle ─────────────────────────────────
+    elif ss_phase == "run_1ab":
+        import threading as _thr5
+        _log_screening(ss_company, "sell_run_1ab", "cartographies verticale + horizontale")
+        _mods_ab = {
+            "ss_result_1a": "sell_1a_cartographie_verticale",
+            "ss_result_1b": "sell_1b_cartographie_horizontale",
+        }
+        _ph_ab   = {rk: st.empty() for rk in _mods_ab}
+        _txt_ab  = {rk: "" for rk in _mods_ab}
+        _res_ab  = {}
+        _err_ab  = {}
 
-    # ── Phase : Module 1b — Cartographie horizontale ─────────────────────────
-    elif ss_phase == "run_1b":
-        _log_screening(ss_company, "sell_run_1b", "cartographie horizontale")
-        _run_s5_module("sell_1b_cartographie_horizontale", input_data="",
-                       next_phase="check_1b", result_key="ss_result_1b")
+        def _worker_ab(rk, mk):
+            def _cb(text):
+                _txt_ab[rk] = text
+            try:
+                _res_ab[rk] = run_sell_side_module(
+                    module_key=mk, variables=ss_variables, input_data="", on_text=_cb,
+                )
+            except Exception as _e:
+                _err_ab[rk] = _e
 
-    elif ss_phase == "check_1b":
-        _log_screening(ss_company, "sell_check_1b", "")
+        _start_ab = _time5.time()
+        _threads_ab = [_thr5.Thread(target=_worker_ab, args=(rk, mk), daemon=True) for rk, mk in _mods_ab.items()]
+        for _t in _threads_ab:
+            _t.start()
+        # Seul le thread principal touche à l'UI Streamlit
+        while any(_t.is_alive() for _t in _threads_ab):
+            for rk, mk in _mods_ab.items():
+                if rk not in _res_ab:
+                    _s5_progress_widget(_ph_ab[rk], mk, _time5.time() - _start_ab, _txt_ab[rk])
+                else:
+                    _ph_ab[rk].empty()
+            _time5.sleep(1)
+        for _ph in _ph_ab.values():
+            _ph.empty()
+
+        for rk, res in _res_ab.items():
+            st.session_state[rk] = res
+        if _err_ab:
+            for rk, _e in _err_ab.items():
+                st.error(f"❌ Erreur ({MODULE_LABELS.get(_mods_ab[rk], rk)}) : {_e}")
+        else:
+            _log_screening(ss_company, "done_sell_run_1ab", "")
+            st.session_state.ss_phase = "check_1ab"
+            st.rerun()
+
+    elif ss_phase == "check_1ab":
+        _log_screening(ss_company, "sell_check_1ab", "")
+        _s5_result_card("Cartographie verticale", st.session_state.get("ss_result_1a", ""), "carto_v")
         _s5_result_card("Cartographie horizontale", st.session_state.get("ss_result_1b", ""), "carto_h")
         st.markdown('<div style="height:6px"></div>', unsafe_allow_html=True)
         _s5_satisfaction(
             yes_phase="wizard_params",
-            no_phase="run_1b",
-            no_clears=["ss_result_1b"],
+            no_phase="run_1ab",
+            no_clears=["ss_result_1a", "ss_result_1b"],
             yes_label="✓ Oui — identifier les acquéreurs →",
         )
 
