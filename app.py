@@ -2083,7 +2083,7 @@ if st.session_state.screen == 1:
         unsafe_allow_html=True,
     )
     st.markdown(
-        '<div class="main-subtitle">Données publiques, modèles propriétaires, résultats structurés — en quelques secondes.</div>',
+        '<div class="main-subtitle">Screening M&amp;A alimenté par l\'IA et les données publiques.</div>',
         unsafe_allow_html=True,
     )
 
