@@ -879,9 +879,9 @@ section[data-testid="stSidebar"] .cr-card {
   border-radius: 20px; padding: 16px 16px 14px; margin-bottom: 8px;
   background:
     radial-gradient(circle at 100% 0%, rgba(0,135,142,0.16) 0%, transparent 55%),
-    linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);
-  backdrop-filter: blur(22px) saturate(170%);
-  -webkit-backdrop-filter: blur(22px) saturate(170%);
+    linear-gradient(135deg,rgba(255,255,255,0.82) 0%,rgba(255,255,255,0.55) 100%);
+  backdrop-filter: blur(22px) saturate(130%);
+  -webkit-backdrop-filter: blur(22px) saturate(130%);
   border: 1px solid rgba(255,255,255,0.7);
   box-shadow: 0 12px 40px rgba(0,87,94,0.16), 0 1px 3px rgba(0,0,0,0.06),
               inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.04);
@@ -1069,7 +1069,7 @@ section[data-testid="stSidebar"] button:hover {
    CARDS — Elevated with subtle 3D hover
 ══════════════════════════════════════════════════════════ */
 .card-premium {
-  background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);
+  background:linear-gradient(135deg,rgba(255,255,255,0.82) 0%,rgba(255,255,255,0.55) 100%);backdrop-filter:blur(22px) saturate(130%);-webkit-backdrop-filter:blur(22px) saturate(130%);
   border: 1px solid rgba(255,255,255,0.7);
   border-radius: var(--r-2xl);
   padding: 20px;
@@ -1084,7 +1084,7 @@ section[data-testid="stSidebar"] button:hover {
 }
 
 .card-btn {
-  background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);
+  background:linear-gradient(135deg,rgba(255,255,255,0.82) 0%,rgba(255,255,255,0.55) 100%);backdrop-filter:blur(22px) saturate(130%);-webkit-backdrop-filter:blur(22px) saturate(130%);
   border: 1px solid rgba(255,255,255,0.7);
   border-radius: var(--r-xl);
   padding: 18px 20px;
@@ -1229,7 +1229,7 @@ button[data-baseweb="tab"] { font-size: 0.86rem !important; font-weight: 600 !im
    EXPANDER
 ══════════════════════════════════════════════════════════ */
 details {
-  background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%) !important;backdrop-filter:blur(22px) saturate(170%) !important;-webkit-backdrop-filter:blur(22px) saturate(170%) !important;
+  background:linear-gradient(135deg,rgba(255,255,255,0.82) 0%,rgba(255,255,255,0.55) 100%) !important;backdrop-filter:blur(22px) saturate(130%) !important;-webkit-backdrop-filter:blur(22px) saturate(130%) !important;
   border: 1px solid rgba(255,255,255,0.7) !important;
   border-radius: var(--r-xl) !important;
   margin-bottom: 10px !important;
@@ -1244,7 +1244,7 @@ details summary {
 
 /* Streamlit bordered containers — result cards, wizard steps */
 div[data-testid="stVerticalBlockBorderWrapper"] {
-  background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%) !important;backdrop-filter:blur(22px) saturate(170%) !important;-webkit-backdrop-filter:blur(22px) saturate(170%) !important;
+  background:linear-gradient(135deg,rgba(255,255,255,0.82) 0%,rgba(255,255,255,0.55) 100%) !important;backdrop-filter:blur(22px) saturate(130%) !important;-webkit-backdrop-filter:blur(22px) saturate(130%) !important;
   border: 1px solid rgba(255,255,255,0.7) !important;
   border-radius: var(--r-xl) !important;
   box-shadow: 0 12px 40px rgba(0,87,94,0.16), 0 1px 3px rgba(0,0,0,0.06),
@@ -1804,13 +1804,13 @@ div[data-testid="stSpinner"] > div { font-size: 0.87rem; color: var(--c-text-3);
 # ── Deliverable type definitions ──────────────────────────────────────────────
 # Style glass réutilisable — gradient diagonal + reflets inset (pas de backdrop-filter)
 _GLASS = (
-    "background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);"
+    "background:linear-gradient(135deg,rgba(255,255,255,0.82) 0%,rgba(255,255,255,0.55) 100%);backdrop-filter:blur(22px) saturate(130%);-webkit-backdrop-filter:blur(22px) saturate(130%);"
     "border:1px solid rgba(255,255,255,0.7);"
     "box-shadow:0 12px 40px rgba(0,87,94,0.16),0 1px 3px rgba(0,0,0,0.06),"
     "inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.25),inset 0 -1px 0 rgba(0,0,0,0.04);"
 )
 _GLASS_SM = (  # pour petits éléments (options recharge, etc.)
-    "background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);"
+    "background:linear-gradient(135deg,rgba(255,255,255,0.82) 0%,rgba(255,255,255,0.55) 100%);backdrop-filter:blur(22px) saturate(130%);-webkit-backdrop-filter:blur(22px) saturate(130%);"
     "border:1px solid rgba(255,255,255,0.7);"
     "box-shadow:0 4px 16px rgba(0,87,94,0.09),0 1px 2px rgba(0,0,0,0.05),"
     "inset 0 1px 0 rgba(255,255,255,1);"
@@ -2277,7 +2277,7 @@ if st.session_state.screen == 1:
         with col_buy:
             st.markdown("""
             <div style="border-radius:32px;padding:28px 24px 22px;margin-bottom:12px;min-height:160px;
-                        background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);
+                        background:linear-gradient(135deg,rgba(255,255,255,0.82) 0%,rgba(255,255,255,0.55) 100%);backdrop-filter:blur(22px) saturate(130%);-webkit-backdrop-filter:blur(22px) saturate(130%);
                         border:1px solid rgba(255,255,255,0.7);
                         box-shadow:0 12px 40px rgba(0,87,94,0.16),0 1px 3px rgba(0,0,0,0.06),inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.25),inset 0 -1px 0 rgba(0,0,0,0.04);">
                 <div style="width:48px;height:48px;border-radius:12px;background:#00878E;
@@ -2296,7 +2296,7 @@ if st.session_state.screen == 1:
         with col_sell:
             st.markdown("""
             <div style="border-radius:32px;padding:28px 24px 22px;margin-bottom:12px;min-height:160px;
-                        background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);
+                        background:linear-gradient(135deg,rgba(255,255,255,0.82) 0%,rgba(255,255,255,0.55) 100%);backdrop-filter:blur(22px) saturate(130%);-webkit-backdrop-filter:blur(22px) saturate(130%);
                         border:1px solid rgba(255,255,255,0.7);
                         box-shadow:0 12px 40px rgba(0,87,94,0.16),0 1px 3px rgba(0,0,0,0.06),inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.25),inset 0 -1px 0 rgba(0,0,0,0.04);">
                 <div style="width:48px;height:48px;border-radius:12px;background:#00878E;
@@ -2388,7 +2388,7 @@ if st.session_state.screen == 1:
                 deep_desc = _DEEP_DESCS.get(deliv["key"], deliv["desc"])
                 st.markdown(f"""
                 <div style="border-radius:32px;padding:24px 22px 18px;margin-bottom:10px;min-height:200px;
-                            background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);
+                            background:linear-gradient(135deg,rgba(255,255,255,0.82) 0%,rgba(255,255,255,0.55) 100%);backdrop-filter:blur(22px) saturate(130%);-webkit-backdrop-filter:blur(22px) saturate(130%);
                             border:1px solid rgba(255,255,255,0.7);
                             box-shadow:0 12px 40px rgba(0,87,94,0.16),0 1px 3px rgba(0,0,0,0.06),inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.25),inset 0 -1px 0 rgba(0,0,0,0.04);
                             display:flex;flex-direction:column;">
