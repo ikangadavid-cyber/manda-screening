@@ -879,33 +879,24 @@ section[data-testid="stSidebar"] .cr-card {
   border-radius: 20px; padding: 16px 16px 14px; margin-bottom: 8px;
   background:
     radial-gradient(circle at 100% 0%, rgba(0,135,142,0.16) 0%, transparent 55%),
-    linear-gradient(145deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.72) 100%);
-  border: 1px solid rgba(255,255,255,0.88);
-  box-shadow: 0 8px 32px rgba(0,87,94,0.13), 0 1px 3px rgba(0,0,0,0.06),
-              inset 0 1.5px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.04);
+    linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid rgba(255,255,255,0.7);
+  box-shadow: 0 12px 40px rgba(0,87,94,0.16), 0 1px 3px rgba(0,0,0,0.06),
+              inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.04);
 }
 section[data-testid="stSidebar"] .cr-label {
   font-family: 'Outfit', sans-serif; font-size: 0.6rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.14em; color: var(--c-teal) !important;
 }
-section[data-testid="stSidebar"] .cr-balance { display: flex; align-items: baseline; gap: 6px; margin: 4px 0 12px; }
+section[data-testid="stSidebar"] .cr-balance { display: flex; align-items: baseline; gap: 6px; margin: 4px 0 6px; }
 section[data-testid="stSidebar"] .cr-num {
   font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 2.9rem; line-height: 1;
   letter-spacing: -0.05em; color: var(--c-teal) !important;
 }
 section[data-testid="stSidebar"] .cr-unit { font-size: 0.78rem; font-weight: 600; color: #8A9494 !important; }
-section[data-testid="stSidebar"] .cr-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-section[data-testid="stSidebar"] .cr-chip {
-  display: flex; flex-direction: column; gap: 1px;
-  padding: 9px 10px; border-radius: 12px;
-  background: rgba(0,135,142,0.07); border: 1px solid rgba(0,135,142,0.14);
-}
-section[data-testid="stSidebar"] .cr-chip-n {
-  font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.15rem; line-height: 1.1;
-  color: var(--c-text) !important;
-}
-section[data-testid="stSidebar"] .cr-chip-l { font-size: 0.68rem; font-weight: 600; color: var(--c-text) !important; }
-section[data-testid="stSidebar"] .cr-chip-c { font-size: 0.6rem; color: #8A9494 !important; }
+section[data-testid="stSidebar"] .cr-equiv { font-size: 0.7rem; color: #8A9494 !important; }
 section[data-testid="stSidebar"] .sidebar-sources {
   font-size: 0.77rem;
   line-height: 1.9;
@@ -1078,30 +1069,30 @@ section[data-testid="stSidebar"] button:hover {
    CARDS — Elevated with subtle 3D hover
 ══════════════════════════════════════════════════════════ */
 .card-premium {
-  background: linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.70) 100%);
-  border: 1px solid rgba(255,255,255,0.85);
+  background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);
+  border: 1px solid rgba(255,255,255,0.7);
   border-radius: var(--r-2xl);
   padding: 20px;
-  box-shadow: 0 8px 32px rgba(0,87,94,0.12), 0 1px 3px rgba(0,0,0,0.06),
-              inset 0 1.5px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.04);
+  box-shadow: 0 12px 40px rgba(0,87,94,0.16), 0 1px 3px rgba(0,0,0,0.06),
+              inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.04);
   transition: transform var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease);
 }
 .card-premium:hover {
   transform: translateY(-3px);
   box-shadow: 0 14px 40px rgba(0,87,94,0.16), 0 2px 6px rgba(0,0,0,0.06),
-              inset 0 1.5px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.04);
+              inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.04);
 }
 
 .card-btn {
-  background: linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%);
-  border: 1px solid rgba(255,255,255,0.85);
+  background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);
+  border: 1px solid rgba(255,255,255,0.7);
   border-radius: var(--r-xl);
   padding: 18px 20px;
   cursor: pointer;
   transition: all var(--t-base) var(--ease);
   width: 100%; text-align: left;
-  box-shadow: 0 8px 32px rgba(0,87,94,0.12), 0 1px 3px rgba(0,0,0,0.06),
-              inset 0 1.5px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.04);
+  box-shadow: 0 12px 40px rgba(0,87,94,0.16), 0 1px 3px rgba(0,0,0,0.06),
+              inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.04);
 }
 .card-btn:hover {
   background: var(--c-glass-hover);
@@ -1238,12 +1229,12 @@ button[data-baseweb="tab"] { font-size: 0.86rem !important; font-weight: 600 !im
    EXPANDER
 ══════════════════════════════════════════════════════════ */
 details {
-  background: linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%) !important;
-  border: 1px solid rgba(255,255,255,0.85) !important;
+  background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%) !important;backdrop-filter:blur(22px) saturate(170%) !important;-webkit-backdrop-filter:blur(22px) saturate(170%) !important;
+  border: 1px solid rgba(255,255,255,0.7) !important;
   border-radius: var(--r-xl) !important;
   margin-bottom: 10px !important;
-  box-shadow: 0 8px 32px rgba(0,87,94,0.12), 0 1px 3px rgba(0,0,0,0.06),
-              inset 0 1.5px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.04) !important;
+  box-shadow: 0 12px 40px rgba(0,87,94,0.16), 0 1px 3px rgba(0,0,0,0.06),
+              inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.04) !important;
 }
 details summary {
   font-weight: 600 !important;
@@ -1253,11 +1244,11 @@ details summary {
 
 /* Streamlit bordered containers — result cards, wizard steps */
 div[data-testid="stVerticalBlockBorderWrapper"] {
-  background: linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%) !important;
-  border: 1px solid rgba(255,255,255,0.85) !important;
+  background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%) !important;backdrop-filter:blur(22px) saturate(170%) !important;-webkit-backdrop-filter:blur(22px) saturate(170%) !important;
+  border: 1px solid rgba(255,255,255,0.7) !important;
   border-radius: var(--r-xl) !important;
-  box-shadow: 0 8px 32px rgba(0,87,94,0.12), 0 1px 3px rgba(0,0,0,0.06),
-              inset 0 1.5px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.04) !important;
+  box-shadow: 0 12px 40px rgba(0,87,94,0.16), 0 1px 3px rgba(0,0,0,0.06),
+              inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.04) !important;
   overflow: hidden;
 }
 
@@ -1813,14 +1804,14 @@ div[data-testid="stSpinner"] > div { font-size: 0.87rem; color: var(--c-text-3);
 # ── Deliverable type definitions ──────────────────────────────────────────────
 # Style glass réutilisable — gradient diagonal + reflets inset (pas de backdrop-filter)
 _GLASS = (
-    "background:linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%);"
-    "border:1px solid rgba(255,255,255,0.85);"
-    "box-shadow:0 8px 32px rgba(0,87,94,0.12),0 1px 3px rgba(0,0,0,0.06),"
-    "inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(0,0,0,0.04);"
+    "background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);"
+    "border:1px solid rgba(255,255,255,0.7);"
+    "box-shadow:0 12px 40px rgba(0,87,94,0.16),0 1px 3px rgba(0,0,0,0.06),"
+    "inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.25),inset 0 -1px 0 rgba(0,0,0,0.04);"
 )
 _GLASS_SM = (  # pour petits éléments (options recharge, etc.)
-    "background:linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%);"
-    "border:1px solid rgba(255,255,255,0.85);"
+    "background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);"
+    "border:1px solid rgba(255,255,255,0.7);"
     "box-shadow:0 4px 16px rgba(0,87,94,0.09),0 1px 2px rgba(0,0,0,0.05),"
     "inset 0 1px 0 rgba(255,255,255,1);"
 )
@@ -2062,12 +2053,7 @@ with st.sidebar:
         f'<div class="cr-label">Crédits</div>'
         f'<div class="cr-balance"><span class="cr-num">{_credits_now}</span>'
         f'<span class="cr-unit">crédits</span></div>'
-        f'<div class="cr-chips">'
-        f'<div class="cr-chip"><span class="cr-chip-n">{_credits_now // 3}</span>'
-        f'<span class="cr-chip-l">analyses rapides</span><span class="cr-chip-c">3 cr. l\'une</span></div>'
-        f'<div class="cr-chip"><span class="cr-chip-n">{_credits_now // 10}</span>'
-        f'<span class="cr-chip-l">screenings</span><span class="cr-chip-c">10 cr. l\'un</span></div>'
-        f'</div>'
+        f'<div class="cr-equiv">{_credits_now // 3} analyses rapides &nbsp;·&nbsp; {_credits_now // 10} screenings</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -2291,9 +2277,9 @@ if st.session_state.screen == 1:
         with col_buy:
             st.markdown("""
             <div style="border-radius:32px;padding:28px 24px 22px;margin-bottom:12px;min-height:160px;
-                        background:linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%);
-                        border:1px solid rgba(255,255,255,0.85);
-                        box-shadow:0 8px 32px rgba(0,87,94,0.12),0 1px 3px rgba(0,0,0,0.06),inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(0,0,0,0.04);">
+                        background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);
+                        border:1px solid rgba(255,255,255,0.7);
+                        box-shadow:0 12px 40px rgba(0,87,94,0.16),0 1px 3px rgba(0,0,0,0.06),inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.25),inset 0 -1px 0 rgba(0,0,0,0.04);">
                 <div style="width:48px;height:48px;border-radius:12px;background:#00878E;
                             display:flex;align-items:center;
                             justify-content:center;font-size:1.3rem;margin-bottom:16px;">💼</div>
@@ -2310,9 +2296,9 @@ if st.session_state.screen == 1:
         with col_sell:
             st.markdown("""
             <div style="border-radius:32px;padding:28px 24px 22px;margin-bottom:12px;min-height:160px;
-                        background:linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%);
-                        border:1px solid rgba(255,255,255,0.85);
-                        box-shadow:0 8px 32px rgba(0,87,94,0.12),0 1px 3px rgba(0,0,0,0.06),inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(0,0,0,0.04);">
+                        background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);
+                        border:1px solid rgba(255,255,255,0.7);
+                        box-shadow:0 12px 40px rgba(0,87,94,0.16),0 1px 3px rgba(0,0,0,0.06),inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.25),inset 0 -1px 0 rgba(0,0,0,0.04);">
                 <div style="width:48px;height:48px;border-radius:12px;background:#00878E;
                             display:flex;align-items:center;
                             justify-content:center;font-size:1.3rem;margin-bottom:16px;">📋</div>
@@ -2402,9 +2388,9 @@ if st.session_state.screen == 1:
                 deep_desc = _DEEP_DESCS.get(deliv["key"], deliv["desc"])
                 st.markdown(f"""
                 <div style="border-radius:32px;padding:24px 22px 18px;margin-bottom:10px;min-height:200px;
-                            background:linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.70) 100%);
-                            border:1px solid rgba(255,255,255,0.85);
-                            box-shadow:0 8px 32px rgba(0,87,94,0.12),0 1px 3px rgba(0,0,0,0.06),inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(0,0,0,0.04);
+                            background:linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.22) 100%);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);
+                            border:1px solid rgba(255,255,255,0.7);
+                            box-shadow:0 12px 40px rgba(0,87,94,0.16),0 1px 3px rgba(0,0,0,0.06),inset 0 1px 0 rgba(255,255,255,0.95),inset 0 0 0 1px rgba(255,255,255,0.25),inset 0 -1px 0 rgba(0,0,0,0.04);
                             display:flex;flex-direction:column;">
                     <div style="width:44px;height:44px;border-radius:11px;background:#00878E;
                                 display:flex;align-items:center;
